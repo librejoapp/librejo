@@ -2127,7 +2127,7 @@ function sortDocs(list){
 /* Emoji de chaque formulaire : se repérer d'un coup d'œil (formulaires de l'admin : champ « Emoji », sinon 📝) */
 const FORM_EMOJI={__ccas:'🏛️',__el:'📄',__cp:'📨',__urg:'🚑',__ordo:'🧾',__cl:'🖊️',__deliv:'💊',__relais:'🔁',__cmi:'🩺',__att:'📋',__mt:'✉️'};
 const formEmoji=f=>FORM_EMOJI[f.id]||(f.emoji||'').trim()||'📝';
-const DOCUBUS_VERSION='2026-11-20.1';
+const DOCUBUS_VERSION='2026-11-25';
 /* Ce que chaque formulaire intégré utilise, et où cela se règle */
 const BUILTIN_FORMS=[
   {tab:'ordo',id:'__ordo',titre:'Ordonnance',sets:['catalogue','entete']},
@@ -2162,12 +2162,22 @@ function drawFormAdmin(t){
     ${f.sets.map(k=>`<button class="secondary" data-goset="${k}">${esc(SETTINGS[k].l)}</button>`).join('')}<button class="secondary" data-pinform="${f.id}">${DATA.formsEpingles.includes(f.id)?'★ Retirer de l’accueil':'☆ Épingler à l’accueil'}</button></div>`;
 }
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-goset]'); if(g){ const k=g.dataset.goset; gotoSetting(k==='newdest'?'dest':k); if(k==='newdest') setTimeout(()=>{ const b=$('#add-dest'); b&&b.click(); const r=[...document.querySelectorAll('.dest-row [data-part]')].pop(); r&&r.focus(); },400); } });
-function formItems(){ return [{id:'__ccas',titre:'Bon d’orientation CCAS',description:"Bon d'orientation vers le CCAS : motif (domiciliation, aide alimentaire ou financière, droits, accompagnement, hébergement), situation, pièces, contact dans la structure.",motscles:['CCAS','orientation','social','domiciliation','aide alimentaire','secours','droits','bon'],kind:'form'},{id:'__el',titre:'En-tête libre',description:"Page blanche à l'en-tête de l'association : titre, destinataire, objet, texte et signature libres, seule la date est fixe.",motscles:['en-tête','papier à en-tête','libre','lettre','courrier','note','attestation'],kind:'form'},{id:'__cp',titre:'Courrier à un partenaire',description:"Courrier type à l'en-tête de l'association pour écrire à un partenaire (structure, service, administration) : destinataire, objet, texte, signature.",motscles:['courrier','lettre','partenaire','structure','administration','en-tête'],kind:'form'},{id:'__urg',titre:'Orientation aux urgences',description:"Courrier d'orientation pour l'équipe des urgences : motif, constantes, antécédents, traitements (TSO), allergies, consommations récentes, contact dans la structure.",motscles:['urgences','hôpital','orientation','SAU','courrier','adressage','hospitalisation'],kind:'form'},{id:'__ordo',titre:'Ordonnance',description:"Ordonnance : traitement (médicaments courants, posologie pré-remplie), bilan à cocher, imagerie, vaccins, tabac, PrEP, compléments alimentaires, préservatifs ou texte libre. QSP, renouvellement, ALD (bizone).",motscles:['ordonnance','ordo','prescription','médicament','paracétamol','antibiotique','bilan','prise de sang','biologie','radio','radiographie','échographie','imagerie','vaccin','tabac','nicotine','PrEP','préservatifs','compléments alimentaires','CNO','dénutrition','vitamines','ALD','bizone','QSP'],kind:'form'},
+function formItems(){ return [{id:'__ccas',titre:'Bon d’orientation CCAS',description:"Bon d'orientation vers le CCAS : motif (domiciliation, aide alimentaire ou financière, droits, accompagnement, hébergement), situation, pièces, contact dans la structure.",motscles:['CCAS','orientation','social','domiciliation','aide alimentaire','secours','droits','bon'],kind:'form'},{id:'__el',titre:'En-tête libre',description:"Page blanche à l'en-tête de la structure : titre, destinataire, objet, texte et signature libres, seule la date est fixe.",motscles:['en-tête','papier à en-tête','libre','lettre','courrier','note','attestation'],kind:'form'},{id:'__cp',titre:'Courrier à un partenaire',description:"Courrier type à l'en-tête de la structure pour écrire à un partenaire (structure, service, administration) : destinataire, objet, texte, signature.",motscles:['courrier','lettre','partenaire','structure','administration','en-tête'],kind:'form'},{id:'__urg',titre:'Orientation aux urgences',description:"Courrier d'orientation pour l'équipe des urgences : motif, constantes, antécédents, traitements, allergies, consommations récentes, contact dans la structure.",motscles:['urgences','hôpital','orientation','SAU','courrier','adressage','hospitalisation'],kind:'form'},{id:'__ordo',titre:'Ordonnance',description:"Ordonnance : traitement (médicaments courants, posologie pré-remplie), bilan à cocher, imagerie, vaccins, tabac, PrEP, compléments alimentaires, préservatifs ou texte libre. QSP, renouvellement, ALD (bizone).",motscles:['ordonnance','ordo','prescription','médicament','paracétamol','antibiotique','bilan','prise de sang','biologie','radio','radiographie','échographie','imagerie','vaccin','tabac','nicotine','PrEP','préservatifs','compléments alimentaires','CNO','dénutrition','vitamines','ALD','bizone','QSP'],kind:'form'},
   {id:'__cl',titre:'Certificat libre',description:"Certificat « Je soussigné(e), Dr X, certifie que… » : le médecin, la date, et le texte à écrire.",motscles:['certificat','certifie','soussigné','attestation médicale','sport'],kind:'form'},{id:'__att',titre:'Attestation de suivi',description:"Atteste qu'une personne est suivie (obligation de soins, injonction thérapeutique, SPIP, employeur), sans information médicale.",motscles:['attestation','suivi','obligation de soins','injonction','SPIP','juge','justice','présence','rendez-vous'],kind:'form'},
   {id:'__mt',titre:'Courrier au médecin traitant',description:"Courrier médical au médecin traitant : information de suivi, compte rendu, demande d'avis ou fin de suivi.",motscles:['courrier','lettre','médecin traitant','généraliste','confrère','compte rendu','liaison'],kind:'form'},{id:'__cmi',titre:'Certificat médical initial – violences',description:"Certificat pour une personne majeure victime de violences (modèle inspiré de l'Ordre des médecins) : dires, examen, lésions, ITT, photos datées en annexe.",motscles:['certificat','CMI','violences','coups','agression','ITT','constatation','photos','plainte','médecin légiste'],kind:'form'},{id:'__relais',titre:'Demande de relais TSO',description:"Adresser un patient à un autre CSAPA ou à un médecin qui prendra le relais de la prescription : posologie, antécédents, traitements associés.",motscles:['relais','orientation','méthadone','buprénorphine','CSAPA','médecin','prescription','TSO'],categorie:(DATA.categories.find(c=>/orientation/i.test(c.nom))||{}).id||'',kind:'form'},{id:'__deliv',titre:'Délivrance exceptionnelle de TSO',description:"Attestation envoyée au CSAPA de suivi quand un patient est venu chercher son traitement (méthadone, buprénorphine) chez nous.",motscles:['attestation','méthadone','buprénorphine','CSAPA','week-end'],categorie:(DATA.categories.find(c=>/d[ée]livrance/i.test(c.nom))||{}).id||'',kind:'form'}]
   .filter(x=>!formsOff().includes(x.id)).concat(DATA.formulaires.map(f=>({...f,kind:'form'})))
   .concat(cerfaDocs().map(d=>({id:'cerfa:'+d.id,titre:d.titre,description:(d.cerfa.numero?'Cerfa '+d.cerfa.numero+', ':'Cerfa ')+'pré-rempli avec les infos de la structure'+(d.cerfa.pieces?', avec la liste des pièces':''),motscles:[...(d.motscles||[]),'cerfa',d.cerfa.numero||''],kind:'form',groupe:d.cerfa.rubrique||'social',emoji:'🧾'}))); }
-function formsOff(){ return Array.isArray(PAR.formsOff)?PAR.formsOff:['__ordo']; } // l'ancienne ordonnance est masquée par défaut
+/* Formulaires proposés selon la structure : les formulaires médicaux seulement s'il y a des médecins,
+   ceux des traitements de substitution seulement pour un CSAPA ou un CAARUD. L'admin garde la main :
+   « Proposer » les active quand même (PAR.formsOn), « Masquer » les retire (PAR.formsOff). */
+const MED_FORMS=['__ordo','__cl','__cmi','__att','__mt','__relais','__deliv'], TSO_FORMS=['__relais','__deliv'];
+const tsoStruct=()=>['csapa','caarud'].includes(PAR.typeStructure);
+function formsAuto(id){ if(MED_FORMS.includes(id)&&!meds().length) return 'masqué : aucun médecin enregistré';
+  if(TSO_FORMS.includes(id)&&!tsoStruct()) return 'masqué : réservé aux CSAPA et CAARUD'; return ''; }
+function formsOffBase(){ return Array.isArray(PAR.formsOff)?PAR.formsOff:['__ordo']; } // l'ancienne ordonnance est masquée par défaut
+function formsOff(){ const on=new Set(PAR.formsOn||[]), off=new Set(formsOffBase());
+  BUILTIN_FORMS.forEach(f=>{ if(!on.has(f.id)&&formsAuto(f.id)) off.add(f.id); }); return [...off]; }
+const tsoOn=()=>TSO_FORMS.some(id=>!formsOff().includes(id)); // traitement de substitution proposé dans les courriers
 function renderDocs(){
   if(!viewChosen) view=isAdmin?'liste':'vignettes';
   const p=$('#p-docs');
@@ -2913,7 +2923,7 @@ function renderForms(){
   const p=$('#p-forms');
   if(formView&&formView!=='__deliv'){ return renderFill(); }
   p.innerHTML=`<h2 class="sec">Formulaires</h2>
-    <p class="hint">Remplissez, Librejo crée le PDF à l'en-tête de l'association, puis prépare le mail. Rien n'est enregistré.</p>
+    <p class="hint">Remplissez, Librejo crée le PDF à l'en-tête de la structure, puis prépare le mail. Rien n'est enregistré.</p>
     ${formsByGroupHTML()}
     ${isAdmin?`<div class="adminbar"><b>Mode admin</b><button class="secondary" data-newform>${ICON.plus}Créer un formulaire</button>${cerfaDocs().length?`<button class="secondary" data-czcheck>Vérifier les Cerfa${cerfaDocs().some(d=>czAge(d)>CZ_DAYS)?' (à faire)':''}</button>`:''}<span class="hint">Les formulaires se modifient dans l'onglet Administration.</span></div>`:''}`;
 }
@@ -3261,15 +3271,6 @@ function editKit(id){
   const del=$('#k-del'); if(del) del.onclick=()=>askConfirm('Supprimer ce kit ?','Les documents eux-mêmes ne sont pas touchés.','Supprimer',async()=>{ const keep=DATA.kits; DATA.kits=keep.filter(x=>x.id!==kd.id); if(!await run(saveData,'Kit supprimé')) DATA.kits=keep; renderDocs(); });
 }
 
-/* ---------- Raccourcis des tâches (page d'accueil) ---------- */
-function renderQuick(){
-  const q=(attr,ico,t,s)=>`<button class="quick" ${attr}><span class="qi" aria-hidden="true">${ico}</span><span class="qt"><b>${t}</b><span>${s}</span></span></button>`;
-  return `<div class="quickrow">
-    ${q('data-fill="__deliv"',FORM_EMOJI.__deliv,'Délivrance exceptionnelle','Attestation pour le CSAPA de suivi')}
-    ${q('data-fill="__relais"',FORM_EMOJI.__relais,'Demande de relais','Adresser un patient pour son TSO')}
-    ${q('data-gotab="semaine"','🖨️','Préparation semaine','Imprimer les documents du bus')}
-  </div>`;
-}
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]'); if(g){ setTab(g.dataset.gotab); window.scrollTo({top:0}); } });
 
 /* ---------- Épinglés (page d'accueil) ---------- */
@@ -3625,7 +3626,7 @@ const MODELE_PACKS=[['droits','Droits des usagers','Pour toutes les structures :
   ['enfance','Enfance et protection de l’enfance','Information préoccupante, signalement, rapport au juge, fugue, autorisations parentales, entretien des 17 ans.'],
   ['agees','Personnes âgées','Admission en EHPAD, APA, directives anticipées, liberté d’aller et venir.'],
   ['asile','Asile et hébergement','Courrier à l’OFII, attestation d’hébergement.'],
-  ['addicto','Addictologie','En-tête d’ordonnance. Les formulaires TSO sont dans les formulaires intégrés ci-dessous.']];
+  ['addicto','Addictologie','En-tête d’ordonnance. Le relais et la délivrance de traitement de substitution sont des formulaires intégrés, à activer ci-dessous.']];
 const modeleAdded=m=>m.lien?DATA.documents.some(d=>d.modele_src===m.id):DATA.formulaires.some(f=>f.modele_src===m.id);
 async function addModele(id){
   const m=MODELES.find(x=>x.id===id); if(!m) return;
@@ -3655,19 +3656,20 @@ function drawFormList(){
   $('#asub').innerHTML=`${modelesHTML()}<div class="card top w-wide">
     <h3>Formulaires intégrés</h3>
     <p class="hint">Leur texte est fixe, mais ce qu'ils proposent se règle : destinataires, adresses, médecins, partenaires. « Masquer » les retire de la liste de l'équipe.</p>
-    <table class="docs"><tbody>${BUILTIN_FORMS.map(f=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}</small></td>
+    <table class="docs"><tbody>${BUILTIN_FORMS.map(f=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}${formsOff().includes(f.id)?` · <b>${esc(formsOffBase().includes(f.id)?'masqué':formsAuto(f.id)||'masqué')}</b>`:(PAR.formsOn||[]).includes(f.id)&&formsAuto(f.id)?' · <b>activé par vous</b>':''}</small></td>
       <td><div class="act"><button class="secondary sm" data-foff="${f.id}">${formsOff().includes(f.id)?'Proposer':'Masquer'}</button>${f.tab==='deliv'?`<button class="secondary" data-goset="dest">Destinataires</button>`:''}${f.sets.includes('annu')?`<button class="secondary" data-goset="annu">Annuaire</button>`:''}${f.sets.includes('catalogue')?`<button class="secondary" data-goset="catalogue">Listes de l'ordonnance</button>`:''}${f.sets.includes('med')?`<button class="secondary" data-goset="med">Médecins</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>
     <div class="card top w-wide">
     <h3>Formulaires</h3>
-    <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de l'association, puis prépare le mail.</p>
+    <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
     ${DATA.formulaires.length?`<table class="docs"><tbody>${DATA.formulaires.map(f=>`<tr><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
       <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
     <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>`;
   $('#asub').onclick=async e=>{
     const ma=e.target.closest('[data-madd]'); if(ma) return addModele(ma.dataset.madd);
-    const fo=e.target.closest('[data-foff]'); if(fo){ const id=fo.dataset.foff, cur=formsOff(), old=PAR.formsOff;
-      PAR.formsOff=cur.includes(id)?cur.filter(x=>x!==id):cur.concat(id);
-      if(!await run(saveParams,PAR.formsOff.includes(id)?'Formulaire masqué pour l’équipe':'Formulaire proposé à l’équipe')) PAR.formsOff=old;
+    const fo=e.target.closest('[data-foff]'); if(fo){ const id=fo.dataset.foff, hidden=formsOff().includes(id), old=PAR.formsOff, oldOn=PAR.formsOn, base=formsOffBase();
+      if(hidden){ PAR.formsOff=base.filter(x=>x!==id); if(formsAuto(id)) PAR.formsOn=[...new Set([...(PAR.formsOn||[]),id])]; }
+      else{ PAR.formsOff=[...new Set([...base,id])]; PAR.formsOn=(PAR.formsOn||[]).filter(x=>x!==id); }
+      if(!await run(saveParams,hidden?'Formulaire proposé à l’équipe':'Formulaire masqué pour l’équipe')){ PAR.formsOff=old; PAR.formsOn=oldOn; }
       renderForms(); drawFormList(); return; }
     if(e.target.closest('[data-fnew]')) return editForm(null);
     const ed=e.target.closest('[data-fedit]'); if(ed) return editForm(ed.dataset.fedit);
@@ -3917,7 +3919,7 @@ function drawReg(){
         <button class="iconbtn align-input" data-mdel="${i}" aria-label="Retirer ce médecin">${ICON.trash}</button></div>`).join('')||'<p class="hint">Aucun médecin.</p>'}
       <div><button class="secondary" id="add-med">${ICON.plus}Ajouter un médecin</button></div>
       <label class="field"><span>Lignes imprimées sous le nom et le RPPS</span><textarea class="in" id="r-medline" rows="2">${esc(rdraft.medecinLigne)}</textarea></label></div>
-    <div class="card top" data-rsec="documents"><h3>Tampon de l'association</h3>
+    <div class="card top" data-rsec="documents"><h3>Tampon de la structure</h3>
       <div class="row">${rdraft.tampon?`<img class="tampon-preview" src="${rdraft.tampon}" alt="Tampon actuel">`:'<span class="hint muted">Aucun tampon.</span>'}
         <label class="secondary">${ICON.up}${rdraft.tampon?'Remplacer':'Ajouter'}<input type="file" id="r-tp" accept="image/png,image/jpeg" hidden></label>
         ${rdraft.tampon?'<button class="ghost danger" id="r-tpdel">Retirer</button>':''}</div>
@@ -4538,7 +4540,7 @@ function expandTerm(t){
 function drawSyn(){
   $('#asub').innerHTML=`<div class="card top w-wide">
     <h3>Synonymes de recherche</h3>
-    <p class="hint">Une ligne par groupe de mots équivalents, séparés par des virgules. Chercher l'un des mots trouve aussi les autres. Exemple : <code>TSO, méthadone, buprénorphine, subutex</code></p>
+    <p class="hint">Une ligne par groupe de mots équivalents, séparés par des virgules. Chercher l'un des mots trouve aussi les autres. Exemple : <code>CMU, C2S, complémentaire santé</code></p>
     <textarea class="in" id="syn-t" rows="14" spellcheck="false">${esc(DATA.synonymes.map(g=>g.join(', ')).join('\n'))}</textarea>
     <div class="row"><button class="primary" id="syn-ok">Enregistrer</button><button class="ghost" id="syn-def">Remettre la liste de départ</button></div></div>`;
   $('#syn-ok').onclick=async()=>{ const before=DATA.synonymes; DATA.synonymes=$('#syn-t').value.split('\n').map(l=>l.split(',').map(w=>w.trim()).filter(Boolean)).filter(g=>g.length>1);
@@ -5242,7 +5244,7 @@ function mtValidate(){
   if(!MT.nom.trim()) e.push(['nom','Nom manquant.']);
   if(!MT.prenom.trim()) e.push(['prenom','Prénom manquant.']);
   if(!parseDDN(MT.ddn.trim())) e.push(['ddn','Date de naissance au format JJ/MM/AAAA.']);
-  if(MT.trt&&MT.trt!=='Aucun'&&!(parseDose(MT.dose)>0)) e.push(['dose','Posologie du TSO en mg par jour manquante.']);
+  if(tsoOn()&&MT.trt&&MT.trt!=='Aucun'&&!(parseDose(MT.dose)>0)) e.push(['dose','Posologie du traitement de substitution (mg par jour) manquante.']);
   if(!MT.texte.trim()) e.push(['texte','Texte du courrier manquant.']);
   if(!MT.consent) e.push(['consent',"Cochez que le patient est informé de ce courrier et ne s'y oppose pas."]);
   return e;
@@ -5274,8 +5276,8 @@ function renderMt(){
         <label class="field"><span>Prénom</span>${txt('prenom')}</label>
       </div></div>
     <div class="card top w-form"><h3>Courrier</h3>
-      <div class="field"><span>Traitement de substitution en cours <small>(facultatif)</small></span><div class="choice">${['Aucun',...RELAIS_TRT].map(t=>`<button type="button" class="chip" data-mc="trt" data-v="${esc(t)}" aria-pressed="${MT.trt===t}">${esc(t)}</button>`).join('')}</div></div>
-      ${MT.trt&&MT.trt!=='Aucun'?`<label class="field"><span>Posologie</span><div class="dose dose-sm"><input class="in${B('dose')}" data-m="dose" value="${esc(MT.dose)}" inputmode="decimal"><em>mg/j</em></div><small class="dosew">${esc(words)}</small></label>`:''}
+      ${tsoOn()?`<div class="field"><span>Traitement de substitution en cours <small>(facultatif)</small></span><div class="choice">${['Aucun',...RELAIS_TRT].map(t=>`<button type="button" class="chip" data-mc="trt" data-v="${esc(t)}" aria-pressed="${MT.trt===t}">${esc(t)}</button>`).join('')}</div></div>`:''}
+      ${tsoOn()&&MT.trt&&MT.trt!=='Aucun'?`<label class="field"><span>Posologie</span><div class="dose dose-sm"><input class="in${B('dose')}" data-m="dose" value="${esc(MT.dose)}" inputmode="decimal"><em>mg/j</em></div><small class="dosew">${esc(words)}</small></label>`:''}
       <label class="field"><span>Autres traitements <small>(facultatif)</small></span>${area('autres','',2)}</label>
       <label class="field"><span>Texte du courrier</span>${area('texte','Situation, suivi, éléments utiles au confrère…',7)}</label>
       <label class="field"><span>Demande ou conclusion <small>(facultatif)</small></span>${area('demande',"ex. Pourriez-vous prendre le relais de la prescription à partir du … ?",2)}</label>
@@ -5315,6 +5317,7 @@ function mtPdf(){
   P.para(`Objet : ${MT.objet} – ${who}, né${e_} le ${MT.ddn.trim()}`,{bold:true,after:5});
   P.para('Chère consœur, cher confrère,',{after:4});
   MT.texte.trim().split(/\n\s*\n/).forEach(par=>P.para(par.replace(/\s*\n\s*/g,' ')));
+  if(!tsoOn()) MT.trt='';
   if(MT.trt&&MT.trt!=='Aucun') P.para(`Traitement de substitution en cours : ${MT.trt}, ${fmtDose(MT.dose)} mg par jour (${doseLettres(MT.dose)} par jour).`);
   else if(MT.trt==='Aucun') P.para('Pas de traitement de substitution en cours.');
   if(MT.autres.trim()) P.para('Autres traitements : '+MT.autres.trim().replace(/\s*\n\s*/g,' ; ').replace(/\.?$/,'.'));
@@ -5332,22 +5335,35 @@ function mtPdf(){
 /* ======================================================================
    MODE D'EMPLOI : 3 écrans, montré une fois par poste, rouvrable depuis le menu
    ====================================================================== */
-const GUIDE=[
+/* Le texte suit les réglages de la structure : formulaires proposés, mail, adresses d'envoi */
+function guideSteps(){
+  const short=t=>{ const x=String(t).replace(/^cerfa\s*[\d*]+\s*:\s*/i,'').replace(/^(trame|dlu)\s*:\s*/i,'').replace(/\s*[(:–].*$/,'').trim(); return /^[A-ZÀ-Ý][a-zà-ÿ’']/.test(x)?x.charAt(0).toLowerCase()+x.slice(1):x; };
+  const ex=[...new Set([...docs().filter(d=>!isLink(d)).slice(0,2),...docs().filter(isLink).slice(0,1),...formItems().slice(0,1)].map(x=>short(x.titre)).filter(Boolean))].slice(0,3).map(t=>`« ${esc(t)} »`);
+  const F=formItems().filter(f=>!String(f.id).startsWith('cerfa:')), nF=F.length, C=cerfaDocs().length;
+  const fl=F.slice(0,4).map(f=>esc(f.titre)).join(', ')+(nF>4?`, et ${nF-4} autre${nF-4>1?'s':''}`:'');
+  const env=(PAR.envoi||[]).filter(Boolean), web=PAR.mail==='web';
+  const mail=PAR.sansMail?'Imprimez le PDF ou téléchargez-le.'
+    :web?'Pour l’envoyer, le PDF est téléchargé et votre messagerie s’ouvre : joignez-y le fichier.'
+    :'Le mail s’ouvre en brouillon dans Outlook, avec le PDF joint.';
+  const exp=PAR.sansMail||!env.length?'':env.length===1?` L’adresse d’envoi de l’équipe est <b>${esc(env[0])}</b>.`:` Choisissez l’expéditeur parmi ${env.slice(0,-1).map(m=>`<b>${esc(m)}</b>`).join(', ')} et <b>${esc(env[env.length-1])}</b>.`;
+  return [
   {ico:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',t:'Trouver un document',
-   p:['Tapez simplement ce que vous cherchez, même sans cliquer dans la barre : « règlement », « domiciliation », « urgences »…','À gauche, les catégories. Sur chaque document : <b>Ouvrir</b>, <b>Imprimer</b>, <b>Envoyer</b> par mail, ou <b>Remplir</b> pour les modèles Word.']},
+   p:[`Tapez simplement ce que vous cherchez, même sans cliquer dans la barre${ex.length?' : '+ex.join(', ')+'…':'.'}`,'À gauche, les catégories. Cliquez sur le titre d’un document pour l’ouvrir ; dessous : <b>Imprimer</b>, <b>Envoyer</b> par mail, ou <b>Remplir</b> pour les modèles Word.']},
   {ico:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',t:'Remplir un formulaire',
-   p:['Page <b>Formulaires</b> : délivrance exceptionnelle, demande de relais, certificat médical initial, attestation de suivi, courrier au médecin traitant.','<b>Rien n’est enregistré</b> : le PDF est créé sur ce poste, puis le formulaire s’efface. Le mail s’ouvre dans Outlook avec le PDF joint ; choisissez medical@ ou social@ comme expéditeur.']},
+   p:[nF?`Page <b>Formulaires</b> : ${fl}.${C?` Et ${C>1?C+' Cerfa':'un Cerfa'} déjà rempli${C>1?'s':''} avec les infos de la structure.`:''}`:'Page <b>Formulaires</b> : l’admin y ajoute les formulaires de la structure.',
+     `<b>Rien n’est enregistré</b> : le PDF est créé sur ce poste, puis le formulaire s’efface. ${mail}${exp}`]},
   {ico:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',t:'Et aussi',
-   p:['<b>Impression rapide</b> : les documents choisis par l’admin, le nombre d’exemplaires de chacun, puis un clic sur « Imprimer ».','<b>Annuaire</b> : les partenaires, pour écrire par exemple à tous les partenaires d’un même type d’un coup.','Première fois sur ce poste ? Cliquez sur <b>Connecter le dossier</b> en bas à gauche. L’<b>accès admin</b> sert à ajouter ou remplacer des documents.']},
-];
+   p:['<b>Impression rapide</b> : les documents choisis par l’admin, le nombre d’exemplaires de chacun, puis un clic sur « Imprimer ».','<b>Annuaire</b> : les partenaires, pour écrire par exemple à tous les partenaires d’un même type d’un coup.',
+     'En bas à gauche, <b>Dossier connecté</b> indique que Librejo lit bien le dossier de la structure (sinon, cliquez dessus pour l’autoriser). L’<b>accès admin</b> sert à ajouter ou remplacer des documents.']},
+  ]; }
 function openGuide(i=0){
-  const g=GUIDE[i], last=i===GUIDE.length-1;
+  const GUIDE=guideSteps(), g=GUIDE[i], last=i===GUIDE.length-1;
   openModal(`<div class="guide">
     <div class="guide-ico">${svg(g.ico)}</div>
     <p class="guide-step">${i+1} / ${GUIDE.length}</p>
     <h3 id="modal-title">${g.t}</h3>
     ${g.p.map(x=>`<p>${x}</p>`).join('')}
-    ${last?`<p class="guide-about">Librejo · ${esc(($('#gen-ver')||{}).textContent||'')}${DATA.maj?' · Liste des documents mise à jour le '+esc(frDate(DATA.maj)):''}</p>`:''}
+    ${last?`<p class="guide-about">Librejo, ${esc((($('#gen-ver')||{}).textContent||'').replace(/^V/,'v'))}${DATA.maj?' · liste des documents mise à jour le '+esc(frDate(DATA.maj)):''}</p>`:''}
     <div class="guide-dots" aria-hidden="true">${GUIDE.map((_,k)=>`<span${k===i?' class="on"':''}></span>`).join('')}</div>
     <div class="row between">${i?`<button class="secondary" data-gprev>Précédent</button>`:`<button class="ghost" data-gskip>Passer</button>`}
       <button class="primary" data-gnext>${last?'C’est parti':'Suivant'}</button></div></div>`);
@@ -5357,10 +5373,11 @@ function openGuide(i=0){
   const sk=box.querySelector('[data-gskip]'); if(sk) sk.onclick=done;
   box.querySelector('[data-gnext]').focus();
 }
+const guideSeen=()=>{ try{ return !!localStorage.getItem('docubus-guide'); }catch(e){ return true; } };
 function guideInit(){
   const b=$('#guidebtn'); if(b) b.onclick=()=>openGuide(0);
-  let seen=false; try{ seen=!!localStorage.getItem('docubus-guide'); }catch(e){ seen=true; }
-  if(!seen) setTimeout(()=>{ if($('#modal').hidden) openGuide(0); },400);
+  // jamais par-dessus l'assistant de première installation : il est montré après « C’est parti »
+  if(!guideSeen()) setTimeout(()=>{ const wz=document.getElementById('wiz'); if($('#modal').hidden&&!wizNeeded()&&!(wz&&!wz.hidden)) openGuide(0); },700);
 }
 attBind(); mtBind(); guideInit();
 
@@ -5986,7 +6003,7 @@ async function persistMigrations(){
    ====================================================================== */
 let UR={}, urErr=false, urRecip=null;
 const urTel=()=>{ const m=/Tél\.?\s*:\s*([\d .]+\d)/.exec((structure.pied||[]).join(' ')); return m?m[1].trim():''; };
-function urReset(){ UR={hopital:'',service:'Service des urgences',date:today(),heure:nowHM(),civ:'',nom:'',prenom:'',ddn:'',motif:'',ta:'',fc:'',temp:'',spo2:'',glyc:'',atcd:'',trt:'',dose:'',derniere:'',autres:'',allergies:'',conso:'',infos:'',contact:'',tel:urTel(),signe:'med',signNom:'',signFonction:''}; urErr=false; }
+function urReset(){ UR={hopital:'',service:'Service des urgences',date:today(),heure:nowHM(),civ:'',nom:'',prenom:'',ddn:'',motif:'',ta:'',fc:'',temp:'',spo2:'',glyc:'',atcd:'',trt:'',dose:'',derniere:'',autres:'',allergies:'',conso:'',infos:'',contact:'',tel:urTel(),signe:'med',signNom:'',signFonction:''}; if(!meds().length) UR.signe='equipe'; urErr=false; }
 urReset();
 function urValidate(){
   const e=[];
@@ -5996,7 +6013,7 @@ function urValidate(){
   if(!UR.prenom.trim()) e.push(['prenom','Prénom manquant.']);
   if(UR.ddn.trim()&&!parseDDN(UR.ddn.trim())) e.push(['ddn','Date de naissance au format JJ/MM/AAAA.']);
   if(!UR.motif.trim()) e.push(['motif',"Motif de l'orientation manquant."]);
-  if(UR.trt&&UR.trt!=='Aucun'&&!(parseDose(UR.dose)>0)) e.push(['dose','Posologie du TSO en mg par jour manquante.']);
+  if(tsoOn()&&UR.trt&&UR.trt!=='Aucun'&&!(parseDose(UR.dose)>0)) e.push(['dose','Posologie du traitement de substitution (mg par jour) manquante.']);
   if(UR.signe==='med'&&!medChoice()) e.push(['med',meds().length?'Choisissez le médecin qui signe le courrier.':'Aucun médecin enregistré : choisissez « Autre membre de l’équipe ».']);
   if(UR.signe==='equipe'&&!UR.signNom.trim()) e.push(['signNom','Nom de la personne qui signe manquant.']);
   if(!UR.contact.trim()) e.push(['contact','Personne à contacter dans la structure manquante.']);
@@ -6035,9 +6052,9 @@ function renderUrg(){
         <label><small>T°</small>${txt('temp','°C','inputmode="decimal"')}</label><label><small>SpO₂</small>${txt('spo2','%','inputmode="numeric"')}</label>
         <label><small>Glycémie</small>${txt('glyc','g/L','inputmode="decimal"')}</label></div></div>
       <label class="field"><span>Antécédents <small>(facultatif)</small></span>${area('atcd','ex. VHC, épilepsie, diabète…')}</label>
-      <div class="field"><span>Traitement de substitution <small>(facultatif)</small></span><div class="choice">${['Aucun',...RELAIS_TRT].map(t=>`<button type="button" class="chip" data-uc="trt" data-v="${esc(t)}" aria-pressed="${UR.trt===t}">${esc(t)}</button>`).join('')}</div></div>
-      ${UR.trt&&UR.trt!=='Aucun'?`<div class="fieldgrid"><label class="field"><span>Posologie</span><div class="dose dose-sm"><input class="in${B('dose')}" data-u="dose" value="${esc(UR.dose)}" inputmode="decimal"><em>mg/j</em></div><small class="dosew">${esc(words)}</small></label>
-        <label class="field"><span>Dernière prise <small>(facultatif)</small></span>${txt('derniere','ex. ce matin 9 h, au Bus')}</label></div>`:''}
+      ${tsoOn()?`<div class="field"><span>Traitement de substitution <small>(facultatif)</small></span><div class="choice">${['Aucun',...RELAIS_TRT].map(t=>`<button type="button" class="chip" data-uc="trt" data-v="${esc(t)}" aria-pressed="${UR.trt===t}">${esc(t)}</button>`).join('')}</div></div>`:''}
+      ${tsoOn()&&UR.trt&&UR.trt!=='Aucun'?`<div class="fieldgrid"><label class="field"><span>Posologie</span><div class="dose dose-sm"><input class="in${B('dose')}" data-u="dose" value="${esc(UR.dose)}" inputmode="decimal"><em>mg/j</em></div><small class="dosew">${esc(words)}</small></label>
+        <label class="field"><span>Dernière prise <small>(facultatif)</small></span>${txt('derniere','ex. ce matin 9 h, à l’accueil')}</label></div>`:''}
       <label class="field"><span>Autres traitements <small>(facultatif)</small></span>${area('autres','')}</label>
       <label class="field"><span>Allergies <small>(facultatif)</small></span>${txt('allergies','ex. pénicilline, aucune connue')}</label>
       <label class="field"><span>Consommations récentes <small>(facultatif : produits, dernière prise)</small></span>${area('conso','ex. alcool hier soir, cocaïne fumée il y a 6 h')}</label>
@@ -6048,7 +6065,7 @@ function renderUrg(){
         <label class="field"><span>Personne à contacter dans la structure</span>${txt('contact','ex. Julie, infirmière')}</label>
         <label class="field"><span>Téléphone</span>${txt('tel','','inputmode="tel"')}</label>
       </div>
-      <div class="field"><span>Signataire</span><div class="seg">${[['med','Médecin'],['equipe','Autre membre de l’équipe']].map(([k,l])=>`<button type="button" data-uc="signe" data-v="${k}" aria-pressed="${UR.signe===k}">${l}</button>`).join('')}</div></div>
+      ${meds().length?'':(UR.signe='equipe','')}<div class="field"${meds().length?'':' hidden'}><span>Signataire</span><div class="seg">${[['med','Médecin'],['equipe','Autre membre de l’équipe']].map(([k,l])=>`<button type="button" data-uc="signe" data-v="${k}" aria-pressed="${UR.signe===k}">${l}</button>`).join('')}</div></div>
       ${UR.signe==='med'?`<div>${medSelectHTML('ur-med').replace('class="in"','class="in'+B('med')+'"')}</div>`
         :`<div class="fieldgrid">${eqChips()}<label class="field"><span>Nom</span>${txt('signNom','Prénom Nom')}</label><label class="field"><span>Fonction</span>${txt('signFonction','ex. Infirmière')}</label></div>`}
     </div>
@@ -6091,6 +6108,7 @@ function urPdf(){
   sec(`Constantes${UR.heure?' (vers '+UR.heure.replace(':',' h ')+')':''}`,cst.join(' – '));
   sec('Antécédents',UR.atcd.trim());
   const tr=[];
+  if(!tsoOn()) UR.trt='';
   if(UR.trt&&UR.trt!=='Aucun') tr.push(`Traitement de substitution : ${UR.trt}, ${fmtDose(UR.dose)} mg par jour (${doseLettres(UR.dose)} par jour)${UR.derniere.trim()?', dernière prise : '+UR.derniere.trim():''}.`);
   else if(UR.trt==='Aucun') tr.push('Pas de traitement de substitution.');
   if(UR.autres.trim()) tr.push('Autres traitements : '+UR.autres.trim().replace(/\s*\n\s*/g,' ; ').replace(/\.?$/,'.'));
@@ -6137,7 +6155,7 @@ function renderCp(){
   const area=(k,ph,rows=2)=>`<textarea class="in${B(k)}" data-c="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(CP[k])}</textarea>`;
   p.innerHTML=`<button class="backlink" data-cback>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">📨</span>Courrier à un partenaire</h2>
-    <p class="hint">Lettre à l'en-tête de l'association pour une structure, un service ou une administration. Pour un médecin au sujet d'un patient, utilisez plutôt « Courrier au médecin traitant ».</p>
+    <p class="hint">Lettre à l'en-tête de la structure pour un partenaire, un service ou une administration. Pour un médecin au sujet d'un patient, utilisez plutôt « Courrier au médecin traitant ».</p>
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface à la fin, ou si vous fermez la page.</span></div>
     <div class="card top w-form"><h3>Destinataire</h3>
       <div class="fieldgrid">
@@ -6375,7 +6393,7 @@ function renderEl(){
   const area=(k,ph,rows)=>`<textarea class="in${B(k)}" data-e="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(EL[k])}</textarea>`;
   p.innerHTML=`<button class="backlink" data-eback>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">📄</span>En-tête libre</h2>
-    <p class="hint">Une page blanche à l'en-tête de l'association : écrivez ce que vous voulez. Seule la date est ajoutée d'office. Laissez vide ce qui ne sert pas.</p>
+    <p class="hint">Une page blanche à l'en-tête de la structure : écrivez ce que vous voulez. Seule la date est ajoutée d'office. Laissez vide ce qui ne sert pas.</p>
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface à la fin, ou si vous fermez la page.</span></div>
     <div class="card top w-form">
       <div class="fieldgrid">
@@ -6790,7 +6808,6 @@ const WZ_CATS={csapa:['Accueil','Soins','Réduction des risques','Social','Parte
 const WZ_PACKS={csapa:['droits','qualite','social','addicto','liaison'],caarud:['droits','social','addicto','liaison'],chrs:['droits','qualite','social','liaison'],
   mecs:['droits','qualite','enfance'],ehpad:['droits','qualite','agees','liaison'],handicap:['droits','qualite','handicap','liaison'],asile:['droits','social','asile','liaison'],
   accueil:['droits','social','liaison'],autre:['droits','qualite']};
-const WZ_MED_FORMS=['__ordo','__cl','__cmi','__relais','__mt','__deliv'];
 const WZ_STEPS=['Bienvenue','Votre structure','Votre équipe','Catégories et noms','Vos modèles','Le mail','Le mot de passe','C’est parti'];
 let WZ=null;
 function wizNeeded(){ return PAR.assistant==='a-faire'||(!PAR.assistant&&!((PAR.attestation||{}).nom)); }
@@ -6922,7 +6939,7 @@ document.addEventListener('click',async e=>{ if(!WZ||!e.target.closest('#wiz')) 
     if(W.step<WZ_STEPS.length-1){ W.step++; wizSave(); wizDraw(); return; }
     for(let i=1;i<WZ_STEPS.length-1;i++){ const m2=wizCheck(i); if(m2){ W.step=i; wizDraw(); document.getElementById('wz-err').textContent=m2; return; } }
     t.disabled=true; t.textContent='Préparation…';
-    if(await run(wizFinish)){ try{ localStorage.removeItem(WZ_KEY); }catch(_){} wizClose(); WZ=null; setTab('docs'); toast('Librejo est prêt. Suivez la liste de démarrage sur l’accueil.'); }
+    if(await run(wizFinish)){ try{ localStorage.removeItem(WZ_KEY); }catch(_){} wizClose(); WZ=null; setTab('docs'); toast('Librejo est prêt. Suivez la liste de démarrage sur l’accueil.'); if(!guideSeen()) setTimeout(()=>{ if($('#modal').hidden) openGuide(0); },900); }
     else{ t.disabled=false; t.textContent='C’est parti'; } } });
 async function wizFinish(){
   const W=WZ; await getDir('readwrite');
@@ -6937,11 +6954,11 @@ async function wizFinish(){
     handicap:['projet','droit','demarche'],enfance:['droits des familles','famille','droit','admission'],agees:['admission','famille','soin'],asile:['procedure','demarche','admission'],addicto:['soin','reduction','sante']};
   const catFor=pk=>{ for(const w of (WZ_PACKCAT[pk]||[])){ const c=DATA.categories.find(c=>norm(c.nom).includes(w)); if(c) return c.id; } return cat0; };
   // modèles
-  MODELES.filter(m=>W.packs.includes(m.pack)).forEach(m=>{ const cat=catFor(m.pack); if(DATA.formulaires.some(f=>f.modele_src===m.id)||DATA.documents.some(d=>d.modele_src===m.id)) return;
+  MODELES.filter(m=>W.packs.includes(m.pack)&&(meds.length||!m.formulaire||m.formulaire.groupe!=='med')).forEach(m=>{ const cat=catFor(m.pack); if(DATA.formulaires.some(f=>f.modele_src===m.id)||DATA.documents.some(d=>d.modele_src===m.id)) return;
     if(m.lien){ const x={id:'l'+rid(),ext:'lien',date:month(),ajoute:today(),historique:[],url:m.lien,titre:m.titre,categorie:cat,sous:'',description:m.description,motscles:m.motscles||[],epingle:false,modele_src:m.id};
       Object.assign(x,{chemin:'lien:'+x.id,fichier:linkHost(m.lien),modifie:today()}); DATA.documents.push(x); return; }
     const f=JSON.parse(JSON.stringify(m.formulaire)); f.id='f'+rid(); f.categorie=cat; f.modele_src=m.id; f.champs.forEach(c=>c.id='c'+rid()); if(m.has) f.has=[...m.has]; DATA.formulaires.push(f); });
-  const off=new Set(formsOff()); if(!meds.length) WZ_MED_FORMS.forEach(x=>off.add(x)); if(!['csapa','caarud'].includes(W.type)){ off.add('__deliv'); off.add('__relais'); }
+  const off=new Set(formsOffBase()); // médicaux et substitution : masqués d'office selon les médecins et le type (formsAuto)
   PAR={...PAR,attestation:{...(PAR.attestation||{}),...ent},fiche:{...(PAR.fiche||{}),adresse:W.adresse.trim(),cp:W.cp.trim(),ville:W.ville.trim(),tel:W.tel.trim(),mail:W.mail.trim(),siret:W.siret.trim(),finess:W.finess.trim()},
     typeStructure:W.type,medecins:meds,mail:W.mailmode==='aucun'?'outlook':W.mailmode,sansMail:W.mailmode==='aucun',envoi:W.envoi.split(/[\s,;]+/).filter(m=>MAIL.test(m)),webmail:W.webmail,
     motdepasse:W.pw,formsOff:[...off],assistant:'fait',demarrage:{debut:today(),faits:[],masque:false},
@@ -7789,13 +7806,16 @@ const BUILTIN_CARDS=[ // [id, rubrique, titre de la carte, sous-titre]
   ['__relais','med','Demande de relais','Adresser un patient à un CSAPA ou un médecin pour le relais du TSO'],
   ['__deliv','med','Délivrance exceptionnelle','Attestation de délivrance de TSO pour le CSAPA de suivi'],
   ['__ccas','social','Bon d’orientation CCAS','Domiciliation, aide alimentaire ou financière, droits, accompagnement, hébergement'],
-  ['__el','mixte','En-tête libre','Page à l’en-tête de l’association, texte entièrement libre (seule la date est fixe)'],
-  ['__cp','mixte','Courrier à un partenaire','Lettre à l’en-tête de l’association : structure, service, administration'],
+  ['__el','mixte','En-tête libre','Page à l’en-tête de la structure, texte entièrement libre (seule la date est fixe)'],
+  ['__cp','mixte','Courrier à un partenaire','Lettre à l’en-tête de la structure : partenaire, service, administration'],
 ];
-const formGroup=f=>{ const b=BUILTIN_CARDS.find(x=>x[0]===f.id); return b?b[1]:(FORM_GROUPS.some(g=>g[0]===f.groupe)?f.groupe:'mixte'); };
+const formGroup=f=>{ const b=BUILTIN_CARDS.find(x=>x[0]===f.id); if(b&&f.id==='__urg'&&!meds().length) return 'mixte'; // sans médecin : rangés avec le médico-social
+  return b?b[1]:(FORM_GROUPS.some(g=>g[0]===f.groupe)?f.groupe:'mixte'); };
 function formsByGroupHTML(){ // une liste déroulante par rubrique (même présentation que l'accueil)
   return `<div class="homecol">${FORM_GROUPS.map(([g,nom,emo])=>{
     const l=formItems().filter(f=>formGroup(f)===g);
+    if(g==='med'&&!l.length&&!meds().length&&!isAdmin) return '';
+    if(g==='med'&&!l.length&&!meds().length) return homeSec('fg:'+g,emo,nom,'masqués : aucun médecin enregistré',`<li class="hempty">Les formulaires médicaux ne sont proposés que si des médecins sont enregistrés (Réglages › Équipe), ou si vous les activez un par un dans Administration › Formulaires et modèles.</li>`);
     const body=l.length?l.map(homeFormRow).join(''):`<li class="hempty">Aucun formulaire pour l’instant.${isAdmin?' Créez-en un avec « Créer un formulaire » et choisissez la rubrique « '+esc(nom)+' ».':''}</li>`;
     return homeSec('fg:'+g,emo,nom,l.length?`${l.length} formulaire${l.length>1?'s':''}`:'aucun formulaire pour l’instant',body,g==='mixte'?' main':'');
   }).join('')}</div>`;
@@ -8059,7 +8079,7 @@ let parPending=false;
 $('#p-deliv').addEventListener('click',e=>{ if(e.target.closest('[data-back]')){ formView=null; setTab('forms'); window.scrollTo({top:0}); } });
 
 /* ---------- Démarrage ---------- */
-$('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10))+(DOCUBUS_VERSION.length>10?' (n° '+DOCUBUS_VERSION.slice(11)+')':'');
+$('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
 if(!FSA){ $('#gen-info').textContent='Pour imprimer en un clic et administrer, ouvrez Librejo avec Microsoft Edge ou Google Chrome.'; $('#gen-info').hidden=false; }
 setAdmin(isAdmin);
