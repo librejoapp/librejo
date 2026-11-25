@@ -367,6 +367,7 @@ table.docs .t .badge:not(.accent){margin:var(--sp-1) var(--sp-1) 0 0}
 /* Messages : .notice (encadré), .errors (liste d'erreurs), .privacy (rappel « rien n'est enregistré »), .toast */
 .notice{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:10px var(--sp-3);font-size:var(--fs-3)}
 .notice b{font-weight:700}
+.badch{font-size:1.15em;padding:0 .15em;background:var(--warn-bg);border-radius:4px}
 .fielderr,.dialog .fielderr{margin:calc(-1 * var(--sp-1)) 0 var(--sp-2);color:var(--danger);font-size:var(--fs-3);font-weight:600}
 .errors{margin:0;padding:10px var(--sp-3) 10px 30px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:var(--fs-3);display:grid;gap:var(--sp-1)}
 .privacy{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-3);font-weight:700;color:var(--ok-text)}
@@ -1742,6 +1743,62 @@ const BS=()=>({petit:.93,normal:1,grand:1.08}[MISE().corps]||1);
 if(window.jspdf&&!window.__ljBS){ window.__ljBS=true; window.jspdf.jsPDF.API.events.push(['initialized',function(){ const k=BS(); if(k===1) return;
   const set=this.setFontSize, get=this.getFontSize; let cur=get.call(this)/k;
   this.setFontSize=function(v){ cur=v; return set.call(this,v*k); }; this.getFontSize=function(){ return cur; }; this.setFontSize(cur); }]); }
+/* ---------- Caractères des PDF ----------
+   Helvetica et Times (polices standard du PDF) n'écrivent que le jeu WinAnsi (français, Europe de l'Ouest),
+   et les polices embarquées sont réduites au latin courant : « NGUYỄN Thị Şahin » sortait « NGUYÄN ThË ^ahin ».
+   Chaque texte d'un PDF (text, splitTextToSize, largeur) est vérifié : s'il contient un caractère que la police
+   choisie ne sait pas dessiner, ce texte passe sur la police de repli (app/polices-pdf/repli.js : latin étendu,
+   vietnamien, grec, cyrillique, symboles). Ce qu'aucune police ne sait dessiner (emoji, arabe, chinois…) est noté :
+   deliver() refuse alors le document et dit quel caractère retirer, dans quel champ. */
+const LJ_WINANSI=new Set([...Array(95)].map((_,i)=>32+i).concat([...Array(96)].map((_,i)=>160+i),
+  [0x20AC,0x201A,0x192,0x201E,0x2026,0x2020,0x2021,0x2C6,0x2030,0x160,0x2039,0x152,0x17D,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0x2DC,0x2122,0x161,0x203A,0x153,0x17E,0x178]));
+const LJ_INVISIBLE=/[­​-‏⁠︀-️﻿]/g;
+const ljPdfStr=s=>String(s??'').normalize('NFC').replace(LJ_INVISIBLE,'');
+let LJ_REPLI=null, LJ_REPLI_LOAD=null;
+function loadPdfRepli(){
+  if(!LJ_REPLI_LOAD) LJ_REPLI_LOAD=((window.LJ_PDF_FONTS||{}).repli?Promise.resolve():loadScript('app/polices-pdf/repli.js'))
+    .then(()=>{ const F=window.LJ_PDF_FONTS.repli; LJ_REPLI=new Set(); (F.couvre||[]).forEach(([a,b])=>{ for(let c=a;c<=b;c++) LJ_REPLI.add(c); }); })
+    .catch(e=>{ LJ_REPLI_LOAD=null; throw e; });
+  return LJ_REPLI_LOAD;
+}
+/* Un caractère est-il imprimable par au moins une police de Librejo ? (pour le garde-fou) */
+const ljPrintable=cp=>cp<32||LJ_WINANSI.has(cp)||!!(LJ_REPLI&&LJ_REPLI.has(cp));
+function ljFontHas(f,cp){
+  if(cp<32) return true;
+  if(f&&f.encoding==='Identity-H'){ const u=f.metadata&&f.metadata.cmap&&f.metadata.cmap.unicode; return !!(u&&u.codeMap[cp]); }
+  return LJ_WINANSI.has(cp);
+}
+/* Caractères qu'aucune police n'a su dessiner pendant la dernière production de PDF */
+const LJ_PDF_MISS=new Set(); let LJ_PDF_T0=0;
+if(window.jspdf&&!window.__ljTxt){ window.__ljTxt=true; window.jspdf.jsPDF.API.events.push(['initialized',function(){
+  const doc=this, now=Date.now(); if(now-LJ_PDF_T0>800) LJ_PDF_MISS.clear(); LJ_PDF_T0=now;
+  const T=doc.text, S=doc.splitTextToSize, W=doc.getStringUnitWidth, force=new Set();
+  const prep=txt=>{ const f=doc.internal.getFont(); let need=false;
+    const one=s=>{ s=ljPdfStr(s); if(force.has(s)) need=true; let o='';
+      for(const ch of s){ const cp=ch.codePointAt(0);
+        if(ljFontHas(f,cp)) o+=ch;
+        else if(/\s/.test(ch)) o+=ljFontHas(f,0xA0)?' ':' ';   // espace fine, cadratin… : espace insécable
+        else { need=true; o+=ch; } }
+      return o; };
+    return {t:Array.isArray(txt)?txt.map(one):one(txt),need}; };
+  const added=new Set();
+  const repli=t=>{ const F=(window.LJ_PDF_FONTS||{}).repli, cur=doc.internal.getFont(), size=doc.getFontSize();
+    if(F){ const s0=String(cur.fontStyle||'normal').toLowerCase(), b=/bold/.test(s0), i=/italic|oblique/.test(s0), st=b&&i?'bolditalic':b?'bold':i?'italic':'normal';
+      if(!added.has(st)){ added.add(st); const n=`lj-repli-${st}.ttf`;   // seuls les styles utilisés vont dans le PDF
+        try{ doc.addFileToVFS(n,F[st]||(st==='bolditalic'?F.bold:F.normal)); doc.addFont(n,'lj-repli',st); }catch(e){} }
+      doc.setFont('lj-repli',st);
+      /* même hauteur d'x que la police remplacée, pour que le texte ne paraisse pas plus petit */
+      const k={helvetica:1.08,times:.96}[String(cur.fontName).toLowerCase()]||1; if(k!==1) doc.setFontSize(size*k); }
+    const f=doc.internal.getFont(); [].concat(t).forEach(s=>{ for(const ch of String(s)) if(!/\s/.test(ch)&&!ljFontHas(f,ch.codePointAt(0))) LJ_PDF_MISS.add(ch); });
+    return {cur,size}; };
+  const around=(txt,fn,keep)=>{ const p=prep(txt); if(!p.need) return fn(p.t);
+    const {cur,size}=repli(p.t); try{ const r=fn(p.t); if(keep&&Array.isArray(r)) r.forEach(l=>force.add(l)); return r; }
+    finally{ doc.setFont(cur.fontName,cur.fontStyle); if(doc.getFontSize()!==size) doc.setFontSize(size); } };
+  doc.text=function(txt,...a){ return (typeof txt==='string'||Array.isArray(txt))?around(txt,t=>T.call(doc,t,...a)):T.call(doc,txt,...a); };
+  /* les lignes coupées sur la police de repli seront écrites avec elle (sinon elles déborderaient) */
+  doc.splitTextToSize=function(txt,...a){ const o=a[1]||{}; return (o.fontName||o.widths)?S.call(doc,txt,...a):around(txt,t=>S.call(doc,t,...a),true); };
+  doc.getStringUnitWidth=function(txt,o){ return (o&&o.font)?W.call(doc,txt,o):around(txt,t=>W.call(doc,t,o)); };
+}]); }
 /* Géométrie : PL = bord gauche de la page (logo, en-tête, bas de page) ; L = début du texte (décalé si marge à gauche) */
 const MARGE_W={etroite:38,large:52};
 function GEO(){ const mw=MARGE_W[MISE().marge]||0; const L=20+(mw?mw+8:0); return {PL:20,L,R:190,W:190-L}; }
@@ -1791,6 +1848,7 @@ function pdfMarge(doc,pg,fy){
   doc.setTextColor(93,103,121);
 }
 if(MISE().police!=='perso') loadPdfFont(MISE().police).catch(()=>{});
+loadPdfRepli().catch(()=>{});
 function pdfRGB(v){ const m=MISE(); if(v==='--navy'&&hexRgb(m.c1)) return hexRgb(m.c1); if(v==='--accent'&&hexRgb(m.c2)) return hexRgb(m.c2); return hexRgb(getComputedStyle(document.documentElement).getPropertyValue(v).trim())||[23,48,47]; }
 /* Logo : réduit pour les réglages (PNG, transparence gardée) ; version JPEG cadrée pour l'en-tête des PDF */
 function imgFrom(url){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=url; }); }
@@ -2967,8 +3025,40 @@ let sendUrls=[];
 function showSendGeneric({files,to,subject,body,sensitive,onDone,title,steps}){
   deliver({files,title:title||(files.length>1?`${files.length} documents prêts`:'Document prêt'),steps,mail:{to:to||[],subject,body},sensitive,onDone});
 }
+/* Garde-fou avant la fenêtre « document prêt » : un caractère qu'aucune police ne sait imprimer
+   (emoji, écriture non latine…) aurait disparu du PDF. On ne montre pas un document faux : on dit
+   quel caractère, dans quel champ, et on y ramène la personne pour le corriger. */
+function fieldLabel(el){
+  const lab=el.closest('label')||(el.id&&document.querySelector(`label[for="${CSS.escape(el.id)}"]`)); let t='';
+  if(lab){ const c=(lab.querySelector(':scope>span')||lab).cloneNode(true); c.querySelectorAll('small,input,textarea,select,datalist').forEach(x=>x.remove()); t=c.textContent; }
+  return (t||el.getAttribute('aria-label')||el.placeholder||'').replace(/\s+/g,' ').trim();
+}
+function pdfCharsOk(){
+  if(!LJ_PDF_MISS.size) return true;
+  if(!LJ_REPLI){ loadPdfRepli().catch(()=>{}); openModal(`<h3 id="modal-title">Un instant</h3><p>Les polices des PDF finissent de se charger. Recommencez dans quelques secondes.</p><button class="secondary" data-close data-autofocus>OK</button>`); return false; }
+  const miss=[...LJ_PDF_MISS]; LJ_PDF_MISS.clear();
+  const seg=v=>{ try{ return [...new Intl.Segmenter('fr',{granularity:'grapheme'}).segment(v)].map(x=>x.segment); }catch(e){ return [...v]; } };
+  const panel=document.querySelector('main>section.panel:not([hidden])')||document;
+  const fields=[...panel.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),textarea')].filter(el=>el.value);
+  const found=[];
+  for(const el of fields){ const gs=[...new Set(seg(el.value.normalize('NFC')).filter(x=>miss.some(ch=>x.includes(ch))))];
+    if(gs.length) found.push({el,gs,g:gs[0],label:fieldLabel(el)||'un champ',at:el.value.indexOf(gs[0])}); }
+  const loose=miss.filter(ch=>!found.some(f=>f.gs.some(g=>g.includes(ch))));
+  const lines=found.slice(0,5).map(f=>{ const n=f.gs.length>1, l=f.gs.slice(0,8).join(' ')+(f.gs.length>8?' …':'');
+      return `${n?'Les caractères':'Le caractère'} <b class="badch">${esc(l)}</b> dans « ${esc(f.label)} » ${n?'ne peuvent':'ne peut'} pas être imprimé${n?'s':''}.`; })
+    .concat(loose.length?[`${loose.length>1?'Les caractères':'Le caractère'} <b class="badch">${esc(loose.join(' '))}</b> ${loose.length>1?'ne peuvent':'ne peut'} pas être imprimé${loose.length>1?'s':''} (texte venu des Réglages, de l’annuaire ou du modèle : prévenez l’admin).`]:[]);
+  const plur=found.reduce((n,f)=>n+f.gs.length,0)+loose.length>1;
+  openModal(`<h3 id="modal-title">${plur?'Des caractères ne peuvent pas être imprimés':'Un caractère ne peut pas être imprimé'}</h3>
+    ${lines.length>1?`<ul class="errors">${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`:`<p class="dv-sub">${lines[0]}</p>`}
+    <p>${plur?'Retirez-les ou remplacez-les':'Retirez-le ou remplacez-le'}, puis recommencez. Les lettres accentuées de toutes les langues à alphabet latin (vietnamien compris), le grec et le cyrillique s’impriment ; les emoji et les autres écritures, non.</p>
+    <div class="btns"><button class="primary alt" id="bc-fix" data-autofocus>${found.length?'Corriger':'OK'}</button></div>`);
+  $('#bc-fix').onclick=()=>{ closeModal(); const f=found[0]; if(!f) return; const el=f.el;
+    el.scrollIntoView({block:'center'}); el.focus(); try{ if(f.at>=0) el.setSelectionRange(f.at,f.at+f.g.length); }catch(e){} };
+  return false;
+}
 /* Fenêtre unique « document prêt » : aperçu, puis Imprimer · Envoyer par mail · Télécharger. */
 function deliver({files,title,steps,mail,sensitive,onDone}){
+  if(!LIVE_DRY&&!pdfCharsOk()) return;
   if(stLastForm&&Date.now()-stLastForm.t<4*3600e3){ stBump(stLastForm.k,'g'); stLastForm=null; }
   if(LIVE_DRY){ LIVE_OUT=files; return; }
   sendUrls.forEach(u=>URL.revokeObjectURL(u)); sendUrls=files.map(f=>URL.createObjectURL(f));

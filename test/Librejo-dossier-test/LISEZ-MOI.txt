@@ -1,3 +1,7 @@
 Dossier de TEST pour Librejo (prototype 2). Toutes les données sont fictives.
 Copiez ce dossier là où vous voulez tester (NAS, lecteur réseau, OneDrive, disque), puis choisissez-le dans Librejo.
 Mot de passe admin : test
+
+Pour vérifier les PDF avec des noms d'autres langues, utilisez par exemple ces noms fictifs :
+  NGUYỄN Thị Şahin · Đặng Văn Ứng · Łukasz Wójcik · Ştefan Ţăranu · Ömer Gül · Олена Шевченко
+Ils doivent sortir à l'identique dans le PDF. Un emoji (ex. 🙂) doit afficher un message qui demande de le retirer.
