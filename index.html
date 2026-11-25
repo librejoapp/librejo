@@ -367,6 +367,7 @@ table.docs .t .badge:not(.accent){margin:var(--sp-1) var(--sp-1) 0 0}
 /* Messages : .notice (encadré), .errors (liste d'erreurs), .privacy (rappel « rien n'est enregistré »), .toast */
 .notice{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:10px var(--sp-3);font-size:var(--fs-3)}
 .notice b{font-weight:700}
+.nm-warn{display:block;margin-top:var(--sp-1);color:var(--warn);font-weight:600}
 .badch{font-size:1.15em;padding:0 .15em;background:var(--warn-bg);border-radius:4px}
 .fielderr,.dialog .fielderr{margin:calc(-1 * var(--sp-1)) 0 var(--sp-2);color:var(--danger);font-size:var(--fs-3);font-weight:600}
 .errors{margin:0;padding:10px var(--sp-3) 10px 30px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:var(--fs-3);display:grid;gap:var(--sp-1)}
@@ -1101,6 +1102,14 @@ table.docs img.thumb.land:hover{transform:scale(5.5)}
 .dv-act.done{border-color:var(--ok,#2f7d4f)}
 .dv-act.done::after{content:"✓ fait";font-size:12px;color:var(--ok,#2f7d4f)}
 .dv-act.main.done::after{color:inherit}
+.dv-warn{display:grid;gap:4px;margin:4px 0 8px;padding:10px 12px;border:1px solid var(--warn-line);border-radius:var(--r-md);background:var(--warn-bg);color:var(--warn);font-size:var(--fs-3);line-height:1.45}
+.dv-warn>b{display:flex;align-items:center;gap:6px}
+.dv-warn svg{width:18px;height:18px;flex:0 0 auto}
+.dv-warn span{color:var(--text)}
+.dv-perso{display:grid;gap:6px;margin:10px 0 0;padding:12px 14px;border:1.5px solid var(--warn);border-radius:var(--r-md);background:var(--warn-bg);color:var(--text);font-size:var(--fs-3);line-height:1.45}
+.dv-perso>b{color:var(--warn)}
+.dv-perso ul{margin:0;padding-left:18px}
+.dv-perso code{font-size:12.5px;overflow-wrap:anywhere}
 .dv-note{margin:8px 0 0;padding:10px 12px;border-radius:var(--r-md);background:var(--accent-soft,#fdf3e2);font-size:var(--fs-3);line-height:1.45}
 .dv-note details{margin-top:6px;color:var(--grey,#5b6b6a);font-size:12.5px}
 .dv-note summary{cursor:pointer;font-weight:600}
@@ -2336,8 +2345,8 @@ async function mailCompose(m,opts={}){
       if(url.length<=1900){ openMailto(url); toast('Ouverture d’Outlook…'); return 'mailto'; }
       toast('Trop d’adresses pour une ouverture directe : un fichier .eml est préparé');
     }
-    const eml=await makeEml(m);
-    downloadBlob(eml,'Mail-'+fileSafe((m.subject||'message').replace(/^Librejo – /,'').replace(/[–—]/g,' ')).slice(0,60)+'.eml');
+    const eml=await makeEml(m), emlName='Mail-'+fileSafe((m.subject||'message').replace(/^Librejo – /,'').replace(/[–—]/g,' ')).slice(0,60)+'.eml';
+    downloadBlob(eml,emlName); mailCompose.lastEml=emlName;
     toast('Mail prêt : cliquez dessus dans la barre de téléchargement');
     setTimeout(emlTip,600);
     return 'outlook';
@@ -3056,9 +3065,17 @@ function pdfCharsOk(){
     el.scrollIntoView({block:'center'}); el.focus(); try{ if(f.at>=0) el.setSelectionRange(f.at,f.at+f.g.length); }catch(e){} };
   return false;
 }
+/* Documents qui portent des données de santé : formulaires de la rubrique Médical (dont l'orientation
+   aux urgences) et formulaires marqués « Confidentiel – données de santé ». */
+function docSante(){
+  if(BUILTIN_CARDS.some(b=>b[1]==='med'&&b[0]==='__'+tab)) return true;
+  const f=tab==='forms'&&formView&&DATA.formulaires.find(x=>x.id===formView);
+  return !!(f&&(formGroup(f)==='med'||(f.confidentiel&&!f.groupe)));   // comme la mention « Confidentiel – données de santé » de makeLetter
+}
 /* Fenêtre unique « document prêt » : aperçu, puis Imprimer · Envoyer par mail · Télécharger. */
-function deliver({files,title,steps,mail,sensitive,onDone}){
+function deliver({files,title,steps,mail,sensitive,onDone,sante}){
   if(!LIVE_DRY&&!pdfCharsOk()) return;
+  if(sante==null&&!LIVE_DRY) sante=docSante();
   if(stLastForm&&Date.now()-stLastForm.t<4*3600e3){ stBump(stLastForm.k,'g'); stLastForm=null; }
   if(LIVE_DRY){ LIVE_OUT=files; return; }
   sendUrls.forEach(u=>URL.revokeObjectURL(u)); sendUrls=files.map(f=>URL.createObjectURL(f));
@@ -3073,14 +3090,23 @@ function deliver({files,title,steps,mail,sensitive,onDone}){
       <label><input type="radio" name="dv-mode" value="sep">Séparés (${N} fichiers)</label></div>`:''}
     <div class="dv-acts">
       <button class="dv-act main" id="dv-print">${ICON.print}Imprimer</button>
-      ${mail&&!PAR.sansMail?`<button class="dv-act" id="dv-mail">${ICON.mail}Envoyer par mail<small>${toTxt}</small></button>`:''}
+      ${mail&&!PAR.sansMail?`<button class="dv-act" id="dv-mail" ${sante?'aria-describedby="dv-sante"':''}>${ICON.mail}Envoyer par mail<small>${sante?'Mail ordinaire, non sécurisé':toTxt}</small></button>`:''}
       <button class="dv-act" id="dv-dl">${ICON.dl}Télécharger</button>
     </div>
+    ${sante&&mail&&!PAR.sansMail?`<div class="dv-warn" id="dv-sante" role="note"><b>${ICON.shield}Données de santé</b><span>Un mail ordinaire n’est pas une messagerie sécurisée de santé. Pour transmettre ce document, utilisez votre messagerie <b>MSSanté</b>, ou remettez-le en main propre.</span></div>`:''}
     <div class="dv-note" id="dv-note" hidden></div>
+    <div class="dv-perso" id="dv-perso" role="status" hidden></div>
     <div class="dv-foot"><button class="ghost" data-close>Revenir sans effacer</button><button class="primary alt" id="dv-done">Terminé : effacer</button></div>`,'deliver');
-  const box=$('#modal-box'), note=box.querySelector('#dv-note');
-  const cleanTip=sensitive?'<br><small>Ensuite, supprimez le fichier du dossier Téléchargements.</small>':'';
+  const box=$('#modal-box'), note=box.querySelector('#dv-note'), perso=box.querySelector('#dv-perso');
   const say=html=>{ note.innerHTML=html; note.hidden=false; };
+  /* Rappel : un fichier créé sur le poste reste dans Téléchargements. Encadré visible dès sa création,
+     avec le nom exact de chaque fichier, et rappel à « Terminé : effacer ». */
+  const created=[];
+  const remind=names=>{ names.forEach(n=>{ if(n&&!created.includes(n)) created.push(n); }); if(!created.length) return;
+    perso.innerHTML=`<b>${sensitive?'Ce fichier contient des données personnelles.':'Si ce fichier contient des données personnelles, ne le laissez pas sur le poste.'}</b>
+      <span>Supprimez-le de <b>Téléchargements</b> dès qu’il est envoyé ou imprimé${created.length>1?' (les '+created.length+' fichiers)':''} :</span>
+      <ul>${created.map(n=>`<li><code>${esc(n)}</code></li>`).join('')}</ul>`;
+    perso.hidden=false; perso.scrollIntoView({block:'nearest'}); };
   const mark=id=>box.querySelector(id).classList.add('done');
   const grouped=()=>N>1&&box.querySelector('input[name=dv-mode]:checked').value==='grp';
   let merged=null;
@@ -3094,18 +3120,25 @@ function deliver({files,title,steps,mail,sensitive,onDone}){
     const fs=await pick(); fs.forEach((f,i)=>setTimeout(()=>printBlob(f,true),i*1500));
     if(fs.length>1) say(`${fs.length} fenêtres d’impression vont s’ouvrir l’une après l’autre.`);
   };
-  box.querySelector('#dv-dl').onclick=async()=>{ const fs=await pick(); fs.forEach(f=>downloadBlob(f,f.name)); mark('#dv-dl'); say(`${fs.length>1?fs.length+' fichiers téléchargés':'PDF téléchargé'} dans le dossier Téléchargements.${cleanTip}`); };
+  box.querySelector('#dv-dl').onclick=async()=>{ const fs=await pick(); fs.forEach(f=>downloadBlob(f,f.name)); mark('#dv-dl'); say(`${fs.length>1?fs.length+' fichiers téléchargés':'PDF téléchargé'} dans le dossier Téléchargements.`); remind(fs.map(f=>f.name)); };
   const m=box.querySelector('#dv-mail');
   if(m) m.onclick=async()=>{
     const fs=await pick();
     if(mode!=='outlook') fs.forEach(f=>downloadBlob(f,f.name));
+    mailCompose.lastEml=null;
     await mailCompose({to,subject:mail.subject,body:mail.body,files:mode==='outlook'?fs:[]});
-    mark('#dv-mail');
+    mark('#dv-mail'); remind(mode==='outlook'?[mailCompose.lastEml]:fs.map(f=>f.name));
     say(mode==='outlook'
-      ?`<b>Ouvrez le fichier .eml</b> qui vient d’être téléchargé : Outlook s’ouvre avec le mail prêt et le PDF joint. Vérifiez, puis envoyez.${cleanTip}`
-      :`Votre messagerie s’ouvre avec le destinataire et le texte. <b>Joignez le PDF</b> téléchargé (bouton Joindre).${cleanTip}`);
+      ?`<b>Ouvrez le fichier .eml</b> qui vient d’être téléchargé : Outlook s’ouvre avec le mail prêt et le PDF joint. Vérifiez, puis envoyez.`
+      :`Votre messagerie s’ouvre avec le destinataire et le texte. <b>Joignez le PDF</b> téléchargé (bouton Joindre).`);
   };
-  box.querySelector('#dv-done').onclick=()=>{ closeModal(); sendUrls.forEach(u=>URL.revokeObjectURL(u)); sendUrls=[]; onDone&&onDone(); toast('C’est fait : le formulaire est vidé'); };
+  box.querySelector('#dv-done').onclick=()=>{ closeModal(); sendUrls.forEach(u=>URL.revokeObjectURL(u)); sendUrls=[]; onDone&&onDone();
+    if(!created.length){ toast('C’est fait : le formulaire est vidé'); return; }
+    openModal(`<h3 id="modal-title">Formulaire vidé. ${created.length>1?`Restent ${created.length} fichiers`:'Reste un fichier'} sur ce poste</h3>
+      <div class="dv-perso"><b>${created.length>1?'Ces fichiers sont':'Ce fichier est'} encore dans Téléchargements${sensitive?', avec des données personnelles':''}.</b>
+        <span>Supprimez-${created.length>1?'les':'le'} dès ${created.length>1?'qu’ils sont envoyés ou imprimés':'qu’il est envoyé ou imprimé'} :</span>
+        <ul>${created.map(n=>`<li><code>${esc(n)}</code></li>`).join('')}</ul></div>
+      <div class="btns"><button class="primary alt" data-close data-autofocus>J’ai compris</button></div>`); };
 }
 
 /* ---------- Délivrance : branchée sur la fenêtre d'envoi commune ---------- */
@@ -3829,6 +3862,8 @@ function drawReg(){
         <label class="field wide"><span>Règle <small>(modifiable)</small></span><input class="in" id="nm-file" value="${esc(NOMMAGE().fichier)}" spellcheck="false"></label>
         <label class="field"><span>Entre les mots du titre</span><select class="in" id="nm-sep">${[['-','tiret : livret-accueil'],['_','tiret bas : livret_accueil'],[' ','espace : livret accueil']].map(([v,l])=>`<option value="${v}" ${NOMMAGE().sep===v?'selected':''}>${l}</option>`).join('')}</select></label>
         <label class="field"><span>Nom des nouveaux dossiers de catégorie</span><select class="in" id="nm-dir">${[['{NN} {Nom}','01 Accueil (par défaut)'],['{NN}_{Nom}','01_Accueil'],['{Nom}','Accueil'],['{NN} - {NOM}','01 - ACCUEIL']].map(([v,l])=>`<option value="${esc(v)}" ${NOMMAGE().dossier===v?'selected':''}>${l}</option>`).join('')}</select></label>
+        <label class="field wide"><span>PDF créés par les formulaires <small>(bon CCAS, urgences, attestation…)</small></span><select class="in" id="nm-out">${NOM_SORTIES.map(([v,l])=>`<option value="${v}" ${(NOMMAGE().sortie||'sans')===v?'selected':''}>${esc(l)}${v==='initiales'?' (donnée personnelle dans le nom du fichier)':''}</option>`).join('')}</select>
+          <small class="nm-warn" id="nm-out-warn" ${NOMMAGE().sortie==='initiales'?'':'hidden'}>⚠️ Ce modèle met une donnée personnelle (les initiales) dans le nom du fichier. Le nom reste visible dans Téléchargements, la corbeille et les mails envoyés.</small></label>
       </div>
       <p class="hint">Éléments possibles : <code>{Titre}</code> <code>{titre}</code> <code>{TITRE}</code> <code>{version}</code> <code>{AAAA}</code> <code>{AA}</code> <code>{MM}</code> <code>{JJ}</code> <code>{categorie}</code> <code>{structure}</code>. Le reste est écrit tel quel.</p>
       <div class="nm-prev" id="nm-prev"></div>
@@ -5070,6 +5105,11 @@ function letterPdf(title,subtitle){
 }
 const fmtCivNom=(civ,nom,prenom)=>`${civ} ${nom.trim().toUpperCase()} ${prenom.trim()}`;
 const initiales=(nom,prenom)=>`${nom.trim().slice(0,1).toUpperCase()}${prenom.trim().slice(0,1).toUpperCase()}`;
+/* Nom des PDF créés par les formulaires intégrés. Par défaut, rien sur la personne : le fichier peut rester
+   dans Téléchargements ou dans les mails envoyés. Les initiales ne s'ajoutent que si l'admin les a choisies
+   (Réglages › Nom des fichiers). */
+const NOM_SORTIES=[['sans','Orientation-urgences_2026-11-25.pdf (par défaut : rien sur la personne)'],['initiales','Orientation-urgences_NT_2026-11-25.pdf : initiales de la personne']];
+const outName=(type,nom,prenom,date)=>{ const ini=NOMMAGE().sortie==='initiales'&&String(nom||'').trim()?initiales(nom,prenom||'-'):''; return `${type}${ini?'_'+ini:''}_${date}.pdf`; };
 const dateMask=v=>{ const d=v.replace(/\D/g,'').slice(0,8); return d.length>4?`${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`:d.length>2?`${d.slice(0,2)}/${d.slice(2)}`:d; };
 
 /* --- Fenêtre « document prêt » : imprimer, télécharger ou envoyer par mail --- */
@@ -5175,7 +5215,7 @@ function attPdf(){
   P.para("Cette attestation ne comporte aucune information couverte par le secret médical.",{italic:true,color:P.C.GREY,size:9.5});
   P.para(`Attestation établie à la demande de l'intéressé${e_} et remise en main propre pour faire valoir ce que de droit.`,{after:6});
   P.sign(signName,md?['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]:[AS.signFonction.trim(),st.nom]);
-  const file=P.finish(`Attestation-suivi_${initiales(AS.nom,AS.prenom)}_${AS.date||today()}.pdf`);
+  const file=P.finish(outName('Attestation-suivi',AS.nom,AS.prenom,AS.date||today()));
   readyModal({file,title:'Attestation prête',steps:['Imprimez-la et signez-la.','Remettez-la à la personne, ou envoyez-la avec son accord.'],
     mail:{to:[],subject:`${st.nom} – Attestation de suivi – ${frDate(AS.date||today())}`,body:`Bonjour,\n\nVeuillez trouver ci-jointe une attestation de suivi, transmise avec l'accord de la personne concernée.\n\nCordialement,\n${signName}`},
     onDone:()=>{ asReset(); renderAtt(); }});
@@ -5277,7 +5317,7 @@ function mtPdf(){
   P.para(`${fem?'La patiente':'Le patient'} est informé${e_} de ce courrier.`,{italic:true,color:P.C.GREY,size:9.5});
   P.para('Je reste à votre disposition et vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.',{after:6});
   P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]);
-  const file=P.finish(`Courrier-medecin_${initiales(MT.nom,MT.prenom)}_${MT.date||today()}.pdf`);
+  const file=P.finish(outName('Courrier-medecin',MT.nom,MT.prenom,MT.date||today()));
   readyModal({file,title:'Courrier prêt',steps:['Imprimez-le et signez-le pour un envoi postal, ou envoyez-le par mail.'],
     mail:{to:mtRecip?mtRecip.get():[],subject:`${st.nom} – ${MT.objet} – courrier médical`,
       body:`Chère consœur, cher confrère,\n\nVeuillez trouver ci-joint un courrier concernant ${fem?'une patiente':'un patient'} que nous suivons en commun.\n\nBien confraternellement,\n${md.nom}`},
@@ -5401,8 +5441,7 @@ function clPdf(){
   if(CL.remise){ P.y+=2; P.para(`Certificat établi à la demande de l'intéressé${CL.civ?e_:'(e)'} et remis en main propre pour faire valoir ce que de droit.`,{after:8}); }
   else P.y+=6;
   P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]);
-  const ini=CL.nom.trim()?initiales(CL.nom,CL.prenom||'-'):'';
-  const file=P.finish(`Certificat${ini?'_'+ini:''}_${CL.date}.pdf`);
+  const file=P.finish(outName('Certificat',CL.nom,CL.prenom,CL.date));
   readyModal({file,title:'Certificat prêt',steps:['Imprimez-le, signez-le et tamponnez-le.'],onDone:()=>{ clReset(); renderCl(); }});
 }
 
@@ -5653,7 +5692,7 @@ function ordoPdf(){
   if(OR.useQsp){ P.para(orQsp()+'.',{bold:true,size:11,after:1}); if(OR.renouv!=='0') P.para(`À renouveler ${OR.renouv} fois.`,{bold:true,size:11,after:1}); }
   if(OR.resultats&&T.resultats){ P.y+=2; P.para(`Merci d'envoyer les résultats à ${OR.mail.trim()}`,{italic:true,size:10,after:1}); }
   P.room(30); // place laissée pour la signature et le tampon, à la main
-  const file=P.finish(`Ordonnance-${T.id}_${initiales(OR.nom,OR.prenom)}_${OR.date}.pdf`);
+  const file=P.finish(outName(`Ordonnance-${T.id}`,OR.nom,OR.prenom,OR.date));
   readyModal({file,title:'Ordonnance prête',steps:['Imprimez-la, puis signez-la et tamponnez-la à la main.'],
     mail:{to:[],subject:`${st.nom} – Ordonnance`,body:`Bonjour,\n\nVeuillez trouver ci-jointe une ordonnance.\n\nCordialement,\n${st.nom}`},
     onDone:()=>{ orReset(OR.type); renderOrdo(); }});
@@ -6059,7 +6098,7 @@ function urPdf(){
   P.para('Nous vous remercions de votre accueil.',{after:6});
   if(UR.signe==='med'){ const md=medChoice(); P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]); }
   else P.sign(UR.signNom.trim(),[UR.signFonction.trim(),st.nom]);
-  const file=P.finish(`Orientation-urgences_${initiales(UR.nom,UR.prenom)}_${UR.date||today()}.pdf`);
+  const file=P.finish(outName('Orientation-urgences',UR.nom,UR.prenom,UR.date||today()));
   readyModal({file,title:'Courrier prêt',steps:['Imprimez-le, signez-le et remettez-le à la personne pour l’accueil des urgences.','Ou envoyez-le par mail au service si une adresse est connue.'],
     mail:{to:urRecip?urRecip.get():[],subject:`${st.nom} – Orientation aux urgences`,
       body:`Madame, Monsieur,\n\nVeuillez trouver ci-joint le courrier d'orientation d'${fem?'une patiente':'un patient'} adressé${e_} ce jour à vos urgences.\n\nCordialement`},
@@ -6827,7 +6866,7 @@ async function wizFinish(){
   const W=WZ; await getDir('readwrite');
   const ent=wizEntete(), meds=W.medecins==='oui'?W.meds.filter(m=>m.nom.trim()).map(m=>({nom:m.nom.trim(),rpps:m.rpps.replace(/\s/g,'')})):[];
   // catégories et dossiers
-  PAR.nommage={fichier:W.nomFichier||NOM_DEF.fichier,sep:W.nomSep||'-',dossier:W.nomDossier||NOM_DEF.dossier};
+  PAR.nommage={fichier:W.nomFichier||NOM_DEF.fichier,sep:W.nomSep||'-',dossier:W.nomDossier||NOM_DEF.dossier,sortie:(PAR.nommage||{}).sortie};
   const cats=W.cats.map(c=>c.trim()).filter(Boolean); let ordre=Math.max(0,...DATA.categories.map(c=>c.ordre||0));
   for(const nom of cats){ if(DATA.categories.some(c=>norm(c.nom)===norm(nom))) continue; ordre++; const id=folderName(nom,ordre);
     await dirAt(['Documents',id],'readwrite',true); DATA.categories.push({id,nom,ordre}); }
@@ -7556,7 +7595,7 @@ async function hasPrep(){
 }
 
 /* Réglage du nommage : aperçu en direct et enregistrement */
-function nmRead(){ return {fichier:($('#nm-file')||{}).value||NOM_DEF.fichier,sep:($('#nm-sep')||{}).value||'-',dossier:($('#nm-dir')||{}).value||NOM_DEF.dossier}; }
+function nmRead(){ return {fichier:($('#nm-file')||{}).value||NOM_DEF.fichier,sep:($('#nm-sep')||{}).value||'-',dossier:($('#nm-dir')||{}).value||NOM_DEF.dossier,sortie:($('#nm-out')||{}).value||'sans'}; }
 function nmPreview(){ const el=$('#nm-prev'); if(!el) return; const n=nmRead(), c=(cats()[0]||{});
   const ex=[['Livret d’accueil',2,c.id],['Protocole douleur',1,c.id]];
   el.innerHTML=`<b>Aperçu</b><ul>${ex.map(([t,v,cat])=>`<li><code>${esc(applyNom(n.fichier,{titre:t,v,date:month(),cat},n.sep))}.pdf</code></li>`).join('')}<li>📁 <code>${esc(String(n.dossier).replace('{NN}','03').replace('{Nom}','Santé et soins').replace('{NOM}','SANTÉ ET SOINS').replace('{nom}','santé et soins'))}</code></li></ul>`
@@ -7564,6 +7603,7 @@ function nmPreview(){ const el=$('#nm-prev'); if(!el) return; const n=nmRead(), 
     +(/\{version\}/.test(n.fichier)?'':'<p class="hint">Sans {version}, deux versions d’un même document se distinguent seulement par -2, -3…</p>'); }
 document.addEventListener('input',e=>{ if(e.target.closest&&e.target.closest('#nm-file,#nm-sep,#nm-dir')){ if(e.target.id==='nm-file'){ const s=$('#nm-preset'); if(s) s.value=NOM_PRESETS.some(([v])=>v===e.target.value)?e.target.value:'__perso'; } nmPreview(); } });
 document.addEventListener('change',e=>{ if(e.target.id==='nm-preset'&&e.target.value!=='__perso'){ $('#nm-file').value=e.target.value; nmPreview(); } });
+document.addEventListener('change',e=>{ if(e.target.id==='nm-out'){ const w=$('#nm-out-warn'); if(w) w.hidden=e.target.value!=='initiales'; } });
 document.addEventListener('click',async e=>{ if(!e.target.closest||!e.target.closest('#nm-save')) return; const n=nmRead();
   if(!/\{(Titre|titre|TITRE)\}/.test(n.fichier)){ toast('La règle doit contenir le titre.'); return; }
   const old=PAR.nommage; PAR.nommage=n; if(await run(saveParams,'Règle de nommage enregistrée')) jlog('Réglages enregistrés','Nom des fichiers',n.fichier+' · dossiers : '+n.dossier); else PAR.nommage=old; });
@@ -7886,7 +7926,7 @@ function ccPdf(){
   P.para(`Pour tout renseignement, vous pouvez joindre ${CC.contact.trim()}${CC.ctel.trim()?`, au ${CC.ctel.trim()}`:''}.`);
   P.para('Nous vous remercions de l’accueil que vous lui réserverez.',{after:6});
   P.sign(CC.signNom.trim(),[CC.signFonction.trim(),st.nom]);
-  const file=P.finish(`Bon-orientation-CCAS_${initiales(CC.nom,CC.prenom)}_${CC.date||today()}.pdf`);
+  const file=P.finish(outName('Bon-orientation-CCAS',CC.nom,CC.prenom,CC.date||today()));
   readyModal({file,title:'Bon d’orientation prêt',steps:['Imprimez-le, signez-le et remettez-le à la personne pour son passage au CCAS.','Ou envoyez-le par mail au service.'],
     mail:{to:ccRecip?ccRecip.get():[],subject:`${st.nom} – Bon d’orientation`,body:`Madame, Monsieur,\n\nVeuillez trouver ci-joint un bon d’orientation vers vos services.\n\nCordialement,\n${CC.signNom.trim()}`},
     onDone:()=>{ ccReset(); ccRecip=null; renderCcas(); }});
