@@ -484,7 +484,16 @@ body.dragging #dropveil{display:grid;position:fixed;inset:0;z-index:15;pointer-e
 #livepv-tab{position:fixed;z-index:6;right:20px;bottom:20px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line,#dfe3ea);background:var(--card,#fff);border-radius:999px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(20,32,58,.12)}
 #livepv-tab svg{width:16px;height:16px}
 /* fenêtre étroite : la miniature se range en bas à droite, plus petite */
-@media (max-width:1460px){ #livepv{width:232px} #livepv .lp-note{display:none} html.live-on .content{padding-right:282px} }
+@media (max-width:1460px){ #livepv{width:250px} #livepv .lp-note{display:none} html.live-on .content{padding-right:290px} }
+/* Aperçu agrandi : lisible à 1366 px, par-dessus le formulaire ; « Réduire » le range */
+#livepv .lp-big{border:1px solid var(--line-strong,#cfd6df);background:var(--surface,#fff);color:var(--navy);font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px;cursor:pointer}
+#livepv .lp-big:hover{border-color:var(--accent)}
+#livepv.big{width:min(640px,calc(100vw - var(--sbw) - 48px));top:16px;max-height:calc(100vh - 32px);overflow:auto;z-index:7}
+#livepv .lp-txt{font-size:12.5px}
+#livepv .lp-txt summary{cursor:pointer;color:var(--navy);font-weight:700}
+#livepv .lp-tx{max-height:220px;overflow:auto;margin-top:6px;padding:8px;border:1px solid var(--line,#dfe3ea);border-radius:6px;background:var(--surface-2,#f7f5ef)}
+#livepv .lp-tx p{margin:0 0 4px}
+#livepv.big .lp-tx{max-height:none}
 @media print{ #livepv,#livepv-tab{display:none!important} }
 /* Annuaire : contacts, import, doublons, export */
 .listhead .row{gap:8px;flex-wrap:wrap}
@@ -760,7 +769,7 @@ html.wiz-on body{overflow:hidden}
 .wz-packs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
 .wz-pack{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
 .wz-pack:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
-.wz-pack input{margin-top:3px;width:18px;height:18px}
+.wz-pack input{margin-top:3px;width:18px;height:18px;flex:none}
 .wz-pack small{color:var(--text-muted)}.wz-pack .d{display:block;margin-top:2px;font-size:12.5px}
 .wz-mailopts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
 .wz-mo{display:grid;gap:4px;text-align:left;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:14px;font:inherit;cursor:pointer;color:var(--text)}
@@ -800,6 +809,21 @@ html.wiz-on body{overflow:hidden}
 .rsave.dirty{position:sticky;bottom:0;z-index:3;background:var(--bg,var(--surface));box-shadow:0 -6px 16px -10px rgba(23,48,47,.35);padding:10px 12px;margin:0 -12px;border-radius:12px 12px 0 0}
 .rsave.dirty .rs-state{color:var(--accent-text);font-weight:700}
 html.reg-dirty{scroll-padding-bottom:96px}
+/* Lien d'évitement, titres cliquables, compteurs, focus des onglets, choix cochés */
+.skip{position:fixed;left:12px;top:-60px;z-index:300;background:var(--navy);color:#fff;font-weight:700;padding:10px 16px;border-radius:var(--r-sm,8px);text-decoration:none;transition:top .15s}
+.skip:focus{top:12px;outline:3px solid var(--accent);outline-offset:2px}
+main:focus{outline:none}
+h1.hello,h2.lab{line-height:inherit}
+a.gtitle{color:inherit;text-decoration:none}
+a.gtitle:hover{text-decoration:underline;text-underline-offset:3px}
+.catbtn .count .cf{display:inline-flex;align-items:center;gap:1px;margin-left:5px;opacity:.85}
+.catbtn .count .cf svg{width:11px;height:11px}
+.chip[aria-pressed="true"]::before,.seg button[aria-pressed="true"]::before{content:"";display:inline-block;width:13px;height:13px;margin-right:6px;vertical-align:-1px;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 12 5 5L20 6'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 12 5 5L20 6'/%3E%3C/svg%3E") center/contain no-repeat}
+.mguard{border:1.5px solid var(--warn,#b3541e);background:var(--warn-bg,#fdf0e6);border-radius:var(--r-md,12px);padding:12px 14px;margin:0 0 12px;display:grid;gap:10px}
+.mguard p{margin:0}
+.stickyfoot .errors{margin:0;max-height:30vh;overflow:auto}
 /* Équipe */
 .eqlist{display:grid;gap:8px;margin:10px 0}
 .eqrow{display:grid;grid-template-columns:1.2fr 1.1fr .9fr 1.3fr 1fr auto;gap:6px;align-items:center}
@@ -1238,17 +1262,22 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
 .qform .qgo{color:var(--accent-text);font-size:22px;font-weight:700}
 /* Vignettes sans miniature : aperçu court, à la couleur de la catégorie */
 .gthumb:not(:has(img)),.gthumb.noimg{aspect-ratio:auto;height:96px;background:color-mix(in srgb,var(--cc,var(--blue)) 12%,var(--surface))}
-.gthumb:not(:has(img)) .gext,.gthumb.noimg .gext{background:var(--cc,var(--navy));font-size:var(--fs-3)}
+.gthumb:not(:has(img)) .gext,.gthumb.noimg .gext{background:color-mix(in srgb,var(--cc,var(--navy)) 78%,#000);font-size:var(--fs-3)}
 /* Pastille de la journée alignée sur la date */
 .todayrow{align-items:center}
 .todayrow .fete{align-self:flex-end;margin-bottom:2px}
+/* Focus bien visible sur l'onglet choisi (le contour fin de la sélection ne suffit pas) */
+html.menu-clair .sidebar nav.top button:focus-visible,html.menu-clair .catbtn:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair) .catbtn:focus-visible{outline:3px solid var(--accent-on-dark);outline-offset:2px}
+.rsec-b:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
 </style>
 </head>
 <body>
+<a class="skip" href="#contenu">Aller au contenu</a>
 <div class="app">
   <aside class="sidebar" aria-label="Menu">
     <div class="brand">
-      <div class="lj-brandbox"><h1 class="lj-brand"><img class="lj-lib" src="logo-blanc.svg" alt="Librejo"></h1><p id="lj-name" hidden></p></div>
+      <div class="lj-brandbox"><div class="lj-brand"><img class="lj-lib" src="logo-blanc.svg" alt="Librejo"></div><p id="lj-name" hidden></p></div>
     </div>
     <nav class="top" role="tablist" aria-label="Navigation" aria-orientation="vertical">
     <button role="tab" data-tab="docs" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>Accueil</button>
@@ -1266,7 +1295,8 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
   </aside>
 
   <div class="content">
-  <main>
+  <main id="contenu" tabindex="-1">
+    <h1 class="sr" id="pagetitle">Accueil</h1>
     <div id="formadmin" hidden></div>
     <section class="panel" id="p-docs"></section>
     <section class="panel" id="p-forms" hidden></section>
@@ -1295,9 +1325,7 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
 <div class="toast" id="toast" role="status" hidden></div>
 <div id="dropveil" aria-hidden="true"><div id="drophint">Déposez les fichiers</div></div>
 
-<script src="app/lib/jspdf.umd.min.js"></script>
-<script src="app/lib/jszip.min.js"></script>
-<script src="app/lib/pdf-lib.min.js"></script>
+<!-- Les bibliothèques PDF (jspdf, jszip, pdf-lib : ~1 Mo) sont chargées par boot.js après le choix du dossier -->
 <script>if(location.protocol==='file:')document.write('<script src="app/logo-association.js"><\/script>\n<script src="app/parametres.js"><\/script>\n<script src="app/donnees.js"><\/script>\n<script src="app/annuaire.js"><\/script>');</script>
 <script type="text/plain" id="docubus-main">
 (function(){
@@ -1343,9 +1371,16 @@ const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const sizeTxt=n=>!n?'':n>1048576?(n/1048576).toFixed(1).replace('.',',')+' Mo':Math.max(1,Math.round(n/1024))+' Ko';
 
 /* ---------- Fenêtres ---------- */
-let lastFocus=null;
+let lastFocus=null, modalGuard=null;
+/* Échap, clic à côté ou « Annuler » : si la fenêtre contient un travail en cours, on demande d'abord */
+function closeAsked(){ if($('#modal').hidden) return; const g=modalGuard&&modalGuard(); if(!g){ closeModal(); return; }
+  if($('#mguard')){ $('#mg-stay').focus(); return; }
+  const box=$('#modal-box'), w=document.createElement('div'); w.id='mguard'; w.className='mguard'; w.setAttribute('role','alertdialog'); w.setAttribute('aria-labelledby','mg-t');
+  w.innerHTML=`<p id="mg-t"><b>${esc(g)}</b></p><div class="row"><button type="button" class="primary danger" id="mg-close">Fermer sans ajouter</button><button type="button" class="secondary" id="mg-stay">Continuer</button></div>`;
+  box.prepend(w); box.scrollTop=0; $('#mg-stay').focus();
+  $('#mg-close').onclick=()=>{ modalGuard=null; closeModal(); }; $('#mg-stay').onclick=()=>{ w.remove(); const f=box.querySelector('input,button'); f&&f.focus(); }; }
 function openModal(html,cls){
-  lastFocus=document.activeElement;
+  lastFocus=document.activeElement; modalGuard=null;
   const box=$('#modal-box'); box.className='dialog'+(cls?' '+cls:''); box.innerHTML=html;
   $('#modal').hidden=false; document.body.style.overflow='hidden';
   const f=box.querySelector('[data-autofocus]')||box.querySelector('input,button'); f&&f.focus();
@@ -1358,8 +1393,8 @@ function closeModal(){
   const lf=lastFocus; lastFocus=null;
   if(lf&&lf.focus) setTimeout(()=>{ const a=document.activeElement; if($('#modal').hidden&&lf.isConnected&&(!a||a===document.body)) lf.focus(); },0);
 }
-$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal'||e.target.closest('[data-close]')) closeModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal'||e.target.closest('[data-close]')) closeAsked(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#mguard')){ $('#mguard').remove(); return; } closeAsked(); } });
 /* « / » ou Ctrl+K : aller à la recherche, depuis n'importe où (sauf en écrivant) */
 document.addEventListener('keydown',e=>{ const t=e.target, typing=t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
   if((e.key==='/'&&!typing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){ if(!$('#modal').hidden) return; const q=$('#q'); if(!q){ if(typeof setTab==='function'){ setTab('docs'); } }
@@ -1712,7 +1747,8 @@ function themeVars(t){
   const CREAM=[251,246,236], mbg=mixRgb(m0,CREAM,.95);
   return {vars:{'--menu-bg':rgbHex(mbg),'--menu-ink':rgbHex(reach(m0,mbg,7,K)),'--navy':rgbHex(t.menuStyle==='clair'?reach(m0,W,7,K):m),'--blue':rgbHex(reach(m0,W,4.6,K)),'--accent':rgbHex(a),
     '--accent-ink':ratio(a,K)>=ratio(a,W)?'#1d1405':'#ffffff','--accent-soft':rgbHex(mixRgb(a,W,.86)),
-    '--accent-text':rgbHex(reach(a,W,4.6,K)),'--accent-on-dark':rgbHex(reach(a,m,4.6,W))},
+    // texte ambré : lisible sur blanc, sur le fond ambré pâle des badges et sur le fond du menu clair
+    '--accent-text':rgbHex([W,mixRgb(a,W,.86),mixRgb(mbg,W,.5),mbg].reduce((c,bg)=>reach(c,bg,4.6,K),a)),'--accent-on-dark':rgbHex(reach(a,m,4.6,W))},
     menuAdjusted:t.menuStyle!=='clair'&&ratio(m0,W)<7};
 }
 function ownLogo(t){ return t.logo||window.DOCUBUS_LOGO_ASSO||null; }
@@ -2062,6 +2098,7 @@ function setTab(t){
   document.querySelectorAll('nav.top [role=tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t||((t==='deliv'||t==='relais'||t==='cmi'||t==='att'||t==='mt'||t==='ordo'||t==='cl'||t==='urg'||t==='cp'||t==='el'||t==='ccas')&&b.dataset.tab==='forms'))));
   document.querySelectorAll('main>section.panel').forEach(sec=>{ sec.hidden=sec.id!=='p-'+t; });
   history.replaceState(null,'',{docs:'#documents',forms:'#formulaires',deliv:'#delivrance',admin:'#admin',annu:'#annuaire',semaine:'#semaine',relais:'#relais',cmi:'#certificat',att:'#attestation',mt:'#courrier',ordo:'#ordonnance',cl:'#certificat-libre',urg:'#urgences',cp:'#courrier-partenaire',el:'#en-tete-libre',ccas:'#orientation-ccas'}[t]);
+  const pt=$('#pagetitle'); if(pt){ pt.textContent={docs:'Documents',forms:'Formulaires',semaine:'Impression rapide',annu:'Annuaire',admin:'Administration'}[t]||'Formulaires'; pt.hidden=t==='docs'&&filter==='recent'&&!query; }
   drawFormAdmin(t);
   liveSoon(60);
   if(t==='admin') renderAdmin();
@@ -2080,6 +2117,19 @@ function setTab(t){
   if(t==='semaine') renderSemaine();
   renderSide();
 }
+/* Pastilles de choix : le groupe porte le nom du champ, l'état choisi est annoncé (aria-pressed) et coché */
+let grpN=0;
+function nameGroups(root){ (root||document).querySelectorAll('.field>.choice:not([role]),.field>.seg:not([role]),.field>div>.choice:not([role])').forEach(g=>{
+  const f=g.closest('.field'), lab=f&&f.querySelector(':scope>span:first-child'); g.setAttribute('role','group'); if(lab){ if(!lab.id) lab.id='grp-l'+(++grpN); g.setAttribute('aria-labelledby',lab.id); } }); }
+new MutationObserver(ms=>{ if(ms.some(m=>m.addedNodes.length)) nameGroups(); }).observe(document.body,{subtree:true,childList:true});
+/* Onglets (menu et sections des réglages) : une seule tabulation par liste, puis les flèches */
+function rovingTabs(list){ if(!list) return; const tabs=[...list.querySelectorAll('[role=tab]')].filter(b=>!b.hidden);
+  const cur=tabs.find(b=>b.getAttribute('aria-selected')==='true')||tabs[0]; tabs.forEach(b=>b.tabIndex=b===cur?0:-1); }
+document.addEventListener('keydown',e=>{ const t=e.target.closest&&e.target.closest('[role=tab]'), list=t&&t.closest('[role=tablist]'); if(!list) return;
+  const tabs=[...list.querySelectorAll('[role=tab]')].filter(b=>!b.hidden&&b.offsetParent), i=tabs.indexOf(t); if(i<0) return;
+  const k=e.key, n=k==='ArrowDown'||k==='ArrowRight'?i+1:k==='ArrowUp'||k==='ArrowLeft'?i-1:k==='Home'?0:k==='End'?tabs.length-1:null; if(n===null) return;
+  e.preventDefault(); const nx=tabs[(n+tabs.length)%tabs.length]; nx.click(); setTimeout(()=>{ const again=list.querySelector(`[role=tab][data-tab="${nx.dataset.tab}"],[role=tab][data-rsecgo="${nx.dataset.rsecgo}"]`)||nx; rovingTabs(list); again.focus(); },0); });
+new MutationObserver(()=>{ rovingTabs(document.querySelector('nav.top')); rovingTabs(document.querySelector('.rsec-nav')); }).observe(document.querySelector('.app'),{subtree:true,attributes:true,attributeFilter:['aria-selected','hidden'],childList:true});
 document.querySelector('nav.top').addEventListener('click',e=>{ const b=e.target.closest('[role=tab]'); if(b){ if(b.dataset.tab==='forms') formView=null; if(b.dataset.tab==='docs'){ filter='recent'; query=''; } setTab(b.dataset.tab); if(b.dataset.tab==='docs') renderDocs(); window.scrollTo({top:0}); } });
 
 /* ======================================================================
@@ -2228,6 +2278,7 @@ function renderDocs(){
         <button class="lbtn more" data-more="${esc(d.chemin)}" title="${isAdmin?'Modifier, nouvelle version, archiver…':'Plus d’actions'}" aria-label="${isAdmin?'Gérer':'Plus d’actions pour'} ${esc(d.titre)}" aria-haspopup="menu">${svg('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>')}${isAdmin?'Gérer':'Plus'}</button>
       </div></td></tr>`; };
   const rows=list.map(rowOf).join(''), home=!ts.length&&filter==='recent';
+  const pt=$('#pagetitle'); if(pt&&tab==='docs'){ pt.hidden=home; pt.textContent='Documents'; }
   p.innerHTML=`${home?homeHead():''}
     <div class="bigsearch">${ICON.search}<input class="in" id="q" type="search" placeholder="Rechercher un document ou un formulaire… (touche /)" value="${esc(query)}" autocomplete="off" aria-label="Rechercher un document"></div>
     <label class="check srch-txt"><input type="checkbox" id="qtxt" ${TXT_ON?'checked':''}> 📄 Chercher aussi dans le texte des documents <small>(plus lent)</small></label>
@@ -2266,7 +2317,8 @@ function renderSide(){
   el.innerHTML=`<div class="sidelab">Catégories</div>`
     +(DATA.kits.length||isAdmin?`<button class="catbtn" data-filter="kits" aria-pressed="${on('kits')}" title="Lots de documents à imprimer ou envoyer ensemble"><span class="cemo" aria-hidden="true">🧰</span><span class="name">Kits de documents</span><span class="count">${DATA.kits.length}</span></button>`:'')
     +cats().filter(c=>isAdmin||filter===c.id||filter.startsWith(c.id+'/')||docs().some(d=>d.categorie===c.id)||formItems().some(f=>f.categorie===c.id)).map(c=>{ const open=tab==='docs'&&!searching&&(filter===c.id||filter.startsWith(c.id+'/'));
-      return `<button class="catbtn" style="${catColVars(c.id)}" data-filter="${esc(c.id)}" aria-pressed="${on(c.id)}" aria-expanded="${open}"><span class="cemo" aria-hidden="true">${catEmoji(c)}</span><span class="name">${esc(c.nom)}</span><span class="count">${docs().filter(d=>d.categorie===c.id).length+formItems().filter(f=>f.categorie===c.id).length}</span></button>`
+      return `<button class="catbtn" style="${catColVars(c.id)}" data-filter="${esc(c.id)}" aria-pressed="${on(c.id)}" aria-expanded="${open}"><span class="cemo" aria-hidden="true">${catEmoji(c)}</span><span class="name">${esc(c.nom)}</span>${(()=>{ const nd=docs().filter(d=>d.categorie===c.id).length, nf=formItems().filter(f=>f.categorie===c.id).length, t=[nd?`${nd} document${nd>1?'s':''}`:'',nf?`${nf} formulaire${nf>1?'s':''}`:''].filter(Boolean).join(' et ')||'vide';
+        return `<span class="count" title="${t}"><span class="sr">${t}</span><span aria-hidden="true">${nd}${nf?`<span class="cf">+${nf}${ICON.pen}</span>`:''}</span></span>`; })()}</button>`
       +(open?sousOf(c).map(sub=>`<button class="catbtn sub" style="${catColVars(c.id)}" data-filter="${esc(c.id+'/'+sub)}" aria-pressed="${on(c.id+'/'+sub)}"><span class="name">${esc(sub)}</span><span class="count">${docs().filter(d=>d.categorie===c.id&&d.sous===sub).length}</span></button>`).join(''):''); }).join('');
   const home=document.querySelector('nav.top [data-tab=docs]');
   if(home) home.setAttribute('aria-selected',String(tab==='docs'&&(filter==='recent'||searching)));
@@ -2513,6 +2565,7 @@ function addDocs(initFiles,initDest){
     <div class="stack" id="ad-list"></div>
     <details class="hint"><summary>Astuce : modèles Word à remplir</summary>Un document Word qui contient des champs entre accolades, comme {Destinataire}, devient un modèle : au moment de l’utiliser, Librejo demandera de remplir ces champs.</details>
     <div class="ad-foot"><button class="ghost" data-close>Annuler</button><button class="primary" id="ad-ok" disabled>Ajouter le document</button></div>`,'wide');
+  modalGuard=()=>picked.length?`Fermer sans ajouter ${picked.length>1?`les ${picked.length} fiches préparées`:'la fiche préparée'} ? Les titres et les rangements choisis seront perdus.`:'';
   $('#ad-files').onchange=e=>{ addFiles(e.target.files); e.target.value=''; draw(); };
   const dz=$('#ad-drop');
   ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); }));
@@ -2995,7 +3048,7 @@ function validateFill(f){
   return errs;
 }
 $('#p-forms').addEventListener('change',e=>{ const q=e.target.dataset.eqi; if(!q) return; const st=FV['_eq'+q]; if(!st) return; const I=new Set(st.infos); e.target.checked?I.add(e.target.dataset.k):I.delete(e.target.dataset.k); st.infos=EQ_INFOS.map(x=>x[0]).filter(x=>I.has(x)); FV[q]=eqText(st); renderFill(); });
-$('#p-forms').addEventListener('input',e=>{ const k=e.target.dataset.f; if(!k) return; FV[k]=e.target.value; if(fShowErr){ fShowErr=false; const u=$('#p-forms .errors'); u&&u.remove(); e.target.classList.remove('bad'); } });
+$('#p-forms').addEventListener('input',e=>{ const k=e.target.dataset.f; if(!k) return; FV[k]=e.target.value; });
 $('#p-forms').addEventListener('click',e=>{
   if(e.target.closest('[data-back]')){ formView=null; renderForms(); return; }
   const ch=e.target.closest('[data-choice]'); if(ch){ FV[ch.dataset.choice]=FV[ch.dataset.choice]===ch.dataset.v?'':ch.dataset.v; renderFill(); return; }
@@ -3286,14 +3339,13 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
 
 /* ---------- Épinglés (page d'accueil) ---------- */
 function renderPinned(){
-  const {fs,ks,ds}=pinnedAndUsed();
-  if(!ds.length&&!ks.length&&!fs.length) return '';
-  const tile=(title,sub,btns,mark,th)=>`<div class="fcard tile">${th||''}${mark}<b>${esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
-  return `<div class="lab">Les plus utilisés</div>
+  const {order}=pinnedAndUsed();
+  if(!order.length) return '';
+  const tile=(title,sub,btns,mark,th,href)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
+  const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" onerror="this.remove()">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin));
+  return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
-    ${fs.map(f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`)).join('')}
-    ${ks.map(k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>')).join('')}
-    ${ds.map(d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" onerror="this.remove()">`:'')).join('')}
+    ${order.map(([t,x])=>t==='f'?F(x):t==='k'?K(x):D(x)).join('')}
   </div>`;
 }
 
@@ -3603,7 +3655,7 @@ function gridCard(d,ts,showCat){
   const href=hrefOf(d.chemin);
   return `<div class="gcard" style="${catColVars(d.categorie)}" data-row="${esc(d.chemin)}">
     <a class="gthumb" href="${href}" target="_blank" rel="noopener" aria-label="Ouvrir ${esc(d.titre)}">${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" onload="if(this.naturalWidth>this.naturalHeight)this.classList.add('land')" onerror="this.parentNode.classList.add('noimg');this.remove()">`:''}<span class="gext">${esc((d.ext||'').toUpperCase())}</span></a>
-    <div class="gbody"><b>${hl(d.titre,ts)}${favBtn('d:'+d.id)}</b>${stBadge(d)}${d.modele?'<span class="badge accent m-0">Modèle à remplir</span>':''}<small>${showCat?esc(catName(d.categorie))+' · ':''}${d.version?'v'+esc(d.version)+' · ':''}${docDate(d.date)}</small>${TXT_ON&&ts.length&&txOf(d)&&ts.some(t=>txOf(d).includes(t))?`<span class="desc txhit">📄 « ${hl(excerpt(txRaw(d),ts,110),ts)} »</span>`:''}</div>
+    <div class="gbody"><b><a class="gtitle" href="${href}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a>${favBtn('d:'+d.id)}</b>${stBadge(d)}${d.modele?'<span class="badge accent m-0">Modèle à remplir</span>':''}<small>${showCat?esc(catName(d.categorie))+' · ':''}${d.version?'v'+esc(d.version)+' · ':''}${docDate(d.date)}</small>${TXT_ON&&ts.length&&txOf(d)&&ts.some(t=>txOf(d).includes(t))?`<span class="desc txhit">📄 « ${hl(excerpt(txRaw(d),ts,110),ts)} »</span>`:''}</div>
     <div class="gact">
       ${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}
       ${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}
@@ -3638,7 +3690,7 @@ const MODELE_PACKS=[['droits','Droits des usagers','Pour toutes les structures :
   ['enfance','Enfance et protection de l’enfance','Information préoccupante, signalement, rapport au juge, fugue, autorisations parentales, entretien des 17 ans.'],
   ['agees','Personnes âgées','Admission en EHPAD, APA, directives anticipées, liberté d’aller et venir.'],
   ['asile','Asile et hébergement','Courrier à l’OFII, attestation d’hébergement.'],
-  ['addicto','Addictologie','En-tête d’ordonnance. Le relais et la délivrance de traitement de substitution sont des formulaires intégrés, à activer ci-dessous.']];
+  ['addicto','Addictologie','En-tête d’ordonnance. Le relais et la délivrance de traitement de substitution sont des formulaires intégrés (Administration › Formulaires et modèles).']];
 const modeleAdded=m=>m.lien?DATA.documents.some(d=>d.modele_src===m.id):DATA.formulaires.some(f=>f.modele_src===m.id);
 async function addModele(id){
   const m=MODELES.find(x=>x.id===id); if(!m) return;
@@ -4051,6 +4103,7 @@ async function saveReg(){
   (r.equipe||[]).forEach(p=>{ if(String(p.mail||'').trim()&&!MAIL.test(String(p.mail).trim())) errs.push(`Équipe : l’adresse de ${p.nom||'une personne'} est incorrecte.`); });
   if(!/^https:\/\//.test(r.webmail)) errs.push("L'adresse d'Outlook doit commencer par https://");
   if(!r.motdepasse) errs.push('Le mot de passe ne peut pas être vide.');
+  else if(r.motdepasse!==PAR.motdepasse&&pwLikeName(r.motdepasse,r.attestation.nom||structure.nom||'')) errs.push('Le mot de passe ressemble trop au nom de la structure : choisissez autre chose.');
   r.medecins.forEach((m,i)=>{ if(!String(m.nom||'').replace(/^Dr\s*/,'').trim()) errs.push(`Médecin ${i+1} : nom manquant.`); if(!/^\d{11}$/.test(m.rpps||'')) errs.push(`${m.nom||'Médecin '+(i+1)} : le n° RPPS doit compter 11 chiffres.`); });
   if(errs.length){ openModal(`<h3 id="modal-title">À corriger</h3><ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="secondary" data-close>OK</button>`); return false; }
   const old=PAR, nomChange=JSON.stringify(r.nommage)!==JSON.stringify(NOMMAGE());
@@ -4128,9 +4181,13 @@ function bindRecip(root,initial){
   $r('q').addEventListener('input',e=>{ const v=norm(e.target.value.trim()); $r('type').value='';
     if(v.length<2||v.includes('@')){ list=[]; title=''; drawList(); return; }
     list=ANNU.partenaires.filter(p=>norm(p.nom+' '+p.type+' '+p.emails.join(' ')+' '+(p.personnes||[]).map(c=>c.nom+' '+c.fonction).join(' ')).includes(v)).slice(0,25); title=`Résultats pour « ${e.target.value.trim()} »`; drawList(); });
+  // adresse tapée sans Entrée : annoncée tout de suite, sur la même ligne (rien ne bouge sous la souris), et prise en compte à l'envoi
+  $r('q').addEventListener('input',e=>{ const v=e.target.value.trim(), ok=MAIL.test(v)&&!has(v), pend=ok?`« ${esc(v)} » sera ${sel.length?'ajoutée aussi':'le destinataire'}`:'';
+    if(!sel.length) $r('sel').innerHTML=`<span class="hint">${pend?pend+' (ou Entrée pour l’ajouter maintenant).':'Aucun destinataire choisi.'}</span>`;
+    else $r('count').innerHTML=`<b>${sel.length}</b> destinataire${sel.length>1?'s':''} choisi${sel.length>1?'s':''}${pend?` <span class="hint">· ${pend}</span>`:''}`; });
   $r('q').addEventListener('keydown',e=>{ if(e.key!=='Enter') return; e.preventDefault(); const v=e.target.value.trim(); if(MAIL.test(v)){ add(v); e.target.value=''; list=[]; title=''; drawList(); drawSel(); } else if(v) toast('Cette adresse mail semble incomplète : vérifiez-la.'); });
   drawSel();
-  return {get:()=>{ const v=$r('q').value.trim(); if(MAIL.test(v)) add(v); return sel.slice(); }, add:a=>{ add(a); drawSel(); }};
+  return {get:()=>{ const v=$r('q').value.trim(); if(MAIL.test(v)){ add(v); $r('q').value=''; drawSel(); } return sel.slice(); }, add:a=>{ add(a); drawSel(); }};
 }
 /* Fenêtre d'envoi commune (document seul, plusieurs documents) */
 function sendDialog(title,intro,nFiles,go){
@@ -4387,7 +4444,7 @@ function renderAnnu(){
         <button data-ex="outlook"><b>Carnet d’adresses</b><small>à importer dans Outlook ou Gmail</small></button>
         <button data-ex="vcf"><b>vCard (.vcf)</b><small>téléphone, Thunderbird, Apple</small></button>
         <p class="hint">${list.length===ANNU.partenaires.length?'Tout l’annuaire':`Les ${list.length} fiches affichées`}.</p></div></details></div></div>
-    <p class="hint">Structures partenaires et leurs contacts, utilisés pour préparer les mails et remplir les courriers. ${ANNU.partenaires.length} fiches${ANNU.maj?' · mis à jour le '+esc(ANNU.maj):''}.${isAdmin?'':' Une erreur ou un contact manquant ? Signalez-le à un admin.'}</p>
+    <p class="hint">Structures partenaires et leurs contacts, utilisés pour préparer les mails et remplir les courriers. ${ANNU.partenaires.length} fiches${ANNU.maj?' · mis à jour le '+esc(frDate(ANNU.maj))+(String(ANNU.maj).length>10?' à '+esc(String(ANNU.maj).slice(11,16).replace(':',' h ')):''):''}.${isAdmin?'':' Une erreur ou un contact manquant ? Signalez-le à un admin.'}</p>
     <div class="annu-tools">
       <div class="bigsearch">${ICON.search}<input class="in" id="an-q" type="search" placeholder="Chercher : nom, contact, ville, mail, téléphone…" value="${esc(aq)}" autocomplete="off" aria-label="Chercher dans l'annuaire"></div>
       <select class="in" id="an-type" aria-label="Type de partenaire"><option value="">Tous les types</option>${annuTypes().map(t=>`<option value="${esc(t)}" ${t===atype?'selected':''}>${esc(t)} (${ANNU.partenaires.filter(x=>x.type===t).length})</option>`).join('')}</select>
@@ -5857,7 +5914,7 @@ function linkCard(d,ts,showCat){
   const u=esc(d.url);
   return `<div class="gcard">
     <a class="gthumb lien${thumbSrc(d)?'':' auto'}" href="${u}" target="_blank" rel="noopener" aria-label="Ouvrir ${esc(d.titre)}">${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" onerror="this.remove()">`:linkVignette(d)}</a>
-    <div class="gbody"><b>${hl(d.titre,ts)}</b><span class="badge m-0 self-start">Lien web</span><small>${showCat?esc(catName(d.categorie))+' · ':''}${docDate(d.date)}</small></div>
+    <div class="gbody"><b><a class="gtitle" href="${u}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a></b><span class="badge m-0 self-start">Lien web</span><small>${showCat?esc(catName(d.categorie))+' · ':''}${docDate(d.date)}</small></div>
     <div class="gact">
       <a class="iconbtn" href="${u}" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>
       <button class="lbtn" data-lsend="${esc(d.id)}" aria-label="Envoyer le lien ${esc(d.titre)} par mail">${ICON.mail}Envoyer</button>
@@ -6279,7 +6336,7 @@ function quickForms(){
   const rank=f=>DATA.formsEpingles.includes(f.id)?0:used.includes(f.id)?1+used.indexOf(f.id):100;
   const list=all.filter(f=>!already.has(f.id)).sort((a,b)=>rank(a)-rank(b)).slice(0,6);
   if(!list.length) return '';
-  return `<div class="lab">Remplir un formulaire</div><div class="qforms">${list.map(f=>`<button type="button" class="qform" data-fill="${esc(f.id)}"><span class="qe" aria-hidden="true">${esc(formEmoji(f))}</span><span class="qt"><b>${esc(f.titre)}</b>${f.description?`<small>${esc(excerpt(f.description,[]))}</small>`:''}</span><span class="qgo" aria-hidden="true">›</span></button>`).join('')}</div>`;
+  return `<h2 class="lab">Remplir un formulaire</h2><div class="qforms">${list.map(f=>`<button type="button" class="qform" data-fill="${esc(f.id)}"><span class="qe" aria-hidden="true">${esc(formEmoji(f))}</span><span class="qt"><b>${esc(f.titre)}</b>${f.description?`<small>${esc(excerpt(f.description,[]))}</small>`:''}</span><span class="qgo" aria-hidden="true">›</span></button>`).join('')}</div>`;
 }
 function homeSec(key,emo,titre,sous,body,cls=''){
   return `<details class="hsec${cls}" data-home="${esc(key)}"${homeOpen.has(key)?' open':''}>
@@ -6307,8 +6364,8 @@ function renderHome(){
     ds.forEach(d=>{ if(shown>=HOME_MAX) return; const s=d.epingle?'':(d.sous||''); if(s&&s!==cur) rows.push(`<li class="hsub">${esc(s)}</li>`); cur=s; rows.push(homeDocRow(d)); shown++; });
     const more=ff.length+ds.length>shown+ff.length||ff.length>HOME_MAX;
     const body=(rows.join('')||'<li class="hempty">Aucun document pour l’instant.</li>')
-      +`<li class="hmore"><button type="button" class="ghost sm" data-filter="${esc(c.id)}">${more?`Voir les ${n} documents`:'Ouvrir la catégorie'} ›</button></li>`;
-    return homeSec('c:'+c.id,catEmoji(c),c.nom,n?`${n} document${n>1?'s':''}`:'vide',body);
+      +`<li class="hmore"><button type="button" class="ghost sm" data-filter="${esc(c.id)}">${more?`Tout voir (${n})`:'Ouvrir la catégorie'} ›</button></li>`;
+    return homeSec('c:'+c.id,catEmoji(c),c.nom,n?[ds.length?`${ds.length} document${ds.length>1?'s':''}`:'',ff.length?`${ff.length} formulaire${ff.length>1?'s':''}`:''].filter(Boolean).join(' · '):'vide',body);
   }).join('');
   const kits=DATA.kits.length?homeSec('kits',HICO.kits,'Kits de documents',`${DATA.kits.length} kit${DATA.kits.length>1?'s':''}`,
     DATA.kits.map(k=>`<li><div class="hrow"><span class="hi" aria-hidden="true">${HICO.kits}</span><span class="hn"><b>${esc(k.titre)}</b><small>${kitDocs(k).length} documents</small></span>
@@ -6372,7 +6429,7 @@ function homeHead(){
   const [,emo]=saison(), f=fete(), hr=new Date().getHours();
   const hello=hr>=5&&hr<12?'Bonjour':hr>=12&&hr<18?'Bon après-midi':'Bonsoir';
   const nom=(structure&&structure.nom)||'';
-  return `<div class="todayrow"><div><p class="hello">${hello}</p><p class="today"><span class="saison" aria-hidden="true">${emo}</span>${todayLong()}${nom?` <span class="who">· ${esc(nom)}</span>`:''}</p></div>${f?`<span class="fete">${esc(f)}</span>`:''}</div>`;
+  return `<div class="todayrow"><div><h1 class="hello">${hello}</h1><p class="today"><span class="saison" aria-hidden="true">${emo}</span>${todayLong()}${nom?` <span class="who">· ${esc(nom)}</span>`:''}</p></div>${f?`<span class="fete">${esc(f)}</span>`:''}</div>`;
 }
 
 /* Emoji d'une catégorie (admin) */
@@ -6511,12 +6568,15 @@ function liveBuild(){
 function liveBox(){
   let b=document.getElementById('livepv'); if(b) return b;
   b=document.createElement('aside'); b.id='livepv'; b.setAttribute('aria-label','Aperçu du document en cours');
-  b.innerHTML=`<div class="lp-head"><b>Aperçu</b><span class="lp-pg"></span><button type="button" class="lp-x" data-lpoff title="Masquer l’aperçu" aria-label="Masquer l’aperçu">×</button></div>
-    <button type="button" class="lp-page" data-lpzoom title="Voir en grand"><canvas></canvas><span class="lp-wait">L’aperçu apparaît ici.</span></button>
+  b.innerHTML=`<div class="lp-head"><b>Aperçu</b><span class="lp-pg"></span><button type="button" class="lp-big" data-lpbig aria-pressed="false">Agrandir</button><button type="button" class="lp-x" data-lpoff title="Masquer l’aperçu" aria-label="Masquer l’aperçu">×</button></div>
+    <button type="button" class="lp-page" data-lpzoom title="Ouvrir le PDF en grand" aria-label="Ouvrir le PDF de l’aperçu en grand"><canvas role="img" aria-label="Première page du document (son texte est sous l’image)"></canvas><span class="lp-wait">L’aperçu apparaît ici.</span></button>
+    <details class="lp-txt"><summary>Lire le texte de la page</summary><div class="lp-tx" aria-live="off"></div></details>
     <p class="lp-note">Se met à jour pendant la saisie. Rien n’est enregistré.</p>`;
+  try{ if(localStorage.getItem('librejo-apercu-grand')==='1'){ b.classList.add('big'); b.querySelector('[data-lpbig]').setAttribute('aria-pressed','true'); b.querySelector('[data-lpbig]').textContent='Réduire'; } }catch(e){}
   document.body.appendChild(b);
   b.addEventListener('click',e=>{
     if(e.target.closest('[data-lpoff]')){ liveSet(true); return; }
+    const bg=e.target.closest('[data-lpbig]'); if(bg){ const on=b.classList.toggle('big'); bg.setAttribute('aria-pressed',String(on)); bg.textContent=on?'Réduire':'Agrandir'; try{ localStorage.setItem('librejo-apercu-grand',on?'1':'0'); }catch(err){} return; }
     if(e.target.closest('[data-lpzoom]')){ const file=liveBuild(); if(!file) return; if(LIVE.url) URL.revokeObjectURL(LIVE.url); LIVE.url=URL.createObjectURL(file); previewUrl(LIVE.url,'Aperçu (document non terminé)'); }
   });
   return b;
@@ -6544,7 +6604,12 @@ async function liveRefresh(){
     const pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise; if(seq!==LIVE.seq){ pdf.destroy(); return; }
     const page=await pdf.getPage(1), v0=page.getViewport({scale:1}), vp=page.getViewport({scale:620/v0.width});
     const off=document.createElement('canvas'); off.width=Math.round(vp.width); off.height=Math.round(vp.height);
-    await page.render({canvasContext:off.getContext('2d'),viewport:vp}).promise; const n=pdf.numPages; pdf.destroy();
+    await page.render({canvasContext:off.getContext('2d'),viewport:vp}).promise; const n=pdf.numPages;
+    // alternative texte : les lignes de la page, dans l'ordre de lecture
+    let lines=[]; try{ const tc=await page.getTextContent(), rows={}; tc.items.forEach(it=>{ if(!it.str.trim()) return; const y=Math.round(it.transform[5]/3); (rows[y]=rows[y]||[]).push(it); });
+      lines=Object.keys(rows).map(Number).sort((a,c)=>c-a).map(y=>rows[y].sort((a,c)=>a.transform[4]-c.transform[4]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim()).filter(Boolean); }catch(e){}
+    pdf.destroy();
+    const tx=b.querySelector('.lp-tx'); if(tx&&seq===LIVE.seq) tx.innerHTML=lines.length?lines.map(l=>`<p>${esc(l)}</p>`).join(''):'<p class="hint">Pas de texte lisible.</p>';
     if(seq!==LIVE.seq) return;
     cv.width=off.width; cv.height=off.height; cv.getContext('2d').drawImage(off,0,0); cv.hidden=false; wait.hidden=true;
     b.querySelector('.lp-pg').textContent=n>1?`page 1 sur ${n}`:'';
@@ -6847,7 +6912,7 @@ const WZ_CATS={csapa:['Accueil','Soins','Réduction des risques','Social','Parte
   chrs:['Admission','Hébergement','Santé','Démarches','Règlement'],mecs:['Admission','Vie quotidienne','Scolarité','Santé','Droits des familles'],
   ehpad:['Admission','Soins','Vie sociale','Familles','Qualité'],handicap:['Admission','Projet personnalisé','Santé','Droits','Partenaires'],
   asile:['Admission','Procédure','Santé','Hébergement','Démarches'],accueil:['Accueil','Démarches','Santé','Partenaires'],autre:['Accueil','Démarches','Santé','Partenaires']};
-const WZ_PACKS={csapa:['droits','qualite','social','addicto','liaison'],caarud:['droits','social','addicto','liaison'],chrs:['droits','qualite','social','liaison'],
+const WZ_PACKS={csapa:['droits','qualite','social','addicto','liaison'],caarud:['droits','social','addicto','liaison'],chrs:['droits','qualite','social','asile','liaison'],
   mecs:['droits','qualite','enfance'],ehpad:['droits','qualite','agees','liaison'],handicap:['droits','qualite','handicap','liaison'],asile:['droits','social','asile','liaison'],
   accueil:['droits','social','liaison'],autre:['droits','qualite']};
 const WZ_STEPS=['Bienvenue','Votre structure','Votre équipe','Catégories et noms','Vos modèles','Le mail','Le mot de passe','C’est parti'];
@@ -6929,12 +6994,18 @@ function wizBody(){ const W=WZ, s=W.step;
       <dt>Mail</dt><dd>${W.mailmode==='outlook'?'Outlook':W.mailmode==='web'?'Messagerie web':W.mailmode==='aucun'?'Pas de mail':'—'}</dd>
       <dt>Mot de passe</dt><dd>${W.pw?'choisi':'<b class="danger">à choisir (étape 7)</b>'}</dd></dl>`;
 }
+/* Mot de passe trop proche du nom de la structure (« mimosa » pour « Les Mimosas ») */
+function pwLikeName(pw,nom){ const k=x=>norm(x).replace(/[^a-z0-9]/g,''), p=k(pw); if(!p) return false;
+  const stop=new Set(['les','des','une','aux','association','centre','foyer','maison','residence','service','structure']);
+  const words=norm(nom).split(/[^a-z0-9]+/).filter(w=>w.length>=4&&!stop.has(w)).map(w=>w.replace(/(es|s|x)$/,'')).filter(w=>w.length>=4);
+  const all=k(nom); return words.some(w=>p.includes(w)||(p.length>=4&&w.includes(p)))||(all.length>=4&&(p.includes(all)||all.includes(p)&&p.length>=4)); }
 function wizCheck(s){ const W=WZ;
   if(s===1){ if(!W.nom.trim()) return 'Indiquez le nom de la structure.'; if(!W.type) return 'Choisissez le type de structure.'; if(W.mail.trim()&&!MAIL.test(W.mail.trim())) return 'L’adresse mail de la structure semble incorrecte.'; }
   if(s===2){ if(!W.medecins) return 'Répondez à la question sur les médecins.'; if(W.medecins==='oui'){ const bad=W.meds.find(m=>m.nom.trim()&&m.rpps.trim()&&!/^\d{11}$/.test(m.rpps.replace(/\s/g,''))); if(bad) return `Le RPPS de ${bad.nom} doit avoir 11 chiffres.`; if(!W.meds.some(m=>m.nom.trim())) return 'Indiquez au moins un médecin, ou répondez « Non ».'; } }
   if(s===3&&!(W.cats||[]).some(c=>c.trim())) return 'Gardez au moins une catégorie.';
   if(s===5){ if(!W.mailmode) return 'Choisissez comment vous envoyez vos mails.'; const bad=W.envoi.split(/[\s,;]+/).filter(Boolean).find(m=>!MAIL.test(m)); if(bad) return 'Adresse incorrecte : '+bad; }
-  if(s===6){ if(W.pw.length<6) return 'Le mot de passe doit avoir au moins 6 caractères.'; if(W.pw!==W.pw2) return 'Les deux mots de passe ne sont pas identiques.'; if(/^(docubus|librejo|motdepasse|123456)$/i.test(W.pw)) return 'Choisissez un mot de passe moins évident.'; }
+  if(s===6){ if(W.pw.length<6) return 'Le mot de passe doit avoir au moins 6 caractères.'; if(W.pw!==W.pw2) return 'Les deux mots de passe ne sont pas identiques.'; if(/^(docubus|librejo|motdepasse|123456)$/i.test(W.pw)) return 'Choisissez un mot de passe moins évident.';
+    if(pwLikeName(W.pw,W.nom)) return `Ce mot de passe ressemble trop au nom de la structure (« ${W.nom.trim()} ») : quelqu’un qui connaît la structure le devinerait. Choisissez autre chose, par exemple trois mots sans rapport entre eux.`; }
   return ''; }
 function wizDraw(){
   const o=document.getElementById('wiz'), W=WZ, s=W.step, last=s===WZ_STEPS.length-1;
@@ -7756,7 +7827,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
 function renderFavs(){
   const F=formItems(), L=favRead().map(k=>{ const [t,id]=[k.slice(0,1),k.slice(2)]; const it=t==='d'?docs().find(d=>d.id===id):F.find(f=>f.id===id); return it?{k,t,it}:null; }).filter(Boolean);
   if(!L.length) return '';
-  return `<div class="lab">⭐ Mes favoris <small class="hint">(sur ce poste)</small></div><div class="cards narrow">${L.map(({k,t,it})=>t==='f'
+  return `<h2 class="lab">⭐ Mes favoris <small class="hint">(sur ce poste)</small></h2><div class="cards narrow">${L.map(({k,t,it})=>t==='f'
     ?`<div class="fcard tile"><span class="tile-emoji" aria-hidden="true">${esc(formEmoji(it))}</span><b>${esc(it.titre)}${favBtn(k)}</b><span>Formulaire</span><div class="row gap-s push"><button class="lbtn" data-fill="${esc(it.id)}">${ICON.pen}Remplir</button></div></div>`
     :`<div class="fcard tile"><b><a href="${isLink(it)?esc(it.url):hrefOf(it.chemin)}" target="_blank" rel="noopener">${esc(it.titre)}</a>${favBtn(k)}</b><span>${esc(catName(it.categorie))}</span><div class="row gap-s push">${!isLink(it)&&printable(it)?`<button class="lbtn" data-print="${esc(it.chemin)}">${ICON.print}Imprimer</button>`:''}${!isLink(it)?`<button class="lbtn" data-send="${esc(it.chemin)}">${ICON.mail}Envoyer</button>`:''}</div></div>`).join('')}</div>`;
 }
@@ -7824,10 +7895,11 @@ function eqField(c,B){ const L=equipe(), k='_eq'+c.id; const st=FV[k]||(FV[k]={i
     <div class="eqinfos"><span class="hint">Faire apparaître :</span>${EQ_INFOS.map(([i,l])=>`<label class="check"><input type="checkbox" data-eqi="${c.id}" data-k="${i}" ${st.infos.includes(i)?'checked':''}> ${l}</label>`).join('')}</div>
     ${FV[c.id]?`<p class="eqout">Sur le document : <b>${esc(FV[c.id])}</b></p>`:''}</div>`; }
 /* Signataire des formulaires intégrés : choisir dans l'équipe remplit le nom et la fonction */
-function eqChips(){ const L=equipe(); if(!L.length) return '';
-  return `<div class="eqquick wide"><span class="hint">Choisir dans l’équipe :</span>${L.map(p=>`<button type="button" class="chip" data-eqsign="${esc(p.id)}">${esc(p.nom)}</button>`).join('')}</div>`; }
+function eqChips(forKey,telKey){ const L=equipe(); if(!L.length) return '';
+  return `<div class="eqquick wide"><span class="hint">Choisir dans l’équipe${forKey?' (personne à contacter)':''} :</span>${L.map(p=>`<button type="button" class="chip" data-eqsign="${esc(p.id)}"${forKey?` data-eqfor="${forKey}" data-eqtel="${telKey||''}"`:''}>${esc(p.nom)}</button>`).join('')}</div>`; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-eqsign]'); if(!b) return; const p=equipe().find(x=>x.id===b.dataset.eqsign), panel=b.closest('section.panel,.card,main'); if(!p||!panel) return;
   const put=(key,v)=>{ const el=[...panel.querySelectorAll('input,textarea')].find(i=>Object.values(i.dataset).includes(key)); if(el){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
+  if(b.dataset.eqfor){ put(b.dataset.eqfor,[p.nom,p.fonction].filter(Boolean).join(', ')); if(b.dataset.eqtel&&p.tel) put(b.dataset.eqtel,p.tel); return; }
   put('signNom',p.nom); put('signFonction',p.fonction||''); });
 
 /* ======================================================================
@@ -8000,8 +8072,10 @@ function renderCcas(){
     </div>
     <div class="card top w-form"><h3>Contact et signature</h3>
       <div class="fieldgrid">
+        ${eqChips('contact','ctel')}
         <label class="field"><span>Personne à contacter dans la structure</span>${txt('contact','ex. Julie, travailleuse sociale')}</label>
         <label class="field"><span>Téléphone</span>${txt('ctel','','inputmode="tel"')}</label>
+        ${eqChips()}
         <label class="field"><span>Signé par</span>${txt('signNom','Prénom Nom')}</label>
         <label class="field"><span>Fonction</span>${txt('signFonction','ex. Travailleuse sociale')}</label>
       </div></div>
@@ -8068,7 +8142,16 @@ function useBump(k){
   try{ localStorage.setItem(USE_KEY,JSON.stringify(o)); }catch(e){}
 }
 /* Classement : nombre d'utilisations, qui compte moitié moins après un mois sans servir */
-function useTop(){ const o=useRead(), now=Date.now(); return Object.keys(o).map(k=>({k,s:(o[k].n||0)*Math.pow(.5,(now-(o[k].t||0))/(30*864e5))})).sort((a,b)=>b.s-a.s).map(x=>x.k); }
+function useRank(){ const o=useRead(), now=Date.now(); return Object.keys(o).map(k=>({k,s:(o[k].n||0)*Math.pow(.5,(now-(o[k].t||0))/(30*864e5))})).sort((a,b)=>b.s-a.s).map(x=>x.k); }
+/* L'ordre est figé pour la journée : un usage ne fait pas sauter les vignettes sous la main.
+   Ce qui sert pour la première fois aujourd'hui se range à la suite. */
+const USE_ORDER='docubus-usage-ordre';
+function useTop(){ let st=null; try{ st=JSON.parse(localStorage.getItem(USE_ORDER)||'null'); }catch(e){}
+  const rank=useRank();
+  if(!st||st.jour!==today()||!Array.isArray(st.ordre)){ st={jour:today(),ordre:rank}; try{ localStorage.setItem(USE_ORDER,JSON.stringify(st)); }catch(e){} return rank; }
+  const known=new Set(st.ordre), fresh=rank.filter(k=>!known.has(k));
+  if(fresh.length){ st.ordre=st.ordre.concat(fresh); try{ localStorage.setItem(USE_ORDER,JSON.stringify(st)); }catch(e){} } // gardent ensuite leur place
+  return st.ordre.filter(k=>rank.includes(k)); }
 document.addEventListener('click',e=>{
   const t=e.target; if(!t||!t.closest) return; let el;
   if((el=t.closest('[data-fill]'))) return useBump('f:'+el.dataset.fill);
@@ -8081,13 +8164,15 @@ document.addEventListener('click',e=>{
 /* Épinglés par l'admin d'abord, puis complétés par ce qui sert le plus sur ce poste */
 function pinnedAndUsed(){
   const all=formItems(), fs=all.filter(f=>DATA.formsEpingles.includes(f.id)), ks=DATA.kits.filter(k=>k.epingle), ds=docs().filter(d=>d.epingle);
-  const room=Math.max(4,USE_MAX-(fs.length+ks.length+ds.length)); let n=0;
+  // d'abord les épinglés, toujours à la même place ; puis ce qui sert le plus sur ce poste
+  const order=[...fs.map(x=>['f',x]),...ks.map(x=>['k',x]),...ds.map(x=>['d',x])];
+  const room=Math.max(4,USE_MAX-order.length); let n=0;
   for(const k of useTop()){
     if(n>=room) break; const i=k.indexOf(':'), ty=k.slice(0,i), id=k.slice(i+1);
     const [list,src]=ty==='f'?[fs,all]:ty==='k'?[ks,DATA.kits]:ty==='d'?[ds,docs()]:[null,[]];
-    const x=src.find(y=>y.id===id); if(list&&x&&!list.includes(x)){ list.push(x); n++; }
+    const x=src.find(y=>y.id===id); if(list&&x&&!list.includes(x)){ list.push(x); order.push([ty,x]); n++; }
   }
-  return {fs,ks,ds};
+  return {fs,ks,ds,order};
 }
 
 /* Délivrance : ce qui manque n'empêche plus de créer les PDF. Une fenêtre le liste :
@@ -8116,6 +8201,25 @@ let parPending=false;
 })();
 
 $('#p-deliv').addEventListener('click',e=>{ if(e.target.closest('[data-back]')){ formView=null; setTab('forms'); window.scrollTo({top:0}); } });
+
+/* Liste « ce qui manque » : juste au-dessus du bouton qui la déclenche, et mise à jour dès qu'un champ
+   est corrigé (le formulaire est redessiné sans perdre le champ en cours ni la position). */
+const ERR_FORMS={'p-relais':[()=>rlErr,rlValidate,()=>renderRelais()],'p-cmi':[()=>cmErr,cmValidate,()=>renderCmi()],'p-att':[()=>asErr,asValidate,()=>renderAtt()],
+  'p-mt':[()=>mtErr,mtValidate,()=>renderMt()],'p-cl':[()=>clErr,clValidate,()=>renderCl()],'p-ordo':[()=>orErr,orValidate,()=>renderOrdo()],'p-urg':[()=>urErr,urValidate,()=>renderUrg()],
+  'p-cp':[()=>cpErr,cpValidate,()=>renderCp()],'p-el':[()=>elErr,elValidate,()=>renderEl()],'p-ccas':[()=>ccErr,ccValidate,()=>renderCcas()],
+  'p-forms':[()=>fShowErr&&!!DATA.formulaires.find(x=>x.id===formView),()=>validateFill(DATA.formulaires.find(x=>x.id===formView)).map(x=>[x.k,x.m]),()=>renderFill()]};
+function errsNearButton(){ document.querySelectorAll('main>section.panel ul.errors.w-form').forEach(u=>{ const sf=u.nextElementSibling; if(sf&&sf.classList.contains('stickyfoot')){ u.classList.remove('w-form'); sf.prepend(u); } }); }
+new MutationObserver(errsNearButton).observe(document.querySelector('main'),{childList:true,subtree:true});
+function keepFocus(panel,draw){ const a=document.activeElement; let sel=null, s0=null, s1=null;
+  if(a&&panel.contains(a)&&a!==panel){ sel=a.tagName.toLowerCase()+(a.id?'#'+CSS.escape(a.id):'')+Object.entries(a.dataset).map(([k,v])=>`[data-${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="${CSS.escape(v)}"]`).join('');
+    try{ s0=a.selectionStart; s1=a.selectionEnd; }catch(e){} }
+  const y=window.scrollY; draw(); window.scrollTo(0,y);
+  if(sel){ const b=panel.querySelector(sel); if(b){ b.focus({preventScroll:true}); try{ if(s0!=null) b.setSelectionRange(s0,s1); }catch(e){} } } }
+let errT=0;
+function errsRefresh(e){ const panel=e.target&&e.target.closest&&e.target.closest('main>section.panel'); if(!panel) return; const F=ERR_FORMS[panel.id]; if(!F||!F[0]()) return;
+  clearTimeout(errT); errT=setTimeout(()=>{ const ul=panel.querySelector('ul.errors'); const now=F[1]().map(x=>x[1]).join('|'), shown=ul?[...ul.children].map(li=>li.textContent).join('|'):'';
+    if(now!==shown) keepFocus(panel,F[2]); },300); }
+document.addEventListener('input',errsRefresh); document.addEventListener('change',errsRefresh);
 
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
