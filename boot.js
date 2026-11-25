@@ -12,9 +12,18 @@ var MIME = {pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/j
   doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',odt:'application/vnd.oasis.opendocument.text'};
 
-function startMain(){
+/* Bibliothèques PDF : chargées seulement une fois le dossier choisi (l'écran d'accueil reste léger).
+   Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
+var LIBS = ['app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js'];
+function loadLib(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error(src)); }; document.head.appendChild(s); }); }
+var libsP = null;
+function loadLibs(){ if(!libsP) libsP = Promise.all(LIBS.map(loadLib)).catch(function(e){ libsP=null; throw e; }); return libsP; }
+async function startMain(){
+  try { await loadLibs(); }
+  catch(e){ if (WEB) { show('<h1>Librejo n’a pas pu se charger entièrement</h1><p>Un fichier de l’application manque ('+esc(e.message||'')+'). Vérifiez la connexion, puis rechargez la page.</p><button class="lj-btn" id="lj-re">Recharger</button>'); document.getElementById('lj-re').onclick=function(){ location.reload(); }; return false; } }
   var src = document.getElementById('docubus-main');
   var s = document.createElement('script'); s.textContent = src.textContent; document.body.appendChild(s);
+  return true;
 }
 if (!WEB) { startMain(); return; }
 
@@ -56,8 +65,8 @@ async function load(){
     document.getElementById('lj-pick').onclick = pick;
     return;
   }
+  if (!(await startMain())) return;
   ui.hidden = true;
-  startMain();
   try { var n=(window.DOCUBUS_PARAMETRES||{}).attestation; var f=document.getElementById('lj-foot'); if(f&&n&&n.nom) f.textContent='Librejo · '+n.nom; } catch(e){}
 }
 async function pick(){

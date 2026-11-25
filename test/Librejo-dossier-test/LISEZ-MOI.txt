@@ -1,3 +1,20 @@
 Dossier de TEST pour Librejo (prototype 2). Toutes les données sont fictives.
 Copiez ce dossier là où vous voulez tester (NAS, lecteur réseau, OneDrive, disque), puis choisissez-le dans Librejo.
 Mot de passe admin : test
+
+Pour vérifier les PDF avec des noms d'autres langues, utilisez par exemple ces noms fictifs :
+  NGUYỄN Thị Şahin · Đặng Văn Ứng · Łukasz Wójcik · Ştefan Ţăranu · Ömer Gül · Олена Шевченко
+Ils doivent sortir à l'identique dans le PDF. Un emoji (ex. 🙂) doit afficher un message qui demande de le retirer.
+
+L'arabe et le géorgien s'impriment aussi (textes fictifs, à copier dans les champs) :
+  Noms : محمد بن علي · مريم حداد · فاطمة الزهراء · ნინო ბერიძე · გიორგი კაპანაძე
+  Consigne en arabe (paragraphe de plusieurs lignes, aligné à droite dans le PDF) :
+    يرجى الحضور إلى مكتب المساعدة الاجتماعية يوم الثلاثاء صباحا مع بطاقة الهوية وشهادة السكن وآخر كشف للحساب البنكي، وإذا لم تتمكن من الحضور فاتصل بنا مسبقا لتحديد موعد آخر.
+  Phrase mélangée (chaque morceau garde son sens, les chiffres restent de gauche à droite) :
+    Rendez-vous le 03/12 à 14 h avec مريم au 04 91 00 00 00
+    موعدك يوم 03/12 الساعة 14:00، الهاتف 04 91 00 00 00
+  Géorgien : შეხვედრა სამშაბათს, დილის 10 საათზე. გთხოვთ, თან იქონიოთ პირადობის მოწმობა.
+Dans le PDF, les lettres arabes doivent être liées et lues de droite à gauche, un paragraphe arabe aligné à droite.
+Copié depuis le PDF, le texte arabe revient lisible, sauf les ligatures lam-alif (لا) qui restent en un seul caractère :
+c'est une limite de l'extraction de texte des PDF, pas de l'impression. Un même champ ne peut pas mêler l'arabe et le
+vietnamien (Librejo le signale).
