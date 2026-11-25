@@ -785,12 +785,12 @@ html.wiz-on body{overflow:hidden}
 .catbtn .cemo{width:20px;text-align:center;font-size:15px;line-height:1;flex:none}
 .hsec .he,.hrow .hi.lien{font-size:20px;line-height:1}
 /* Réglages en sections */
-.rsec-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:var(--sp-4,16px)}
+.rsec-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:var(--sp-4,16px)}
 .rsec-b{display:grid;gap:2px;text-align:left;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:10px 12px;font:inherit;color:var(--text);cursor:pointer}
 .rsec-b small{color:var(--text-muted);font-size:12px}
 .rsec-b[aria-selected=true]{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent) inset}
 .reglages[data-show] .card[data-rsec]{display:none}
-.reglages[data-show=equipe] .card[data-rsec=equipe],.reglages[data-show=documents] .card[data-rsec=documents],.reglages[data-show=apparence] .card[data-rsec=apparence],.reglages[data-show=mail] .card[data-rsec=mail],.reglages[data-show=securite] .card[data-rsec=securite]{display:block}
+.reglages[data-show=structure] .card[data-rsec=structure],.reglages[data-show=equipe] .card[data-rsec=equipe],.reglages[data-show=documents] .card[data-rsec=documents],.reglages[data-show=apparence] .card[data-rsec=apparence],.reglages[data-show=mail] .card[data-rsec=mail],.reglages[data-show=securite] .card[data-rsec=securite]{display:block}
 .rsave{position:sticky;bottom:0;background:var(--bg,var(--surface));padding:12px 0;z-index:3;border-top:1px solid var(--line)}
 /* Équipe */
 .eqlist{display:grid;gap:8px;margin:10px 0}
@@ -2142,13 +2142,14 @@ const BUILTIN_FORMS=[
   {tab:'el',id:'__el',titre:'En-tête libre',sets:['entete']},
   {tab:'ccas',id:'__ccas',titre:'Bon d’orientation CCAS',sets:['annu','entete']}];
 const SETTINGS={dest:{l:'CSAPA destinataires et leurs adresses',h:'Destinataires de la délivrance'},med:{l:'Médecins et RPPS',h:'Médecins'},
-  envoi:{l:'Adresses d’envoi',h:'Envoi des mails'},entete:{l:'En-tête et bas de page',h:'En-tête'},annu:{l:'Fiches de l’annuaire proposées',tab:'annu'},catalogue:{l:'Listes proposées',asub:'ordo'}};
+  envoi:{l:'Adresses d’envoi',h:'Envoi des mails'},structure:{l:'Infos de la structure',h:'Infos de la structure'},entete:{l:'En-tête et bas de page',h:'En-tête'},annu:{l:'Fiches de l’annuaire proposées',tab:'annu'},catalogue:{l:'Listes proposées',asub:'ordo'}};
 function gotoSetting(k){
   const S_=SETTINGS[k]||{};
   if(S_.tab){ formView=null; setTab(S_.tab); window.scrollTo({top:0}); return; }
   if(S_.asub){ formView=null; asub=S_.asub; fdraft=null; setTab('admin'); window.scrollTo({top:0}); return; }
   formView=null; asub='reg'; fdraft=null; setTab('admin');
-  setTimeout(()=>{ const h=[...document.querySelectorAll('#asub .card h3')].find(x=>x.textContent.trim().startsWith(S_.h||k)); const c=h&&h.closest('.card');
+  setTimeout(()=>{ const h=[...document.querySelectorAll('#asub .card h3')].find(x=>x.textContent.trim().replace(/^\S+\s(?=[A-ZÀ-Ý])/u,'').startsWith(S_.h||k)||x.textContent.trim().startsWith(S_.h||k)); const c=h&&h.closest('.card');
+    if(c&&c.dataset.rsec&&c.dataset.rsec!==rsec){ rsec=c.dataset.rsec; const g=document.querySelector('.reglages'); if(g) g.dataset.show=rsec; document.querySelectorAll('[data-rsecgo]').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.rsecgo===rsec))); }
     if(c){ c.scrollIntoView({behavior:'smooth',block:'start'}); c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),2200);
       if(k==='newdest'){ const b=c.querySelector('#add-dest'); b&&b.click(); } } },60);
 }
@@ -3814,11 +3815,14 @@ let rsec='documents';
 function drawReg(){
   if(!rdraft) rdraft={medecins:meds().map(m=>({...m})),medecinLigne:PAR.medecinLigne||DEFAULT_MED_LINE,attestation:{...structure},destinataires:dests.map(d=>{ const o={nom:d.nom||'',structure:d.structure||'',attention:d.attention||'',adresses:[...(d.adresses||[])],partenaire:annuPart(d.partenaire)?d.partenaire:'',exclues:[...(d.exclues||[])]};
       if(!o.partenaire&&o.adresses.length){ const c=ANNU.partenaires.filter(p=>o.adresses.every(a=>(p.emails||[]).includes(a))); if(c.length===1){ o.partenaire=c[0].id; o.exclues=c[0].emails.filter(m=>!o.adresses.includes(m)); o.auto=true; } }
-      return o; }),envoi:[...envoi],webmail,mail:PAR.mail||'outlook',motdepasse:PAR.motdepasse||'docubus',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})}};
+      return o; }),envoi:[...envoi],webmail,mail:PAR.mail||'outlook',motdepasse:PAR.motdepasse||'docubus',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})},fiche:{...(PAR.fiche||{})}};
   const a=rdraft.attestation, ap=rdraft.apparence, th=applyTheme(ap), own=ownLogo(ap);
   const sw=(list,key)=>list.map(([c,n])=>`<button type="button" style="background:${c}" data-ap="${key}" data-v="${c}" title="${n}" aria-label="${n}" aria-pressed="${String(ap[key]).toLowerCase()===c.toLowerCase()}"></button>`).join('')+`<input type="color" data-apc="${key}" value="${esc(ap[key])}" aria-label="Autre couleur">`;
   $('#asub').innerHTML=`<div class="reglages" data-show="${rsec}">
-    <div class="rsec-nav" role="tablist" aria-label="Sections des réglages">${[['documents','📄 Documents','En-tête, police, marge, tampon, médecins'],['apparence','🎨 Apparence','Couleurs et logo de l’application'],['mail','✉️ Mail','Envoi des mails, destinataires'],['equipe','👥 Équipe','Médecins et autres professionnels'],['securite','🔑 Accès','Mot de passe, assistant de démarrage']].map(([k,t,d])=>`<button type="button" class="rsec-b" role="tab" data-rsecgo="${k}" aria-selected="${rsec===k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+    <div class="rsec-nav" role="tablist" aria-label="Sections des réglages">${[['structure','🏢 Structure','Adresse, SIRET, agrément, responsable'],['documents','📄 Documents','En-tête, police, marge, tampon, médecins'],['apparence','🎨 Apparence','Couleurs et logo de l’application'],['mail','✉️ Mail','Envoi des mails, destinataires'],['equipe','👥 Équipe','Médecins et autres professionnels'],['securite','🔑 Accès','Mot de passe, assistant de démarrage']].map(([k,t,d])=>`<button type="button" class="rsec-b" role="tab" data-rsecgo="${k}" aria-selected="${rsec===k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>
+    <div class="card top w-wide" data-rsec="structure"><h3>Infos de la structure</h3>
+      <p class="hint muted m-0">Servent à pré-remplir les Cerfa (et à rien d’autre). Laissez vide ce que vous n’avez pas : la case restera vide sur le Cerfa.${(()=>{ const g=czGuess(); return Object.keys(g).length?' En gris : ce que Librejo a trouvé dans votre en-tête et votre bas de page.':''; })()}</p>
+      <div class="fieldgrid">${(()=>{ const g=czGuess(); return CZ_INFO.map(([k,l])=>`<label class="field${k==='adresse'||k==='responsable'?' wide':''}"><span>${esc(l)}</span><input class="in" data-fiche="${k}" value="${esc(rdraft.fiche[k]||'')}" placeholder="${esc(g[k]||'')}"${k==='mail'?' spellcheck="false"':''}></label>`).join(''); })()}</div></div>
     <div class="card top w-wide" data-rsec="apparence"><h3>Apparence</h3>
       <p class="hint muted m-0">Les changements s'affichent tout de suite. Ils s'appliquent à tous les postes une fois enregistrés.</p>
       <div class="ap-grid">
@@ -3938,6 +3942,7 @@ function drawReg(){
     if(el.id==='r-pw') rdraft.motdepasse=el.value;
     const mr=el.closest('[data-mi]'); if(mr&&el.dataset.m){ rdraft.medecins[+mr.dataset.mi][el.dataset.m]=el.dataset.m==='rpps'?el.value.replace(/\D/g,''):el.value; }
     if(el.id==='r-medline') rdraft.medecinLigne=el.value;
+    if(el.dataset.fiche){ rdraft.fiche[el.dataset.fiche]=el.value; return; }
     if(el.dataset.apc){ rdraft.apparence[el.dataset.apc]=el.value; applyTheme(rdraft.apparence); } };
   box.onchange=e=>{ const el=e.target, row=el.closest('.dest-row');
     if(row&&el.dataset.part!==undefined){ const d=rdraft.destinataires[+row.dataset.i], v=el.value.trim(), p=ANNU.partenaires.find(x=>x.nom===v);
@@ -4005,7 +4010,7 @@ async function saveReg(){
   r.medecins.forEach((m,i)=>{ if(!String(m.nom||'').replace(/^Dr\s*/,'').trim()) errs.push(`Médecin ${i+1} : nom manquant.`); if(!/^\d{11}$/.test(m.rpps||'')) errs.push(`${m.nom||'Médecin '+(i+1)} : le n° RPPS doit compter 11 chiffres.`); });
   if(errs.length){ openModal(`<h3 id="modal-title">À corriger</h3><ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="secondary" data-close>OK</button>`); return; }
   const old=PAR;
-  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,mail:r.mail,motdepasse:r.motdepasse,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff};
+  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,mail:r.mail,motdepasse:r.motdepasse,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff,fiche:Object.fromEntries(Object.entries(r.fiche||{}).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>v))};
   const newLogo=r.apparence.logo&&r.apparence.logo!==((old.apparence||{}).logo);
   if(r.persoFont&&!await run(()=>writeRel('app/polices-pdf/perso.json',new Blob([JSON.stringify(r.persoFont)],{type:'application/json'})))) return;
   if(await run(saveParams,'Réglages enregistrés')){ jlog('Réglages enregistrés','');
@@ -6514,6 +6519,44 @@ function czInfo(){ return {...czGuess(),...Object.fromEntries(Object.entries(PAR
 function czVal(src,fixe){ const I=czInfo();
   if(src==='nom') return structure.nom||''; if(src==='ville') return I.ville||structure.ville||''; if(src==='signataire') return structure.signataire||'';
   if(src==='date') return frDate(today()); if(src==='fixe') return fixe||''; return I[src]||''; }
+/* Ce que chaque source devient vraiment : les cases sans valeur sont annoncées, pas comptées */
+const CZ_WHERE={nom:'Réglages › Mes courriers',signataire:'Réglages › Mes courriers',fixe:'le réglage du pré-remplissage'};
+const czWhere=src=>CZ_WHERE[src]||'Réglages › Structure';
+const czLow=s=>/^[A-Z]{2,}/.test(s)?s:s.charAt(0).toLowerCase()+s.slice(1);
+function czPlan(champs){ const filled=[], empty=[];
+  Object.values(champs||{}).forEach(c=>{ if(!c||!c.src) return; if(c.src==='coche'){ filled.push(c); return; }
+    const v=String(czVal(c.src,c.fixe)||'').trim(); if(v) filled.push(c); else if(!empty.some(e=>e.src===c.src)) empty.push({src:c.src,label:(CZ_SRC.find(x=>x[0]===c.src)||[,c.src])[1]}); });
+  const at=src=>CZ_SRC.findIndex(x=>x[0]===src); empty.sort((a,b)=>at(a.src)-at(b.src));
+  return {n:filled.length,empty}; }
+/* « 3 cases resteront vides (SIRET, n° d’agrément, nom du responsable) » ; la phrase dit où les compléter */
+function czEmptyTxt(e){ if(!e.length) return ''; const n=e.length, l=e.map(x=>czLow(x.label));
+  const where=[...new Set(e.map(x=>czWhere(x.src)))];
+  return `${n} case${n>1?'s':''} ${n>1?'resteront vides':'restera vide'} (${l.join(', ')}) : à compléter dans ${where.join(' et ')}`; }
+/* Libellé lisible d'une case du PDF (« Nom de l organisme » → « Nom de l’organisme ») */
+const CZ_MOTS={numero:'numéro',telephone:'téléphone',prenom:'prénom',premiere:'première',agrement:'agrément',etablissement:'établissement',departement:'département',
+  delivre:'délivré',delivree:'délivrée',demandee:'demandée',interesse:'intéressé',beneficiaire:'bénéficiaire',electronique:'électronique',ne:'né',nee:'née',sejour:'séjour',a:'à',
+  cp:'code postal',tel:'téléphone',mel:'mél',siret:'SIRET',finess:'FINESS',rpps:'RPPS'};
+function czLabel(f){ let t=String((f&&(f.alt||f.name))||'').replace(/\[\d+\]$|#\d+$/g,'').replace(/[_.]+/g,' ').replace(/([a-zà-ÿ])([A-Z])/g,'$1 $2').replace(/\s+/g,' ').trim();
+  t=t.replace(/\b([dlDL]|qu|Qu|jusqu|Jusqu)[ ']\s*(?=[aeiouyhàâéèêîôûAEIOUYHÉ])/g,'$1’');
+  t=t.split(' ').map((w,i)=>{ const k=w.toLowerCase(), r=CZ_MOTS[k]; if(!r||(k==='a'&&!/^fait$/i.test(t.split(' ')[i-1]||''))) return w; return /^[A-Z]{2,}$/.test(r)?r:(w[0]===w[0].toUpperCase()&&w[0]!==w[0].toLowerCase()?r.charAt(0).toUpperCase()+r.slice(1):r); }).join(' ');
+  return t.charAt(0).toUpperCase()+t.slice(1); }
+/* Le Cerfa est rempli en Helvetica (WinAnsi) : un caractère hors de cette table serait perdu sans le dire */
+const CZ_WIN=new Set([...'€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ']);
+const czWinOk=ch=>{ const c=ch.codePointAt(0); return ch.length===1&&(c===9||c===10||c===13||(c>=32&&c<127)||(c>=160&&c<=255)||CZ_WIN.has(ch)); };
+const czClean=v=>String(v).normalize('NFC').replace(/[\u202F\u2007]/g,'\u00A0').replace(/[\u2009\u200A\u2002\u2003]/g,' ').replace(/[\u2010\u2011]/g,'-').replace(/\u2212/g,'-');
+function czCharsOk(d,champs){ const bad=[];
+  Object.entries(champs||{}).forEach(([name,c])=>{ if(!c||!c.src||c.src==='coche') return; const v=czClean(czVal(c.src,c.fixe)||'');
+    let gs; try{ gs=[...new Intl.Segmenter('fr',{granularity:'grapheme'}).segment(v)].map(x=>x.segment); }catch(e){ gs=[...v]; }
+    const miss=[...new Set(gs.filter(g=>![...g].every(czWinOk)))];
+    if(miss.length) bad.push({miss,label:(CZ_SRC.find(x=>x[0]===c.src)||[,c.src])[1],where:czWhere(c.src),src:c.src}); });
+  if(!bad.length) return true;
+  const one=b=>`${b.miss.length>1?'Les caractères':'Le caractère'} <b class="badch">${esc(b.miss.join(' '))}</b> de « ${esc(b.label)} » (${esc(b.where)}) ${b.miss.length>1?'ne peuvent':'ne peut'} pas être écrit${b.miss.length>1?'s':''} dans ce Cerfa.`;
+  openModal(`<h3 id="modal-title">${bad.length>1||bad[0].miss.length>1?'Des caractères ne peuvent pas être écrits':'Un caractère ne peut pas être écrit'} dans le Cerfa</h3>
+    ${bad.length>1?`<ul class="errors">${bad.map(b=>`<li>${one(b)}</li>`).join('')}</ul>`:`<p class="dv-sub">${one(bad[0])}</p>`}
+    <p>Le formulaire officiel n’accepte que l’alphabet latin d’Europe de l’Ouest (accents français compris). ${(()=>{ const pl=bad.length>1||bad[0].miss.length>1; return isAdmin?`Remplacez-${pl?'les':'le'} dans le réglage indiqué, puis recommencez.`:`Prévenez l’admin : il ${pl?'les':'le'} remplacera dans le réglage indiqué. En attendant, écrivez ${pl?'ces cases':'cette case'} à la main.`; })()}</p>
+    <div class="btns">${isAdmin&&bad[0].where==='Réglages › Structure'?`<button class="primary" id="czb-go" data-autofocus>Ouvrir Réglages › Structure</button>`:''}<button class="secondary" data-close ${isAdmin&&bad[0].where==='Réglages › Structure'?'':'data-autofocus'}>OK</button></div>`);
+  const go=$('#czb-go'); if(go) go.onclick=()=>{ closeModal(); gotoSetting('structure'); };
+  return false; }
 function czGuessField(f){ const s=norm(f.alt+' '+f.name).replace(/[^a-z0-9]+/g,' ');
   if(f.check) return ''; if(/\bsiret\b/.test(s)) return 'siret'; if(/\bfiness\b/.test(s)) return 'finess'; if(/agrement/.test(s)) return 'agrement';
   const org=/organisme|structure|association|etablissement|domiciliataire|service instructeur|centre/.test(s);
@@ -6543,7 +6586,7 @@ async function czFill(d){
   const buf=await (await readRel(d.chemin)).arrayBuffer();
   const doc=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true}); const form=doc.getForm(); try{ form.deleteXFA(); }catch(e){}
   let n=0; Object.entries(d.cerfa.champs||{}).forEach(([name,c])=>{ if(!c||!c.src) return; try{ const f=form.getField(name);
-    if(c.src==='coche'){ f.check(); n++; return; } const v=czVal(c.src,c.fixe); if(v){ f.setText(v); n++; } }catch(e){} });
+    if(c.src==='coche'){ f.check(); n++; return; } const v=czClean(czVal(c.src,c.fixe)||''); if(v.trim()){ f.setText(v); n++; } }catch(e){ console.warn('Cerfa : case',name,e); } });
   try{ form.acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'),PDFLib.PDFBool.True); }catch(e){}
   return {blob:new Blob([await doc.save()],{type:'application/pdf'}),n,crypte:doc.isEncrypted};
 }
@@ -6553,19 +6596,21 @@ function renderCerfa(){
   const d=DATA.documents.find(x=>'cerfa:'+x.id===formView); if(!d||!d.cerfa){ formView=null; return renderForms(); }
   const C=d.cerfa, p=$('#p-forms'), part=C.partenaire?annuPart(C.partenaire):null, age=czAge(d);
   const lines=s=>String(s||'').split('\n').map(x=>x.replace(/^[-•*]\s*/,'').trim()).filter(Boolean);
-  const pieces=lines(C.pieces), nAuto=Object.values(C.champs||{}).filter(c=>c&&c.src).length;
+  const pieces=lines(C.pieces), plan=czPlan(C.champs), nAuto=plan.n;
   p.innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">🧾</span>${esc(d.titre)}</h2>
     <p class="hint">${C.numero?`Cerfa n° ${esc(C.numero)} · `:''}${C.verifie?`version vérifiée le ${esc(frDate(C.verifie))}`:'version pas encore vérifiée'}</p>
-    ${isAdmin&&age>CZ_DAYS?`<div class="cz-warn">Vérifiée il y a plus de 3 mois : regardez sur service-public.fr si une nouvelle version existe. <button class="secondary sm" data-czcheck>Vérifier les Cerfa</button></div>`:''}
-    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Le Cerfa s’ouvre avec les infos de la structure déjà remplies (${nAuto} case${nAuto>1?'s':''}). Complétez la partie de la personne dans le document, puis imprimez. Rien n’est enregistré.</span></div>
+    ${isAdmin&&age>CZ_DAYS?`<div class="cz-warn">${C.verifie?'Vérifiée il y a plus de 3 mois':'Version jamais vérifiée'} : regardez sur service-public.fr si une nouvelle version existe. <button class="secondary sm" data-czcheck>Vérifier les Cerfa</button></div>`:''}
+    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>${nAuto?`Le Cerfa s’ouvre avec les infos de la structure déjà remplies (${nAuto} case${nAuto>1?'s':''}).`:'Le Cerfa s’ouvre vierge : aucune info de la structure n’est encore réglée.'} Complétez la partie de la personne dans le document, puis imprimez. Rien n’est enregistré.</span></div>
+    ${plan.empty.length?`<div class="cz-warn cz-empty"><span>${esc(isAdmin?czEmptyTxt(plan.empty)+'.':plan.empty.length+' case'+(plan.empty.length>1?'s':'')+' de la structure '+(plan.empty.length>1?'resteront vides':'restera vide')+' ('+plan.empty.map(x=>czLow(x.label)).join(', ')+') : remplissez-'+(plan.empty.length>1?'les':'la')+' à la main, ou demandez à l’admin de '+(plan.empty.length>1?'les':'la')+' compléter dans '+[...new Set(plan.empty.map(x=>czWhere(x.src)))].join(' et ')+'.')}</span>${isAdmin&&plan.empty.some(x=>czWhere(x.src)==='Réglages › Structure')?`<button class="secondary sm" data-czreg>Compléter dans Réglages › Structure</button>`:''}</div>`:''}
     <div class="cz-grid">
       ${pieces.length?`<div class="card top"><h3>Pièces à joindre</h3><ul class="cz-list">${pieces.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
       ${part||C.envoi?`<div class="card top blue"><h3>Où l’envoyer</h3>${part?`<p class="m-0"><b>${esc(part.nom)}</b>${partAddr(part)?`<br>${esc(partAddr(part))}`:''}${part.tel?`<br>${esc(part.tel)}`:''}</p>${part.emails.length?`<div class="row">${part.emails.slice(0,3).map(m=>`<button class="linkbtn" data-czmail="${esc(m)}">${esc(m)}</button>`).join('')}</div>`:''}`:''}${C.envoi?`<p class="cz-note">${esc(C.envoi)}</p>`:''}</div>`:''}
     </div>
     <div class="stickyfoot w-form"><button class="primary big" data-czopen>${ICON.file}Ouvrir le Cerfa pré-rempli</button></div>
     ${isAdmin?`<div class="row end w-form"><button class="ghost" data-czedit>${ICON.pen}Modifier le pré-remplissage</button></div>`:''}`;
-  p.querySelector('[data-czopen]').onclick=async()=>{ try{ const r=await czFill(d); const u=URL.createObjectURL(r.blob); previewUrl(u,d.titre+' — à compléter');
+  p.querySelectorAll('[data-czreg]').forEach(b=>b.onclick=()=>gotoSetting('structure'));
+  p.querySelector('[data-czopen]').onclick=async()=>{ if(!czCharsOk(d,C.champs)) return; try{ const r=await czFill(d); const u=URL.createObjectURL(r.blob); previewUrl(u,d.titre+' — à compléter');
       if(r.crypte) toast('Ce PDF est protégé : vérifiez que les cases remplies apparaissent bien.'); }catch(e){ console.error(e); toast('Impossible de préparer ce Cerfa : '+(e.message||e)); } };
   p.querySelectorAll('[data-czedit]').forEach(b=>b.onclick=()=>cerfaSetup(d));
   p.querySelectorAll('[data-czcheck]').forEach(b=>b.onclick=()=>cerfaCheck());
@@ -6581,7 +6626,7 @@ async function cerfaSetup(d){
   const num=C.numero||((d.titre+' '+d.fichier).match(/\b(\d{5})\s*[*_-]?\s*(\d{2})?\b/)||[]).slice(1).filter(Boolean).join('*');
   const opt=(f,c)=>f.check?`<option value="">— L’équipe coche —</option><option value="coche" ${c.src==='coche'?'selected':''}>Toujours cochée</option>`
     :CZ_SRC.map(([k,l])=>`<option value="${k}" ${c.src===k?'selected':''}>${esc(l)}</option>`).join('');
-  const label=f=>esc(f.alt||f.name);
+  const label=f=>esc(czLabel(f));
   openModal(`<h3 id="modal-title">Pré-remplir : ${esc(d.titre)}</h3><div id="cz-wrap">
     ${F.fields.length?'':`<div class="cz-warn">Ce PDF n’a pas de cases à remplir : il ne peut pas être pré-rempli. Il reste imprimable tel quel depuis Documents.</div>`}
     <div class="fieldgrid">
@@ -6603,6 +6648,7 @@ async function cerfaSetup(d){
       <label class="field"><span>Où l’envoyer <small>(fiche de l’annuaire)</small></span><input class="in" id="cz-part" list="cz-parts" value="${esc((annuPart(C.partenaire)||{}).nom||'')}" placeholder="chercher dans l’annuaire"><datalist id="cz-parts">${ANNU.partenaires.map(x=>`<option value="${esc(x.nom)}">`).join('')}</datalist></label>
       <label class="field"><span>Précisions <small>(facultatif)</small></span><textarea class="in" id="cz-envoi" rows="2">${esc(C.envoi||'')}</textarea></label>
     </div>
+    <div class="cz-warn cz-empty" id="cz-empty" role="status" hidden></div>
     <div class="row between"><div class="row"><button class="primary" id="cz-ok">${first?'Proposer ce Cerfa à l’équipe':'Enregistrer'}</button><button class="secondary" id="cz-test">Essayer</button><button class="secondary" data-close>Annuler</button></div>
       ${first?'':`<button class="ghost danger" id="cz-off">Ne plus le proposer</button>`}</div></div>`,'wide czdlg');
   const W=$('#cz-wrap'), cv=$('#cz-cv'); let shown=0, pageImg=null;
@@ -6612,7 +6658,7 @@ async function cerfaSetup(d){
     if(!pageImg) return; cv.width=pageImg.c.width; cv.height=pageImg.c.height; const g=cv.getContext('2d'); g.drawImage(pageImg.c,0,0);
     const [x1,y1,x2,y2]=pageImg.vp.convertToViewportRectangle(f.rect); g.lineWidth=3; g.strokeStyle='#E9A23B'; g.fillStyle='rgba(233,162,59,.22)';
     const rx=Math.min(x1,x2)-3, ry=Math.min(y1,y2)-3, rw=Math.abs(x2-x1)+6, rh=Math.abs(y2-y1)+6; g.fillRect(rx,ry,rw,rh); g.strokeRect(rx,ry,rw,rh);
-    $('#cz-pg').textContent=`Page ${f.page} · ${f.alt||f.name}`; };
+    $('#cz-pg').textContent=`Page ${f.page} · ${czLabel(f)}`; };
   if(F.fields.length) draw(0);
   W.addEventListener('mouseover',e=>{ const r=e.target.closest('.cz-f'); if(r) draw(+r.dataset.fi); });
   W.addEventListener('focusin',e=>{ const r=e.target.closest('.cz-f'); if(r) draw(+r.dataset.fi); });
@@ -6621,14 +6667,30 @@ async function cerfaSetup(d){
     const fiche={}; W.querySelectorAll('[data-ci]').forEach(i=>{ if(i.value.trim()) fiche[i.dataset.ci]=i.value.trim(); });
     const pn=$('#cz-part').value.trim(), part=ANNU.partenaires.find(x=>x.nom===pn);
     return {cerfa:{numero:$('#cz-num').value.trim(),rubrique:$('#cz-rub').value,champs,pieces:$('#cz-pieces').value.trim(),partenaire:part?part.id:'',envoi:$('#cz-envoi').value.trim(),verifie:$('#cz-ver').checked?today():(C.verifie||'')},fiche}; };
-  $('#cz-test').onclick=async()=>{ const {cerfa,fiche}=read(), oldF=PAR.fiche; PAR.fiche=fiche; try{ const r=await czFill({...d,cerfa}); previewUrl(URL.createObjectURL(r.blob),'Essai — '+d.titre); }catch(e){ toast('Essai impossible : '+(e.message||e)); } finally{ PAR.fiche=oldF; } };
+  const emptyNow=()=>{ const {cerfa,fiche}=read(), oldF=PAR.fiche; PAR.fiche=fiche; try{ return czPlan(cerfa.champs).empty; } finally{ PAR.fiche=oldF; } };
+  const showEmpty=()=>{ const e=emptyNow(), box=$('#cz-empty'); if(!box) return; box.hidden=!e.length;
+    box.innerHTML=e.length?`<span>${esc(czEmptyTxt(e).replace('Réglages › Structure','« Infos de la structure » ci-dessus (ou plus tard dans Réglages › Structure)'))}.</span>`:''; };
+  W.addEventListener('input',e=>{ if(e.target.closest('[data-ci],[data-fx]')) showEmpty(); }); W.addEventListener('change',showEmpty); showEmpty();
+  $('#cz-test').onclick=async()=>{ const {cerfa,fiche}=read(), oldF=PAR.fiche; PAR.fiche=fiche; if(!czCharsOk(d,cerfa.champs)){ PAR.fiche=oldF; return; } try{ const r=await czFill({...d,cerfa}); previewUrl(URL.createObjectURL(r.blob),'Essai — '+d.titre); }catch(e){ toast('Essai impossible : '+(e.message||e)); } finally{ PAR.fiche=oldF; } };
   $('#cz-ok').onclick=async()=>{ const {cerfa,fiche}=read(); const before=d.cerfa, bf=PAR.fiche;
     d.cerfa=cerfa; PAR.fiche=fiche;
-    if(await run(async()=>{ await saveData(); await saveParams(); },first?'Le Cerfa est proposé dans Formulaires':'Cerfa enregistré')){ closeModal(); renderForms(); if(typeof renderDocs==='function') renderDocs(); }
+    if(await run(async()=>{ await saveData(); await saveParams(); },first?'Le Cerfa est proposé dans Formulaires':'Cerfa enregistré')){ closeModal(); renderForms(); if(typeof renderDocs==='function') renderDocs();
+      const e=czPlan(cerfa.champs).empty; if(e.length) czEmptyModal(d,e,first); }
     else{ d.cerfa=before; PAR.fiche=bf; } };
   const off=$('#cz-off'); if(off) off.onclick=()=>askConfirm('Ne plus proposer ce Cerfa ?','Il reste dans Documents, sans pré-remplissage.','Retirer',async()=>{ const b=d.cerfa; delete d.cerfa; if(!await run(saveData,'Cerfa retiré des formulaires')) d.cerfa=b; renderForms(); });
 }
 
+
+/* Après « Proposer ce Cerfa » : l'admin sait quelles cases l'équipe trouvera vides, et où les compléter */
+function czEmptyModal(d,e,first){
+  const reg=e.some(x=>czWhere(x.src)==='Réglages › Structure');
+  openModal(`<h3 id="modal-title">${first?'Cerfa proposé à l’équipe':'Cerfa enregistré'}, avec des cases vides</h3>
+    <p class="dv-sub">${esc(czEmptyTxt(e))}.</p>
+    <p>En attendant, l’équipe devra ${e.length>1?'les':'la'} remplir à la main sur « ${esc(d.titre)} ».</p>
+    <div class="btns">${reg?`<button class="primary" id="cze-go" data-autofocus>Ouvrir Réglages › Structure</button>`:`<button class="primary" id="cze-edit" data-autofocus>Revoir le pré-remplissage</button>`}<button class="secondary" data-close>Plus tard</button></div>`);
+  const g=$('#cze-go'); if(g) g.onclick=()=>{ closeModal(); gotoSetting('structure'); };
+  const ed=$('#cze-edit'); if(ed) ed.onclick=()=>{ closeModal(); cerfaSetup(d); };
+}
 
 /* ---------- Vérifier les Cerfa (bouton admin) et préparer une nouvelle version ----------
    Librejo lit une liste publique (cerfa.json, tenue à jour chaque mois par un robot à partir des
@@ -6639,7 +6701,7 @@ const CZ_LIST_DEFAULT='https://raw.githubusercontent.com/julienaron/librejo/main
 async function cerfaCheck(){
   const docs=cerfaDocs();
   openModal(`<h3 id="modal-title">Vérifier les Cerfa</h3><div id="cc-wrap">
-    <p class="m-0">Librejo lit la liste publique des Cerfa en vigueur et la compare aux ${docs.length} Cerfa proposés à l’équipe. <b>Il ne fait que lire : rien n’est envoyé.</b> Aucune nouvelle version n’est installée sans votre accord.</p>
+    <p class="m-0">Librejo lit la liste publique des Cerfa en vigueur et ${docs.length>1?`la compare aux ${docs.length} Cerfa proposés à l’équipe`:docs.length?'la compare au Cerfa proposé à l’équipe':'la compare aux Cerfa proposés à l’équipe (aucun pour l’instant)'}. <b>Il ne fait que lire : rien n’est envoyé.</b> Aucune nouvelle version n’est installée sans votre accord.</p>
     <label class="field"><span>Adresse de la liste <small>(fournie avec Librejo ; à changer seulement si on vous le demande)</small></span><input class="in" id="cc-url" value="${esc(PAR.cerfaListe||CZ_LIST_DEFAULT)}" placeholder="https://…/cerfa.json" spellcheck="false"></label>
     <div id="cc-res"></div>
     <div class="btns"><button class="primary" id="cc-go">Vérifier maintenant</button><button class="secondary" data-close>Fermer</button></div></div>`,'wide');
@@ -6660,7 +6722,7 @@ async function cerfaCheck(){
       ${rows.length?`<div class="cc-list">${rows.map((r,i)=>`<div class="cc-row ${r.cls}"><span><b>${esc(r.d.titre)}</b><small>${r.txt}</small></span>
         ${r.rem?`<span class="row">${r.rem.page?`<a class="linkbtn" href="${esc(r.rem.page)}" target="_blank" rel="noopener">Page officielle ›</a>`:''}<button class="primary sm" data-ccup="${i}">Préparer la mise à jour</button></span>`:''}</div>`).join('')}</div>`
       :'<p>Aucun Cerfa n’est encore proposé à l’équipe.</p>'}
-      ${okDocs.length?`<p class="hint">Les Cerfa à jour sont notés « vérifiés aujourd’hui » : le rappel des 3 mois repart de zéro.</p>`:''}`;
+      ${okDocs.length?`<p class="hint">${okDocs.length>1?'Les Cerfa à jour sont notés « vérifiés aujourd’hui »':'Le Cerfa à jour est noté « vérifié aujourd’hui »'} : le rappel des 3 mois repart de zéro.</p>`:''}`;
     res.onclick=e=>{ const b=e.target.closest('[data-ccup]'); if(b){ const r=rows[+b.dataset.ccup]; cerfaUpdate(r.d,r.rem); } };
   };
   $('#cc-go').click();
@@ -6684,8 +6746,8 @@ async function cerfaUpdate(d,rem){
     Object.entries(d.cerfa.champs||{}).forEach(([name,c])=>{ if(!c||!c.src) return; const alt=c.alt||altOld[name]||'';
       let nf=NF.fields.find(f=>f.name===name); if(nf&&alt&&nf.alt&&anKey(nf.alt)!==anKey(alt)) nf=null; // même nom mais autre case : on ne reprend pas
       if(!nf&&alt) nf=NF.fields.find(f=>!champs[f.name]&&f.alt&&anKey(f.alt)===anKey(alt));
-      if(nf){ champs[nf.name]={...c,alt:nf.alt}; repris.push(nf.alt||nf.name); } else perdus.push(alt||name); });
-    NF.fields.forEach(f=>{ if(champs[f.name]) return; const g=czGuessField(f); if(g&&!Object.values(champs).some(c=>c.src===g&&!['ville','date'].includes(g))){ champs[f.name]={src:g,alt:f.alt}; devines.push(f.alt||f.name); } });
+      if(nf){ champs[nf.name]={...c,alt:nf.alt}; repris.push(czLabel(nf)); } else perdus.push(czLabel({alt,name})); });
+    NF.fields.forEach(f=>{ if(champs[f.name]) return; const g=czGuessField(f); if(g&&!Object.values(champs).some(c=>c.src===g&&!['ville','date'].includes(g))){ champs[f.name]={src:g,alt:f.alt}; devines.push(czLabel(f)); } });
     newBuf=buf; newName=name; d._cuChamps=champs;
     $('#cu-get').hidden=true;
     $('#cu-cmp').innerHTML=`<div class="cu-sum"><span class="im-st up">${repris.length} case${repris.length>1?'s':''} reprise${repris.length>1?'s':''}</span>
@@ -7662,9 +7724,9 @@ function invRows(){
 const INV_COLS=[['type','Type'],['titre','Titre'],['categorie','Catégorie'],['sous','Sous-dossier'],['version','Version'],['date','Date du document'],['ajoute','Ajouté le'],['modifie','Modifié le'],
   ['format','Format'],['taille','Taille'],['emplacement','Fichier, lien ou contenu'],['archives','Versions archivées'],['epingle','Épinglé'],['equipe','Proposé à l’équipe'],['cerfa','N° Cerfa'],['cerfaVerif','Cerfa vérifié le'],['modele','Modèle d’origine'],['motscles','Mots-clés']];
 function inventaire(){
-  const R=invRows(), n=t=>R.filter(r=>r.type===t).length;
+  const R=invRows(), c=t=>R.filter(r=>r.type===t).length, pl=(k,a,b)=>`${k} ${k>1?b:a}`, nm=R.filter(r=>r.equipe==='masqué').length;
   openModal(`<h3 id="modal-title">Inventaire de votre Librejo</h3>
-    <p class="m-0">${n('Document')} documents, ${n('Cerfa (PDF à cases)')} Cerfa, ${n('Lien')} liens, ${n('Formulaire')} formulaires créés, ${n('Formulaire intégré')} formulaires intégrés (dont ${R.filter(r=>r.equipe==='masqué').length} masqués).</p>
+    <p class="m-0">${pl(c('Document'),'document','documents')}, ${c('Cerfa (PDF à cases)')} Cerfa, ${pl(c('Lien'),'lien','liens')}, ${pl(c('Formulaire'),'formulaire créé','formulaires créés')}, ${pl(c('Formulaire intégré'),'formulaire intégré','formulaires intégrés')}${nm?` (dont ${pl(nm,'masqué','masqués')})`:''}.</p>
     <p class="hint">Avec, pour chacun : catégorie, version, dates, format, taille, emplacement, versions archivées, n° et date de vérification des Cerfa. Utile pour un audit, une évaluation, ou pour faire relire les documents par la direction.</p>
     <div class="inv-choix"><button class="dv-act" id="inv-xls">${ICON.dl}Tableur (Excel)<small>Toutes les colonnes, à trier et filtrer</small></button>
       <button class="dv-act" id="inv-pdf">${ICON.file}PDF à imprimer<small>Liste lisible, par type et catégorie</small></button></div>
