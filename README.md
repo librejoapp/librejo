@@ -19,7 +19,7 @@ La boîte à outils documentaire des petites structures sociales et médico-soci
 
 ## Contenu du dépôt
 
-- `index.html`, `boot.js`, `sw.js`, `app/` : l'application (`app/lib/ocr` : lecture des PDF scannés, Tesseract.js, licence Apache 2.0 ; `app/polices-pdf` : polices libres OFL).
+- `index.html`, `boot.js`, `sw.js`, `app/` : l'application (`app/lib/ocr` : lecture des PDF scannés, Tesseract.js, licence Apache 2.0 ; `app/polices-pdf` : polices libres OFL, dont les polices de repli pour le latin étendu, le grec, le cyrillique, l'arabe et le géorgien ; `app/lib/bidi.min.js` : ordre d'affichage de l'arabe, bidi-js, licence MIT).
 - `test/Librejo-dossier-test/` : dossier de structure fictive pour les essais.
 - `cerfa/` et `.github/workflows/cerfa.yml` : le robot qui publie chaque mois la liste des Cerfa (données ouvertes de Service-Public, DILA). L'application lit pour l'instant la liste publiée sur `julienaron/librejo`.
 - `docs/BRIEF.md` : l'état du projet, les décisions et ce qui reste à faire.

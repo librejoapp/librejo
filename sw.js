@@ -1,8 +1,9 @@
 // Librejo : met en cache le code du site pour fonctionner hors ligne. Les documents de la structure ne passent jamais par ici.
-const VERSION='librejo-proto3i';
+const VERSION='librejo-proto3j';
 const BASE=['./','index.html','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
  'app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js', // PDF : créer, assembler, remplir
- 'app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-preview.min.js','app/polices-pdf/repli.js']; // aperçus, impression, caractères des PDF
+ 'app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-preview.min.js','app/polices-pdf/repli.js', // aperçus, impression, caractères des PDF
+ 'app/polices-pdf/arabe.js','app/polices-pdf/georgien.js','app/lib/bidi.min.js']; // arabe et géorgien : chargés par la page seulement si un texte en a besoin
 /* Seuls les fichiers de l'application vont au cache : la page, ses scripts, ses icônes, ses bibliothèques
    et ses polices. Tout le reste du site (dossier de test, documents d'exemple, robot des Cerfa…) n'y va
    jamais, et les réglages d'une structure non plus. */

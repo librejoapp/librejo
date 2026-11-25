@@ -1802,57 +1802,136 @@ if(window.jspdf&&!window.__ljBS){ window.__ljBS=true; window.jspdf.jsPDF.API.eve
    Helvetica et Times (polices standard du PDF) n'écrivent que le jeu WinAnsi (français, Europe de l'Ouest),
    et les polices embarquées sont réduites au latin courant : « NGUYỄN Thị Şahin » sortait « NGUYÄN ThË ^ahin ».
    Chaque texte d'un PDF (text, splitTextToSize, largeur) est vérifié : s'il contient un caractère que la police
-   choisie ne sait pas dessiner, ce texte passe sur la police de repli (app/polices-pdf/repli.js : latin étendu,
-   vietnamien, grec, cyrillique, symboles). Ce qu'aucune police ne sait dessiner (emoji, arabe, chinois…) est noté :
-   deliver() refuse alors le document et dit quel caractère retirer, dans quel champ. */
+   choisie ne sait pas dessiner, ce texte passe sur une police de repli (app/polices-pdf) :
+   - repli.js : latin étendu, vietnamien, grec, cyrillique, symboles (chargée au démarrage) ;
+   - georgien.js : géorgien + latin ; arabe.js : arabe (persan et ourdou de base) + latin. Ces deux-là ne sont
+     chargées que si un texte en a besoin (saisie, réglages, ou au plus tard à la production du PDF).
+   L'arabe est mis en forme ici (lettres liées : formes isolée, initiale, médiane, finale, lam-alif), puis remis
+   dans l'ordre d'affichage par l'algorithme bidirectionnel Unicode (app/lib/bidi.min.js) : chaque morceau garde
+   son sens, les chiffres restent de gauche à droite. Un paragraphe arabe coupé en lignes est aligné à droite.
+   Ce qu'aucune police ne sait dessiner (emoji, chinois, hébreu…) est noté : deliver() refuse alors le document
+   et dit quel caractère retirer, dans quel champ. */
 const LJ_WINANSI=new Set([...Array(95)].map((_,i)=>32+i).concat([...Array(96)].map((_,i)=>160+i),
   [0x20AC,0x201A,0x192,0x201E,0x2026,0x2020,0x2021,0x2C6,0x2030,0x160,0x2039,0x152,0x17D,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0x2DC,0x2122,0x161,0x203A,0x153,0x17E,0x178]));
-const LJ_INVISIBLE=/[­​-‏⁠︀-️﻿]/g;
-const ljPdfStr=s=>String(s??'').normalize('NFC').replace(LJ_INVISIBLE,'');
-let LJ_REPLI=null, LJ_REPLI_LOAD=null;
-function loadPdfRepli(){
-  if(!LJ_REPLI_LOAD) LJ_REPLI_LOAD=((window.LJ_PDF_FONTS||{}).repli?Promise.resolve():loadScript('app/polices-pdf/repli.js'))
-    .then(()=>{ const F=window.LJ_PDF_FONTS.repli; LJ_REPLI=new Set(); (F.couvre||[]).forEach(([a,b])=>{ for(let c=a;c<=b;c++) LJ_REPLI.add(c); }); })
-    .catch(e=>{ LJ_REPLI_LOAD=null; throw e; });
-  return LJ_REPLI_LOAD;
-}
-/* Un caractère est-il imprimable par au moins une police de Librejo ? (pour le garde-fou) */
-const ljPrintable=cp=>cp<32||LJ_WINANSI.has(cp)||!!(LJ_REPLI&&LJ_REPLI.has(cp));
+const LJ_AR=/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFC]/, LJ_KA=/[\u10A0-\u10FF\u1C90-\u1CBF\u2D00-\u2D2F]/;
+const LJ_INVISIBLE=/[\u00AD\u200B\u2060\uFE00-\uFE0F\uFEFF]/g, LJ_JOIN=/[\u200C-\u200F]/g, LJ_BIDI_CTRL=/[\u200C-\u200F\u202A-\u202E\u2066-\u2069]/g;   // ZWNJ, ZWJ, LRM, RLM : utiles à l'arabe, retirés ailleurs
+const ljPdfStr=s=>{ s=String(s??'').normalize('NFC').replace(LJ_INVISIBLE,''); return LJ_AR.test(s)?s:s.replace(LJ_JOIN,''); };
+const LJ_REPLIS={repli:{f:'app/polices-pdf/repli.js'},georgien:{f:'app/polices-pdf/georgien.js',re:LJ_KA},arabe:{f:'app/polices-pdf/arabe.js',re:LJ_AR,lib:'app/lib/bidi.min.js'}};
+let LJ_REPLI=null, LJ_ARABE=null, LJ_BIDI=null;
+function loadPdfRepli(k='repli'){ const R=LJ_REPLIS[k];
+  if(!R.load) R.load=Promise.all([(window.LJ_PDF_FONTS||{})[k]?0:loadScript(R.f),R.lib&&!window.bidi_js?loadScript(R.lib):0])
+    .then(()=>{ const F=window.LJ_PDF_FONTS[k], s=new Set(); (F.couvre||[]).forEach(([a,b])=>{ for(let c=a;c<=b;c++) s.add(c); }); R.set=s;
+      if(k==='repli') LJ_REPLI=s;
+      if(k==='arabe'){ LJ_BIDI=window.bidi_js(); LJ_ARABE={formes:new Map(Object.entries(F.formes).map(([c,f])=>[+c,f])),lamalef:new Map(Object.entries(F.lamalef).map(([c,f])=>[+c,f]))}; }
+      if(k!=='repli') liveSoon(0); })   // l'aperçu en direct se redessine avec la bonne police
+    .catch(e=>{ R.load=null; throw e; });
+  return R.load; }
+/* Écritures repérées dans un texte (saisie, réglages) : leur police est chargée d'avance */
+function ljWantScripts(s){ if(!s) return; for(const k of ['arabe','georgien']){ const R=LJ_REPLIS[k]; if(!R.set&&R.re.test(s)) loadPdfRepli(k).catch(()=>{}); } }
+document.addEventListener('input',e=>{ const v=e.target&&e.target.value; if(typeof v==='string') ljWantScripts(v); },true);
+try{ ljWantScripts(JSON.stringify([window.DOCUBUS_PARAMETRES,window.DOCUBUS_DONNEES,window.DOCUBUS_ANNUAIRE])); }catch(e){}
+/* À l'écran aussi : chaque champ texte prend le sens de ce qu'on y écrit (arabe à droite, français à gauche) */
+const LJ_DIR_SEL='input:not([dir]):not([type]),input[type=text]:not([dir]),input[type=search]:not([dir]),textarea:not([dir])';
+const ljDirAuto=n=>{ if(n.nodeType!==1) return; if(n.matches(LJ_DIR_SEL)) n.setAttribute('dir','auto'); n.querySelectorAll(LJ_DIR_SEL).forEach(el=>el.setAttribute('dir','auto')); };
+ljDirAuto(document.body); new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(ljDirAuto))).observe(document.body,{childList:true,subtree:true});
+/* Un caractère est-il imprimable par au moins une police de Librejo ? */
+const ljPrintable=cp=>cp<32||LJ_WINANSI.has(cp)||Object.values(LJ_REPLIS).some(R=>R.set&&R.set.has(cp));
 function ljFontHas(f,cp){
   if(cp<32) return true;
   if(f&&f.encoding==='Identity-H'){ const u=f.metadata&&f.metadata.cmap&&f.metadata.cmap.unicode; return !!(u&&u.codeMap[cp]); }
   return LJ_WINANSI.has(cp);
 }
+/* Arabe : lettres liées. Le texte reste dans l'ordre logique ; chaque lettre prend sa forme de présentation
+   selon ses voisines (les signes diacritiques sont transparents, le tatweel et le ZWJ lient, le ZWNJ coupe). */
+const ljArMark=c=>(c>=0x610&&c<=0x61A)||(c>=0x64B&&c<=0x65F)||c===0x670||(c>=0x6D6&&c<=0x6DC)||(c>=0x6DF&&c<=0x6E4)||c===0x6E7||c===0x6E8||(c>=0x6EA&&c<=0x6ED);
+function ljShape(s){
+  if(!LJ_ARABE||!LJ_AR.test(s)) return s;
+  const F=LJ_ARABE.formes, LA=LJ_ARABE.lamalef, cs=[...s].map(ch=>ch.codePointAt(0)), n=cs.length;
+  const jt=c=>ljArMark(c)?'T':(c===0x640||c===0x200D)?'C':F.has(c)?(F.get(c)[2]?'D':F.get(c)[1]?'R':'U'):'U';
+  const near=(i,d)=>{ for(let j=i+d;j>=0&&j<n;j+=d){ const t=jt(cs[j]); if(t!=='T') return [t,j]; } return ['U',-1]; };
+  let o='';
+  for(let i=0;i<n;i++){ const c=cs[i], f=F.get(c); if(!f){ o+=String.fromCodePoint(c); continue; }
+    const p=near(i,-1)[0], jp=p==='D'||p==='C', [nt,nj]=near(i,1);
+    if(c===0x644&&nj>=0&&LA.has(cs[nj])){ o+=String.fromCharCode(LA.get(cs[nj])[jp?1:0]); for(let j=i+1;j<nj;j++) o+=String.fromCodePoint(cs[j]); i=nj; continue; }
+    const jn=jt(c)==='D'&&(nt==='D'||nt==='R'||nt==='C'), k=jp&&jn?3:jp?1:jn?2:0;
+    o+=String.fromCharCode(f[k]||f[jp?1:0]||f[0]); }
+  return o;
+}
+/* Ordre d'affichage d'une ligne (algorithme bidirectionnel Unicode) ; lvl : sens du paragraphe (0 gauche à droite,
+   1 droite à gauche), sinon déduit de la première lettre. Les parenthèses des passages arabes sont retournées. */
+function ljVisual(s,lvl){
+  s=ljShape(s); if(!LJ_BIDI) return s.replace(LJ_BIDI_CTRL,'');
+  /* un numéro en plusieurs groupes (04 91 00 00 00) reste d'un seul tenant, de gauche à droite, même dans une phrase
+     arabe : ses espaces deviennent insécables (séparateurs de nombre pour l'algorithme), et dans un paragraphe arabe
+     il est isolé en entier (indicatif « +33 » compris) */
+  const rp=lvl==null?ljParaLevel(s):lvl;
+  s=s.replace(/\+?\d+(?:[ \u00A0.\-]\d+)+/g,m=>{ m=m.replace(/ (?=\d)/g,'\u00A0'); return rp?'\u2066'+m+'\u2069':m; });
+  const emb=LJ_BIDI.getEmbeddingLevels(s,lvl==null?undefined:lvl?'rtl':'ltr'), ch=s.split('');
+  LJ_BIDI.getMirroredCharactersMap(s,emb.levels).forEach((c,i)=>{ ch[i]=c; });
+  LJ_BIDI.getReorderSegments(s,emb).forEach(([a,b])=>{ const r=ch.slice(a,b+1).reverse(); for(let i=a;i<=b;i++) ch[i]=r[i-a]; });
+  for(let i=0;i+1<ch.length;i++) if(/[\uDC00-\uDFFF]/.test(ch[i])&&/[\uD800-\uDBFF]/.test(ch[i+1])){ const t=ch[i]; ch[i]=ch[i+1]; ch[i+1]=t; i++; }
+  return ch.join('').replace(LJ_BIDI_CTRL,'');
+}
+const ljParaLevel=p=>{ try{ return LJ_BIDI.getEmbeddingLevels(p).paragraphs[0].level&1; }catch(e){ return 0; } };
 /* Caractères qu'aucune police n'a su dessiner pendant la dernière production de PDF */
 const LJ_PDF_MISS=new Set(); let LJ_PDF_T0=0;
-if(window.jspdf&&!window.__ljTxt){ window.__ljTxt=true; window.jspdf.jsPDF.API.events.push(['initialized',function(){
+if(window.jspdf&&!window.__ljTxt){ window.__ljTxt=true;
+  /* jsPDF met en forme l'arabe et réordonne chaque texte lui-même, mais sa mise en forme refait des ligatures
+     lam-alif sur un texte déjà réordonné (« سالم » deviendrait « سلام ») : Librejo s'en charge ci-dessus. */
+  const API=window.jspdf.jsPDF.API, E=API.events;
+  for(let i=E.length-1;i>=0;i--){ const [n,f]=E[i]; if((n==='preProcessText'&&f===API.processArabic)||(n==='postProcessText'&&/doBidiReorder/.test(String(f)))) E.splice(i,1); }
+  API.processArabic=null;
+  window.jspdf.jsPDF.API.events.push(['initialized',function(){
   const doc=this, now=Date.now(); if(now-LJ_PDF_T0>800) LJ_PDF_MISS.clear(); LJ_PDF_T0=now;
-  const T=doc.text, S=doc.splitTextToSize, W=doc.getStringUnitWidth, force=new Set();
+  const T=doc.text, S=doc.splitTextToSize, W=doc.getStringUnitWidth, force=new Set(), rtl=new Map();
   const prep=txt=>{ const f=doc.internal.getFont(); let need=false;
     const one=s=>{ s=ljPdfStr(s); if(force.has(s)) need=true; let o='';
       for(const ch of s){ const cp=ch.codePointAt(0);
         if(ljFontHas(f,cp)) o+=ch;
-        else if(/\s/.test(ch)) o+=ljFontHas(f,0xA0)?' ':' ';   // espace fine, cadratin… : espace insécable
+        else if(/\s/.test(ch)) o+=ljFontHas(f,0xA0)?' ':' ';   // espace fine, cadratin… : espace insécable
         else { need=true; o+=ch; } }
       return o; };
     return {t:Array.isArray(txt)?txt.map(one):one(txt),need}; };
   const added=new Set();
-  const repli=t=>{ const F=(window.LJ_PDF_FONTS||{}).repli, cur=doc.internal.getFont(), size=doc.getFontSize();
+  const repli=t=>{ const all=[].concat(t).join('\n'), cur=doc.internal.getFont(), size=doc.getFontSize();
+    let k=LJ_AR.test(all)?'arabe':LJ_KA.test(all)?'georgien':'repli';
+    if(!(window.LJ_PDF_FONTS||{})[k]){ ljWantScripts(all); k='repli'; }
+    const F=(window.LJ_PDF_FONTS||{})[k], fam='lj-'+k;
     if(F){ const s0=String(cur.fontStyle||'normal').toLowerCase(), b=/bold/.test(s0), i=/italic|oblique/.test(s0), st=b&&i?'bolditalic':b?'bold':i?'italic':'normal';
-      if(!added.has(st)){ added.add(st); const n=`lj-repli-${st}.ttf`;   // seuls les styles utilisés vont dans le PDF
-        try{ doc.addFileToVFS(n,F[st]||(st==='bolditalic'?F.bold:F.normal)); doc.addFont(n,'lj-repli',st); }catch(e){} }
-      doc.setFont('lj-repli',st);
+      if(!added.has(fam+st)){ added.add(fam+st); const n=`${fam}-${st}.ttf`;   // seuls les styles utilisés vont dans le PDF
+        try{ doc.addFileToVFS(n,F[st]||(st==='bolditalic'?F.bold:F.normal)); doc.addFont(n,fam,st); }catch(e){} }
+      doc.setFont(fam,st);
       /* même hauteur d'x que la police remplacée, pour que le texte ne paraisse pas plus petit */
-      const k={helvetica:1.08,times:.96}[String(cur.fontName).toLowerCase()]||1; if(k!==1) doc.setFontSize(size*k); }
-    const f=doc.internal.getFont(); [].concat(t).forEach(s=>{ for(const ch of String(s)) if(!/\s/.test(ch)&&!ljFontHas(f,ch.codePointAt(0))) LJ_PDF_MISS.add(ch); });
+      const z={helvetica:1.08,times:.96}[String(cur.fontName).toLowerCase()]||1; if(z!==1) doc.setFontSize(size*z); }
+    const f=doc.internal.getFont(); [].concat(t).forEach(s=>{ for(const ch of String(s)) if(!/[\s\u200C-\u200F]/.test(ch)&&!ljFontHas(f,ch.codePointAt(0))) LJ_PDF_MISS.add(ch); });
     return {cur,size}; };
   const around=(txt,fn,keep)=>{ const p=prep(txt); if(!p.need) return fn(p.t);
     const {cur,size}=repli(p.t); try{ const r=fn(p.t); if(keep&&Array.isArray(r)) r.forEach(l=>force.add(l)); return r; }
     finally{ doc.setFont(cur.fontName,cur.fontStyle); if(doc.getFontSize()!==size) doc.setFontSize(size); } };
-  doc.text=function(txt,...a){ return (typeof txt==='string'||Array.isArray(txt))?around(txt,t=>T.call(doc,t,...a)):T.call(doc,txt,...a); };
-  /* les lignes coupées sur la police de repli seront écrites avec elle (sinon elles déborderaient) */
-  doc.splitTextToSize=function(txt,...a){ const o=a[1]||{}; return (o.fontName||o.widths)?S.call(doc,txt,...a):around(txt,t=>S.call(doc,t,...a),true); };
-  doc.getStringUnitWidth=function(txt,o){ return (o&&o.font)?W.call(doc,txt,o):around(txt,t=>W.call(doc,t,o)); };
+  const arabic=t=>!!LJ_ARABE&&[].concat(t).some(s=>LJ_AR.test(s));
+  /* Le PDF garde, pour le copier-coller et la lecture d'écran, la lettre de base plutôt que sa forme liée */
+  const toUni=v=>{ const f=doc.internal.getFont(), m=f.metadata; if(!m||!m.toUnicode||!m.characterToGlyph) return;
+    for(const ch of v){ const c=ch.charCodeAt(0); if((c>=0xFB50&&c<=0xFDFF)||(c>=0xFE70&&c<=0xFEFC)){ const b=ch.normalize('NFKC'); if(b.length===1) m.toUnicode[m.characterToGlyph(c)]=b.charCodeAt(0); } } };
+  doc.text=function(txt,...a){
+    if(!(typeof txt==='string'||Array.isArray(txt))) return T.call(doc,txt,...a);
+    return around(txt,t=>{ if(!arabic(t)) return T.call(doc,t,...a);
+      const ls=[].concat(t).flatMap(s=>String(s).split(/\r?\n/)), info=ls.map(l=>rtl.get(l));
+      const v=ls.map((l,i)=>ljVisual(l,info[i]?info[i].lvl:null));
+      let [x,y,o,...rest]=a; o=Object.assign({},o||{});
+      /* paragraphe arabe coupé en lignes : aligné à droite, sur la largeur demandée */
+      if((!o.align||o.align==='left')&&info.every(z=>z&&z.lvl===1)&&typeof x==='number'){ o.align='right'; x+=Math.max(...info.map(z=>z.w)); }
+      const r=T.call(doc,v.length>1?v:v[0],x,y,o,...rest); v.forEach(toUni); return r; }); };
+  /* les lignes coupées sur une police de repli seront écrites avec elle (sinon elles déborderaient) ;
+     un texte arabe est coupé d'après la largeur de ses lettres liées, dans l'ordre logique */
+  doc.splitTextToSize=function(txt,...a){ const o=a[1]||{}; if(o.fontName||o.widths) return S.call(doc,txt,...a);
+    return around(txt,t=>{ if(!arabic(t)) return S.call(doc,t,...a);
+      const w=a[0], fs=doc.internal.getFontSize(), sf=doc.internal.scaleFactor, ww=s=>W.call(doc,ljShape(s))*fs/sf, out=[];
+      [].concat(t).forEach(par=>String(par).split(/\r?\n/).forEach(p=>{ const lvl=ljParaLevel(p); let line=null;
+        const push=l=>{ out.push(l); rtl.set(l,{lvl,w}); };
+        p.split(' ').forEach(wd=>{ if(line===null){ line=wd; return; } const c=line+' '+wd; if(ww(c)>w){ push(line); line=wd; } else line=c; });
+        push(line||''); }));
+      return out; },true); };
+  doc.getStringUnitWidth=function(txt,o){ return (o&&o.font)?W.call(doc,txt,o):around(txt,t=>W.call(doc,ljShape(t),o)); };
 }]); }
 /* Géométrie : PL = bord gauche de la page (logo, en-tête, bas de page) ; L = début du texte (décalé si marge à gauche) */
 const MARGE_W={etroite:38,large:52};
@@ -3119,24 +3198,32 @@ function fieldLabel(el){
 }
 function pdfCharsOk(){
   if(!LJ_PDF_MISS.size) return true;
-  if(!LJ_REPLI){ loadPdfRepli().catch(()=>{}); openModal(`<h3 id="modal-title">Un instant</h3><p>Les polices des PDF finissent de se charger. Recommencez dans quelques secondes.</p><button class="secondary" data-close data-autofocus>OK</button>`); return false; }
+  /* une police de repli pas encore là (réseau lent, écriture repérée trop tard) : on la charge et on fait patienter */
+  const wait=Object.keys(LJ_REPLIS).filter(k=>{ const R=LJ_REPLIS[k]; return !R.set&&(!R.re||[...LJ_PDF_MISS].some(ch=>R.re.test(ch))); });
+  if(wait.length){ wait.forEach(k=>loadPdfRepli(k).catch(()=>{})); openModal(`<h3 id="modal-title">Un instant</h3><p>Les polices des PDF finissent de se charger. Recommencez dans quelques secondes.</p><button class="secondary" data-close data-autofocus>OK</button>`); return false; }
   const miss=[...LJ_PDF_MISS]; LJ_PDF_MISS.clear();
+  /* un caractère qu'une police sait dessiner, mais pas celle qu'a prise son texte : le texte mêle deux écritures
+     de polices différentes (l'arabe et le géorgien, par exemple) */
+  const mixCh=miss.filter(ch=>ljPrintable(ch.codePointAt(0))), badCh=miss.filter(ch=>!mixCh.includes(ch));
+  const oneFont=v=>{ const cs=[...v].filter(c=>!/[\s\u200C-\u200F]/.test(c)).map(c=>c.codePointAt(0)); return [LJ_WINANSI,...Object.values(LJ_REPLIS).map(R=>R.set).filter(Boolean)].some(S=>cs.every(c=>S.has(c))); };
   const seg=v=>{ try{ return [...new Intl.Segmenter('fr',{granularity:'grapheme'}).segment(v)].map(x=>x.segment); }catch(e){ return [...v]; } };
   const panel=document.querySelector('main>section.panel:not([hidden])')||document;
   const fields=[...panel.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),textarea')].filter(el=>el.value);
-  const found=[];
-  for(const el of fields){ const gs=[...new Set(seg(el.value.normalize('NFC')).filter(x=>miss.some(ch=>x.includes(ch))))];
-    if(gs.length) found.push({el,gs,g:gs[0],label:fieldLabel(el)||'un champ',at:el.value.indexOf(gs[0])}); }
-  const loose=miss.filter(ch=>!found.some(f=>f.gs.some(g=>g.includes(ch))));
+  const found=[], mixed=[];
+  for(const el of fields){ const v=el.value.normalize('NFC'), gs=[...new Set(seg(v).filter(x=>badCh.some(ch=>x.includes(ch))))];
+    if(gs.length) found.push({el,gs,g:gs[0],label:fieldLabel(el)||'un champ',at:el.value.indexOf(gs[0])});
+    else if(mixCh.some(ch=>v.includes(ch))&&!oneFont(v)) mixed.push({el,label:fieldLabel(el)||'un champ',at:-1}); }
+  const loose=miss.filter(ch=>!found.some(f=>f.gs.some(g=>g.includes(ch)))&&!(mixCh.includes(ch)&&mixed.some(f=>f.el.value.includes(ch))));
   const lines=found.slice(0,5).map(f=>{ const n=f.gs.length>1, l=f.gs.slice(0,8).join(' ')+(f.gs.length>8?' …':'');
       return `${n?'Les caractères':'Le caractère'} <b class="badch">${esc(l)}</b> dans « ${esc(f.label)} » ${n?'ne peuvent':'ne peut'} pas être imprimé${n?'s':''}.`; })
-    .concat(loose.length?[`${loose.length>1?'Les caractères':'Le caractère'} <b class="badch">${esc(loose.join(' '))}</b> ${loose.length>1?'ne peuvent':'ne peut'} pas être imprimé${loose.length>1?'s':''} (texte venu des Réglages, de l’annuaire ou du modèle : prévenez l’admin).`]:[]);
-  const plur=found.reduce((n,f)=>n+f.gs.length,0)+loose.length>1;
-  openModal(`<h3 id="modal-title">${plur?'Des caractères ne peuvent pas être imprimés':'Un caractère ne peut pas être imprimé'}</h3>
+    .concat(mixed.slice(0,3).map(f=>`« ${esc(f.label)} » mêle deux écritures qui ne s’impriment pas ensemble (l’arabe et le vietnamien, par exemple)\u202f: mettez-les dans deux champs, ou écrivez l’une en lettres latines.`))
+    .concat(loose.length?[`${loose.length>1?'Les caractères':'Le caractère'} <b class="badch">${esc(loose.join(' '))}</b> ${loose.length>1?'ne peuvent':'ne peut'} pas être imprimé${loose.length>1?'s':''} (texte venu des Réglages, de l’annuaire ou du modèle : prévenez l’admin).`]:[]);
+  const plur=found.reduce((n,f)=>n+f.gs.length,0)+loose.length>1, onlyMix=!found.length&&!loose.length;
+  openModal(`<h3 id="modal-title">${onlyMix?'Deux écritures dans un même champ':plur?'Des caractères ne peuvent pas être imprimés':'Un caractère ne peut pas être imprimé'}</h3>
     ${lines.length>1?`<ul class="errors">${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`:`<p class="dv-sub">${lines[0]}</p>`}
-    <p>${plur?'Retirez-les ou remplacez-les':'Retirez-le ou remplacez-le'}, puis recommencez. Les lettres accentuées de toutes les langues à alphabet latin (vietnamien compris), le grec et le cyrillique s’impriment ; les emoji et les autres écritures, non.</p>
-    <div class="btns"><button class="primary alt" id="bc-fix" data-autofocus>${found.length?'Corriger':'OK'}</button></div>`);
-  $('#bc-fix').onclick=()=>{ closeModal(); const f=found[0]; if(!f) return; const el=f.el;
+    ${onlyMix?'':`<p>${plur?'Retirez-les ou remplacez-les':'Retirez-le ou remplacez-le'}, puis recommencez. Les lettres accentuées de toutes les langues à alphabet latin (vietnamien compris), le grec, le cyrillique, l’arabe et le géorgien s’impriment\u202f; les emoji et les autres écritures (chinois, hébreu…), non.</p>`}
+    <div class="btns"><button class="primary alt" id="bc-fix" data-autofocus>${found.length||mixed.length?'Corriger':'OK'}</button></div>`);
+  $('#bc-fix').onclick=()=>{ closeModal(); const f=found[0]||mixed[0]; if(!f) return; const el=f.el;
     el.scrollIntoView({block:'center'}); el.focus(); try{ if(f.at>=0) el.setSelectionRange(f.at,f.at+f.g.length); }catch(e){} };
   return false;
 }
@@ -6607,7 +6694,7 @@ async function liveRefresh(){
     await page.render({canvasContext:off.getContext('2d'),viewport:vp}).promise; const n=pdf.numPages;
     // alternative texte : les lignes de la page, dans l'ordre de lecture
     let lines=[]; try{ const tc=await page.getTextContent(), rows={}; tc.items.forEach(it=>{ if(!it.str.trim()) return; const y=Math.round(it.transform[5]/3); (rows[y]=rows[y]||[]).push(it); });
-      lines=Object.keys(rows).map(Number).sort((a,c)=>c-a).map(y=>rows[y].sort((a,c)=>a.transform[4]-c.transform[4]).map(x=>x.str).join(' ').replace(/\s+/g,' ').trim()).filter(Boolean); }catch(e){}
+      lines=Object.keys(rows).map(Number).sort((a,c)=>c-a).map(y=>rows[y].sort((a,c)=>a.transform[4]-c.transform[4]).map(x=>x.str).join(' ').replace(/\s+/g,' ').replace(/[\uFB50-\uFDFF\uFE70-\uFEFC]/g,c=>c.normalize('NFKC')).trim()).filter(Boolean); }catch(e){}   // lam-alif : lettres de base
     pdf.destroy();
     const tx=b.querySelector('.lp-tx'); if(tx&&seq===LIVE.seq) tx.innerHTML=lines.length?lines.map(l=>`<p>${esc(l)}</p>`).join(''):'<p class="hint">Pas de texte lisible.</p>';
     if(seq!==LIVE.seq) return;
@@ -6678,7 +6765,7 @@ function czCharsOk(d,champs){ const bad=[];
   const one=b=>`${b.miss.length>1?'Les caractères':'Le caractère'} <b class="badch">${esc(b.miss.join(' '))}</b> de « ${esc(b.label)} » (${esc(b.where)}) ${b.miss.length>1?'ne peuvent':'ne peut'} pas être écrit${b.miss.length>1?'s':''} dans ce Cerfa.`;
   openModal(`<h3 id="modal-title">${bad.length>1||bad[0].miss.length>1?'Des caractères ne peuvent pas être écrits':'Un caractère ne peut pas être écrit'} dans le Cerfa</h3>
     ${bad.length>1?`<ul class="errors">${bad.map(b=>`<li>${one(b)}</li>`).join('')}</ul>`:`<p class="dv-sub">${one(bad[0])}</p>`}
-    <p>Le formulaire officiel n’accepte que l’alphabet latin d’Europe de l’Ouest (accents français compris). ${(()=>{ const pl=bad.length>1||bad[0].miss.length>1; return isAdmin?`Remplacez-${pl?'les':'le'} dans le réglage indiqué, puis recommencez.`:`Prévenez l’admin : il ${pl?'les':'le'} remplacera dans le réglage indiqué. En attendant, écrivez ${pl?'ces cases':'cette case'} à la main.`; })()}</p>
+    <p>Le formulaire officiel n’accepte que l’alphabet latin d’Europe de l’Ouest (accents français compris) : l’arabe, le géorgien ou le vietnamien, qui s’impriment dans les autres documents de Librejo, ne peuvent pas y être écrits. ${(()=>{ const pl=bad.length>1||bad[0].miss.length>1; return isAdmin?`Remplacez-${pl?'les':'le'} dans le réglage indiqué, puis recommencez.`:`Prévenez l’admin : il ${pl?'les':'le'} remplacera dans le réglage indiqué. En attendant, écrivez ${pl?'ces cases':'cette case'} à la main.`; })()}</p>
     <div class="btns">${isAdmin&&bad[0].where==='Réglages › Structure'?`<button class="primary" id="czb-go" data-autofocus>Ouvrir Réglages › Structure</button>`:''}<button class="secondary" data-close ${isAdmin&&bad[0].where==='Réglages › Structure'?'':'data-autofocus'}>OK</button></div>`);
   const go=$('#czb-go'); if(go) go.onclick=()=>{ closeModal(); gotoSetting('structure'); };
   return false; }
