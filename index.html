@@ -367,6 +367,7 @@ table.docs .t .badge:not(.accent){margin:var(--sp-1) var(--sp-1) 0 0}
 /* Messages : .notice (encadré), .errors (liste d'erreurs), .privacy (rappel « rien n'est enregistré »), .toast */
 .notice{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:10px var(--sp-3);font-size:var(--fs-3)}
 .notice b{font-weight:700}
+.fielderr,.dialog .fielderr{margin:calc(-1 * var(--sp-1)) 0 var(--sp-2);color:var(--danger);font-size:var(--fs-3);font-weight:600}
 .errors{margin:0;padding:10px var(--sp-3) 10px 30px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:var(--fs-3);display:grid;gap:var(--sp-1)}
 .privacy{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-3);font-weight:700;color:var(--ok-text)}
 .privacy svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
@@ -1332,7 +1333,10 @@ function openModal(html,cls){
 function closeModal(){
   if($('#modal').hidden) return;
   $('#modal').hidden=true; document.body.style.overflow=''; $('#modal-box').innerHTML='';
-  lastFocus&&lastFocus.focus&&lastFocus.focus();
+  /* Le focus revient au bouton d'origine au tour suivant : si la fenêtre se ferme sur la touche Entrée,
+     le même appui ne doit pas « cliquer » ce bouton (ex. Accès admin, qui ressortirait aussitôt). */
+  const lf=lastFocus; lastFocus=null;
+  if(lf&&lf.focus) setTimeout(()=>{ const a=document.activeElement; if($('#modal').hidden&&lf.isConnected&&(!a||a===document.body)) lf.focus(); },0);
 }
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal'||e.target.closest('[data-close]')) closeModal(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
@@ -1349,7 +1353,7 @@ function askText(title,label,value,fn){
   openModal(`<h3 id="modal-title">${esc(title)}</h3><label class="field"><span>${esc(label)}</span><input class="in" id="pv" value="${esc(value)}" data-autofocus></label>
     <div class="btns"><button class="primary alt" id="pok">Valider</button><button class="secondary" data-close>Annuler</button></div>`);
   const go=()=>{ const v=$('#pv').value.trim(); if(!v) return; closeModal(); fn(v); };
-  $('#pok').onclick=go; $('#pv').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }); $('#pv').select();
+  $('#pok').onclick=go; $('#pv').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } }); $('#pv').select();
 }
 let logoData=null;
 function isoToday(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
@@ -1961,10 +1965,15 @@ function setAdmin(v){
 $('#adminbtn').addEventListener('click',()=>{
   if(isAdmin){ setAdmin(false); toast('Modifications terminées, merci !'); return; }
   openModal(`<h3 id="modal-title">Accès admin</h3><label class="field"><span>Mot de passe</span><input class="in" id="pw" type="password" data-autofocus autocomplete="off"></label>
+    <p class="fielderr" id="pw-err" role="alert" hidden></p>
     <label class="field"><span>Votre prénom <small>(facultatif, pour le journal des modifications)</small></span><input class="in" id="pw-who" value="${esc(jrWho())}" autocomplete="given-name"></label>
     <div class="btns"><button class="primary alt" id="pw-ok">Entrer</button><button class="secondary" data-close>Annuler</button></div>`);
-  const go=()=>{ if($('#pw').value===(PAR.motdepasse||'docubus')){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>setTimeout(autoThumbs,600)).catch(e=>{ const m=fsErr(e); m&&toast(m); }); } else { toast('Ce n’est pas le bon mot de passe. Réessayez.'); $('#pw').select(); } };
-  $('#pw-ok').onclick=go; $('#pw').addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
+  const go=()=>{ const pw=$('#pw');
+    if(pw.value===(PAR.motdepasse||'docubus')){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>setTimeout(autoThumbs,600)).catch(e=>{ const m=fsErr(e); m&&toast(m); }); }
+    else { const m=$('#pw-err'); m.textContent=pw.value?'Ce n’est pas le bon mot de passe. Vérifiez les majuscules et réessayez.':'Saisissez le mot de passe admin.'; m.hidden=false; pw.setAttribute('aria-invalid','true'); pw.setAttribute('aria-describedby','pw-err'); pw.focus(); pw.select(); } };
+  $('#pw-ok').onclick=go; $('#pw').addEventListener('input',()=>{ $('#pw-err').hidden=true; $('#pw').removeAttribute('aria-invalid'); });
+  /* Entrée dans l'un ou l'autre champ : valider sans laisser l'appui atteindre un autre bouton */
+  ['#pw','#pw-who'].forEach(sel=>$(sel).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } }));
 });
 
 /* ---------- Onglets ---------- */
