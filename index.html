@@ -1361,6 +1361,7 @@ body.has-aide #adminflag{right:72px}
 .aide-sous{margin:4px 0 0;font-size:var(--fs-3);color:var(--text-3)}
 .aide-h .secondary{flex:0 0 auto;min-height:40px}
 .aide-b{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-2) var(--sp-4) var(--sp-4);font-size:var(--fs-4);line-height:1.5}
+#aide .aide-b:focus-visible{outline-offset:-3px}   /* zone qui défile : atteinte au clavier, contour à l’intérieur */
 .aide-b h3{margin:var(--sp-4) 0 var(--sp-2);font-size:var(--fs-5);font-weight:700;color:var(--navy)}
 .aide-b>p{margin:0}
 .aide-steps{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-3);counter-reset:aide}
@@ -4364,7 +4365,7 @@ function drawReg(){
       else{ if(v) toast('Partenaire introuvable : choisissez-le dans la liste'); if(d.partenaire){ const em=destMails(d); if(em&&em.length) d.adresses=em; } d.partenaire=''; d.exclues=[]; d.auto=false; }
       setTimeout(drawReg,0); return; }
     if(row&&el.dataset.ex!==undefined){ const d=rdraft.destinataires[+row.dataset.i]; d.exclues=(d.exclues||[]).filter(m=>m!==el.dataset.ex); if(!el.checked) d.exclues.push(el.dataset.ex); return; }
-    if(el.dataset.apc){ drawReg(); return; }
+    if(el.dataset.apc||el.dataset.misec){ drawReg(); return; }
     if(el.id==='r-apnom'){ rdraft.apparence.nom=el.checked; applyTheme(rdraft.apparence); return; }
     if(el.id==='r-logo'){ const f=el.files[0]; if(!f) return; if(f.size>2097152){ toast('Image trop lourde (2 Mo max).'); return; }
       const fr=new FileReader(); fr.onload=async()=>{ try{ rdraft.apparence.logo=await logoForMenu(fr.result); if(rdraft.apparence.menuLogo==='librejo') rdraft.apparence.menuLogo='both'; drawReg(); toast('Logo prêt : enregistrez les réglages'); }catch(err){ toast('Cette image ne s’ouvre pas : essayez un PNG ou un JPEG.'); } }; fr.readAsDataURL(f); return; }
@@ -9298,7 +9299,7 @@ function aideHTML(c){
   const adm=isAdmin&&!SANS&&c.admin&&c.admin.length, guide=!c.fenetre&&$('#modal').hidden;
   return `<div class="aide-h"><div><h2 id="aide-t" tabindex="-1">${esc(c.titre||'Librejo')}</h2>${c.sous?`<p class="aide-sous">${esc(c.sous)}</p>`:''}</div>
       <button type="button" class="secondary sm" id="aide-x">Fermer</button></div>
-    <div class="aide-b">
+    <div class="aide-b" tabindex="0" role="region" aria-label="Explications de l’aide">
       <h3>À quoi sert cette page</h3><p>${c.but}</p>
       <h3>Comment faire</h3><ol class="aide-steps">${(c.etapes||[]).map(x=>`<li><span>${x}</span></li>`).join('')}</ol>
       ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
