@@ -1,0 +1,7 @@
+# Propose chaque mois une mise à jour des outils GitHub figés par empreinte dans .github/workflows/ (une PR à relire).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: monthly}
+    commit-message: {prefix: "Robot"}
