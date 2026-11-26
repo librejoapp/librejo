@@ -1558,7 +1558,8 @@ document.addEventListener('keydown',e=>{
   if(go){ e.preventDefault(); go.focus(); }
 },true);
 function openModal(html,cls){
-  lastFocus=document.activeElement; modalGuard=null;
+  /* une fenêtre qui en remplace une autre (étapes de la visite, confirmation) garde le bouton d'origine */
+  if($('#modal').hidden||!lastFocus) lastFocus=document.activeElement; modalGuard=null;
   const box=$('#modal-box'); box.className='dialog'+(cls?' '+cls:''); box.innerHTML=html;
   $('#modal').hidden=false; document.body.style.overflow='hidden'; layersSync();
   const f=box.querySelector('[data-autofocus]')||box.querySelector('input,button'); f&&f.focus();
@@ -1569,7 +1570,10 @@ function closeModal(){
   /* Le focus revient au bouton d'origine au tour suivant : si la fenêtre se ferme sur la touche Entrée,
      le même appui ne doit pas « cliquer » ce bouton (ex. Accès admin, qui ressortirait aussitôt). */
   const lf=lastFocus; lastFocus=null;
-  if(lf&&lf.focus) setTimeout(()=>{ const a=document.activeElement; if($('#modal').hidden&&lf.isConnected&&(!a||a===document.body)) lf.focus(); },0);
+  /* Sans bouton d'origine (visite guidée ouverte au démarrage, bouton redessiné entre-temps), le focus va au
+     début du contenu de la page plutôt que de se perdre sur le document */
+  setTimeout(()=>{ const a=document.activeElement; if(!$('#modal').hidden||(a&&a!==document.body)) return;
+    const t=lf&&lf!==document.body&&lf.isConnected&&lf.getClientRects().length?lf:$('#contenu'); t&&t.focus({preventScroll:t.id==='contenu'}); },0);
 }
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal'||e.target.closest('[data-close]')) closeAsked(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#mguard')){ $('#mguard').remove(); return; } closeAsked(); } });
@@ -2259,7 +2263,8 @@ function copyText(t){
   if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(()=>true,()=>fallbackCopy(t));
   return Promise.resolve(fallbackCopy(t));
 }
-function fallbackCopy(t){ const a=document.createElement('textarea'); a.value=t; a.setAttribute('readonly',''); a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} a.remove(); return ok; }
+function fallbackCopy(t){ const back=document.activeElement, a=document.createElement('textarea'); a.value=t; a.setAttribute('readonly',''); a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} a.remove();
+  if(back&&back!==document.body&&back.isConnected) back.focus({preventScroll:true}); return ok; }
 function composeUrl(to,subject,body){
   const q=[]; if(to&&to.length) q.push('to='+encodeURIComponent(to.join(';')));
   if(subject) q.push('subject='+encodeURIComponent(subject)); if(body) q.push('body='+encodeURIComponent(body));
@@ -3791,7 +3796,18 @@ async function detectModel(d,file){
 
 
 /* ---------- Menu « Plus d'actions » d'un document ---------- */
-function closeMenu(){ const m=document.getElementById('menu'); if(m){ m.remove(); document.removeEventListener('mousedown',menuOutside,true); } }
+function closeMenu(){ const m=document.getElementById('menu'); if(m){ if(m._btn) m._btn.setAttribute('aria-expanded','false'); m.remove(); document.removeEventListener('mousedown',menuOutside,true); } }
+/* Menus « Plus d'actions » (role=menu) au clavier : flèches haut et bas (en boucle), Début, Fin. Échap et Tab
+   ferment le menu et rendent le focus à son bouton ; Tab continue ensuite vers l'élément suivant (Maj+Tab, le précédent). */
+function menuWire(m,btn){
+  m._btn=btn; btn.setAttribute('aria-expanded','true');
+  m.querySelectorAll('[role=menuitem]').forEach(b=>b.tabIndex=-1);
+  m.addEventListener('keydown',e=>{ const bs=[...m.querySelectorAll('[role=menuitem]')], i=bs.indexOf(document.activeElement), k=e.key;
+    const n=k==='ArrowDown'?i+1:k==='ArrowUp'?i-1:k==='Home'?0:k==='End'?bs.length-1:null;
+    if(n!==null){ e.preventDefault(); bs[(n+bs.length)%bs.length].focus(); return; }
+    if(k==='Escape'){ e.preventDefault(); closeMenu(); btn.focus(); return; }
+    if(k==='Tab'){ closeMenu(); btn.focus(); } });
+}
 function menuOutside(e){ if(!e.target.closest('#menu')&&!e.target.closest('[data-more]')) closeMenu(); }
 function moreMenu(btn,d){
   if(document.getElementById('menu')){ closeMenu(); return; }
@@ -3807,10 +3823,8 @@ function moreMenu(btn,d){
   document.body.appendChild(m);
   const r=btn.getBoundingClientRect(), w=m.offsetWidth;
   m.style.top=(window.scrollY+r.bottom+6)+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
-  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); items[+b.dataset.i][2](); });
-  m.addEventListener('keydown',e=>{ const bs=[...m.querySelectorAll('button')], i=bs.indexOf(document.activeElement);
-    if(e.key==='ArrowDown'){ e.preventDefault(); bs[(i+1)%bs.length].focus(); } if(e.key==='ArrowUp'){ e.preventDefault(); bs[(i-1+bs.length)%bs.length].focus(); }
-    if(e.key==='Escape'){ closeMenu(); btn.focus(); } });
+  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus(); items[+b.dataset.i][2](); });
+  menuWire(m,btn);
   m.querySelector('button').focus();
   setTimeout(()=>document.addEventListener('mousedown',menuOutside,true),0);
 }
@@ -6289,10 +6303,8 @@ function linkMenu(btn,d){
   document.body.appendChild(m);
   const r=btn.getBoundingClientRect(), w=m.offsetWidth;
   m.style.top=(window.scrollY+r.bottom+6)+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
-  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); items[+b.dataset.i][2](); });
-  m.addEventListener('keydown',e=>{ const bs=[...m.querySelectorAll('button')], i=bs.indexOf(document.activeElement);
-    if(e.key==='ArrowDown'){ e.preventDefault(); bs[(i+1)%bs.length].focus(); } if(e.key==='ArrowUp'){ e.preventDefault(); bs[(i-1+bs.length)%bs.length].focus(); }
-    if(e.key==='Escape'){ closeMenu(); btn.focus(); } });
+  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus(); items[+b.dataset.i][2](); });
+  menuWire(m,btn);
   m.querySelector('button').focus();
   setTimeout(()=>document.addEventListener('mousedown',linkMenuOutside,true),0);
 }
