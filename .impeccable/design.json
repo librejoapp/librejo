@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-26T07:04:39+00:00",
+  "title": "Design System: Librejo",
+  "extensions": {
+    "colorMeta": {
+      "canard": {
+        "role": "primary",
+        "displayName": "Bleu canard",
+        "tonalRamp": [
+          "#173534",
+          "#245c59",
+          "#2e8580",
+          "#35b0aa",
+          "#65cdc8",
+          "#a3dbd8",
+          "#d1eae9",
+          "#eef7f6"
+        ]
+      },
+      "canard-nuit": {
+        "role": "primary",
+        "displayName": "Bleu canard nuit",
+        "tonalRamp": [
+          "#183533",
+          "#255b58",
+          "#2f847f",
+          "#37afa8",
+          "#66ccc6",
+          "#a4dad7",
+          "#d2eae9",
+          "#eef6f6"
+        ]
+      },
+      "ambre": {
+        "role": "secondary",
+        "displayName": "Ambre",
+        "tonalRamp": [
+          "#3b2a11",
+          "#674718",
+          "#97651c",
+          "#ca831b",
+          "#e3a74f",
+          "#e7c798",
+          "#efe1cc",
+          "#f8f3ec"
+        ]
+      },
+      "ambre-encre": {
+        "role": "secondary",
+        "displayName": "Encre d'ambre",
+        "tonalRamp": [
+          "#3b2c12",
+          "#674a19",
+          "#96691c",
+          "#ca8a1c",
+          "#e2ac50",
+          "#e6ca98",
+          "#efe2cc",
+          "#f8f4ec"
+        ]
+      },
+      "ambre-doux": {
+        "role": "secondary",
+        "displayName": "Ambre doux",
+        "tonalRamp": [
+          "#3c2d10",
+          "#694d16",
+          "#9a6e18",
+          "#cf9016",
+          "#e7b14b",
+          "#e9cc96",
+          "#f0e4cb",
+          "#f9f4ec"
+        ]
+      },
+      "ambre-texte": {
+        "role": "secondary",
+        "displayName": "Texte ambre",
+        "tonalRamp": [
+          "#3d2c10",
+          "#6a4a16",
+          "#9b6917",
+          "#d08a15",
+          "#e8ac4a",
+          "#e9ca95",
+          "#f1e2cb",
+          "#f9f4ec"
+        ]
+      },
+      "ambre-sur-nuit": {
+        "role": "secondary",
+        "displayName": "Ambre sur nuit",
+        "tonalRamp": [
+          "#3c2d10",
+          "#694c16",
+          "#9a6c19",
+          "#cf8d17",
+          "#e7af4b",
+          "#e9cb96",
+          "#f0e3cb",
+          "#f9f4ec"
+        ]
+      },
+      "encre": {
+        "role": "neutral",
+        "displayName": "Encre",
+        "tonalRamp": [
+          "#1d2f2f",
+          "#2e5150",
+          "#3e7472",
+          "#4c9996",
+          "#78bab7",
+          "#aed1cf",
+          "#d6e6e5",
+          "#f0f5f5"
+        ]
+      },
+      "encre-2": {
+        "role": "neutral",
+        "displayName": "Encre 2",
+        "tonalRamp": [
+          "#202c2b",
+          "#344b49",
+          "#476b68",
+          "#598c88",
+          "#83afab",
+          "#b4cbc9",
+          "#d9e3e2",
+          "#f0f4f4"
+        ]
+      },
+      "encre-3": {
+        "role": "neutral",
+        "displayName": "Encre 3",
+        "tonalRamp": [
+          "#23292a",
+          "#3a4546",
+          "#506263",
+          "#657f80",
+          "#8da3a5",
+          "#b9c5c5",
+          "#dbe0e1",
+          "#f1f3f3"
+        ]
+      },
+      "encre-attenuee": {
+        "role": "neutral",
+        "displayName": "Encre attenuee",
+        "tonalRamp": [
+          "#242828",
+          "#3c4443",
+          "#535f5f",
+          "#6a7c7a",
+          "#91a1a0",
+          "#bbc3c3",
+          "#dce0df",
+          "#f2f3f3"
+        ]
+      },
+      "texte-sur-nuit": {
+        "role": "neutral",
+        "displayName": "Texte sur nuit",
+        "tonalRamp": [
+          "#202d2b",
+          "#334c48",
+          "#456d66",
+          "#578f86",
+          "#81b1a9",
+          "#b3ccc8",
+          "#d8e4e2",
+          "#f0f4f4"
+        ]
+      },
+      "texte-sur-nuit-2": {
+        "role": "neutral",
+        "displayName": "Texte sur nuit 2",
+        "tonalRamp": [
+          "#212b2a",
+          "#364947",
+          "#4a6864",
+          "#5e8883",
+          "#87aba6",
+          "#b6c9c6",
+          "#dae2e1",
+          "#f1f4f3"
+        ]
+      },
+      "creme": {
+        "role": "neutral",
+        "displayName": "Crème",
+        "tonalRamp": [
+          "#312b1c",
+          "#54492c",
+          "#79683a",
+          "#9f8746",
+          "#bfaa73",
+          "#d3c8ab",
+          "#e7e2d5",
+          "#f5f4ef"
+        ]
+      },
+      "creme-charte": {
+        "role": "neutral",
+        "displayName": "Crème de la charte",
+        "tonalRamp": [
+          "#372c15",
+          "#604a20",
+          "#8c6a27",
+          "#ba8b2b",
+          "#d6ad5c",
+          "#dfca9f",
+          "#ece3cf",
+          "#f7f4ed"
+        ]
+      },
+      "papier": {
+        "role": "neutral",
+        "displayName": "Papier",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#999999",
+          "#bfbfbf",
+          "#dedede",
+          "#f2f2f2"
+        ]
+      },
+      "papier-2": {
+        "role": "neutral",
+        "displayName": "Papier 2",
+        "tonalRamp": [
+          "#2f2a1e",
+          "#4f4630",
+          "#726441",
+          "#968250",
+          "#b7a67b",
+          "#cfc6b0",
+          "#e5e1d7",
+          "#f5f3f0"
+        ]
+      },
+      "papier-3": {
+        "role": "neutral",
+        "displayName": "Papier 3",
+        "tonalRamp": [
+          "#312b1b",
+          "#54482b",
+          "#796739",
+          "#a08646",
+          "#bfa973",
+          "#d4c8ab",
+          "#e7e2d5",
+          "#f5f4ef"
+        ]
+      },
+      "filet": {
+        "role": "neutral",
+        "displayName": "Filet",
+        "tonalRamp": [
+          "#2f291d",
+          "#51452f",
+          "#74613f",
+          "#997e4d",
+          "#b9a379",
+          "#d0c4ae",
+          "#e5e0d6",
+          "#f5f3f0"
+        ]
+      },
+      "filet-fort": {
+        "role": "neutral",
+        "displayName": "Filet fort",
+        "tonalRamp": [
+          "#2c2821",
+          "#4a4436",
+          "#695f4a",
+          "#897b5c",
+          "#aca086",
+          "#c9c3b5",
+          "#e2e0d9",
+          "#f4f3f1"
+        ]
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Ok",
+        "tonalRamp": [
+          "#143923",
+          "#1c633a",
+          "#229050",
+          "#24c166",
+          "#57db8e",
+          "#9ce3b9",
+          "#ceeedb",
+          "#edf8f1"
+        ]
+      },
+      "ok-fond": {
+        "role": "status",
+        "displayName": "Ok fond",
+        "tonalRamp": [
+          "#1b3224",
+          "#2a553c",
+          "#387b53",
+          "#43a36a",
+          "#71c192",
+          "#aad5bb",
+          "#d4e7dc",
+          "#eff6f2"
+        ]
+      },
+      "alerte": {
+        "role": "status",
+        "displayName": "Alerte",
+        "tonalRamp": [
+          "#3d200f",
+          "#6b3415",
+          "#9d4716",
+          "#d25913",
+          "#ea8348",
+          "#eab494",
+          "#f1d9cb",
+          "#f9f0ec"
+        ]
+      },
+      "alerte-fond": {
+        "role": "status",
+        "displayName": "Alerte fond",
+        "tonalRamp": [
+          "#3d250f",
+          "#6b3e15",
+          "#9c5716",
+          "#d26f13",
+          "#ea9648",
+          "#eabe94",
+          "#f1ddcb",
+          "#f9f2ec"
+        ]
+      },
+      "danger": {
+        "role": "status",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "#3d1d0f",
+          "#6b2e14",
+          "#9d3d15",
+          "#d44a12",
+          "#eb7747",
+          "#ebad94",
+          "#f1d6ca",
+          "#f9efec"
+        ]
+      },
+      "surligne": {
+        "role": "status",
+        "displayName": "Surligne",
+        "tonalRamp": [
+          "#40330c",
+          "#71570e",
+          "#a67e0c",
+          "#e0a605",
+          "#f6c53c",
+          "#f1d68e",
+          "#f4e8c8",
+          "#faf6eb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "marque": {
+        "displayName": "Enseigne",
+        "purpose": "Le nom « librejo » uniquement."
+      },
+      "titre-section": {
+        "displayName": "Titre de section",
+        "purpose": "Titres de page et de section."
+      },
+      "corps": {
+        "displayName": "Corps",
+        "purpose": "Texte courant et champs."
+      },
+      "aide": {
+        "displayName": "Aide",
+        "purpose": "Aides et métadonnées."
+      },
+      "etiquette": {
+        "displayName": "Étiquette",
+        "purpose": "Groupes du menu latéral."
+      }
+    },
+    "shadows": [
+      {
+        "name": "carte-posee",
+        "value": "0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07)",
+        "purpose": "Cartes au repos."
+      },
+      {
+        "name": "carte-soulevee",
+        "value": "0 10px 24px rgba(90,60,20,.12)",
+        "purpose": "Survol, menus déroulants."
+      },
+      {
+        "name": "fenetre",
+        "value": "0 18px 40px -14px rgba(13,42,94,.45)",
+        "purpose": "Fenêtres modales."
+      }
+    ],
+    "motion": [
+      {
+        "name": "reduit",
+        "value": "prefers-reduced-motion: transitions et animations coupées",
+        "purpose": "Respect du réglage système."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "menu-au-dessus",
+        "value": "900px",
+        "purpose": "Le menu passe au-dessus du contenu ; pas d’adaptation téléphone au-delà."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "bouton-principal",
+      "description": "L'action principale d'une zone (Créer, Entrer).",
+      "html": "<button class=\"ds-btn\">Créer le document</button>",
+      "css": ".ds-btn{background:#E9A23B;color:#2b1d05;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer;transition:filter .15s}.ds-btn:hover{filter:brightness(.95)}.ds-btn:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+    },
+    {
+      "name": "Bouton alternatif",
+      "kind": "button",
+      "refersTo": "bouton-principal-alt",
+      "description": "Action principale sur fond clair quand l'ambre est déjà pris.",
+      "html": "<button class=\"ds-btn-alt\">Entrer</button>",
+      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+    },
+    {
+      "name": "Bouton secondaire",
+      "kind": "button",
+      "refersTo": "bouton-principal",
+      "description": "Actions secondaires (Annuler, Revenir).",
+      "html": "<button class=\"ds-btn-2\">Revenir sans effacer</button>",
+      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+    },
+    {
+      "name": "Champ",
+      "kind": "input",
+      "refersTo": "champ",
+      "description": "Champ de formulaire, 48px, halo bleu canard au focus.",
+      "html": "<label class=\"ds-f\"><span>Nom</span><input class=\"ds-in\" dir=\"auto\" value=\"NGUYỄN Thị\"></label>",
+      "css": ".ds-f{display:grid;gap:6px;font:600 14px Asap,system-ui,sans-serif;color:#17302F}.ds-in{height:48px;border:1px solid #d2cbbb;border-radius:14px;background:#fff;color:#17302F;padding:0 12px;font:400 16px Asap,system-ui,sans-serif}.ds-in:focus{outline:none;border-color:#1F6F6B;box-shadow:0 0 0 3px rgba(31,111,107,.3)}"
+    },
+    {
+      "name": "Carte de formulaire",
+      "kind": "card",
+      "refersTo": "carte",
+      "description": "Fiche posée sur le fond crème, liseré haut en intercalaire.",
+      "html": "<div class=\"ds-card\"><h3>Bon d’orientation CCAS</h3><p>Domiciliation, CSS, RSA : en moins d’une minute.</p><span class=\"ds-badge\">Formulaire</span></div>",
+      "css": ".ds-card{background:#fff;color:#17302F;border:1px solid #ece5d8;border-top:4px solid #174f4c;border-radius:14px;box-shadow:0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07);padding:16px;display:grid;gap:8px;font-family:Asap,system-ui,sans-serif;max-width:300px;transition:box-shadow .2s}.ds-card:hover{box-shadow:0 10px 24px rgba(90,60,20,.12)}.ds-card h3{margin:0;font-size:18px}.ds-card p{margin:0;color:#46595a;font-size:14px}.ds-badge{justify-self:start;background:#fcf1dc;color:#8a5a0b;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700}"
+    },
+    {
+      "name": "Pastille de choix",
+      "kind": "chip",
+      "refersTo": "pastille",
+      "description": "Choix rapide ; état choisi par remplissage et coche.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">✓ Sans domicile</button><button class=\"ds-chip\" aria-pressed=\"false\">Hébergé(e) chez un tiers</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+    },
+    {
+      "name": "Menu latéral",
+      "kind": "nav",
+      "refersTo": "menu-lateral",
+      "description": "Le meuble du bureau : sombre, stable, toujours au même endroit.",
+      "html": "<nav class=\"ds-side\"><div class=\"ds-brand\">librejo</div><button aria-selected=\"true\">Accueil</button><button>Formulaires</button><button>Impression rapide</button><button>Annuaire</button></nav>",
+      "css": ".ds-side{background:#174f4c;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#fff;padding:0 8px 14px}.ds-side button{all:unset;color:#d3e5e2;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.07);color:#fff}.ds-side button[aria-selected=\"true\"]{background:rgba(255,255,255,.11);color:#fff}.ds-side button:focus-visible{outline:3px solid #E9A23B}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le bureau d'accueil",
+    "overview": "Librejo est le bureau d'accueil d'une petite structure : l'endroit chaleureux où, la personne en face de soi, on trouve tout de suite le bon papier, rempli proprement, à l'en-tête de la maison. Tout le système sert ce geste : un menu sombre et stable à gauche, comme le meuble du bureau ; à droite, une surface crème et calme où les documents et formulaires sont posés comme des fiches sur la table, à portée de main. Rien ne doit faire hésiter : on voit d'abord ce qu'on cherche, puis l'action qui suit.\n\nLa densité est moyenne : assez d'air pour lire vite entre deux rendez-vous, assez d'information pour qu'un admin range une cinquantaine de documents sans tourner les pages. La chaleur vient de la matière (fond crème, ombres dorées très douces, arrondis généreux, une seule touche ambre), pas de la décoration. Le logo donne la mesure : une étagère bien rangée, rassurante, ordonnée, bienveillante.\n\nLes écrans d'équipe restent simples et directs ; les écrans d'administration peuvent être plus denses, mais toujours rangés par tâche. Librejo est fait pour l'ordinateur (Chrome ou Edge) : la mise en page n'est pas pensée pour le téléphone.",
+    "keyCharacteristics": [
+      "Menu latéral fixe bleu canard nuit, contenu sur fond crème.",
+      "Cartes blanches arrondies, posées par une ombre chaude et légère.",
+      "Une seule couleur chaude, l'ambre, pour l'action principale et les repères.",
+      "Une police de lecture unique (Asap) pour l'interface ; Poppins réservé au nom.",
+      "Vouvoiement, phrases courtes, honnêteté sur ce qui est enregistré ou non."
+    ],
+    "rules": [
+      {
+        "name": "The One Warm Voice Rule",
+        "body": "L'ambre est la seule couleur chaude de l'interface, comme le livre ambre de l'étagère. Il sert l'action principale et les signaux d'attention ; il n'habille jamais une surface entière.",
+        "section": "colors"
+      },
+      {
+        "name": "The Adjusted Colour Rule",
+        "body": "Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée. Aucune couleur de structure ne passe sous 4,5:1 pour du texte.",
+        "section": "colors"
+      },
+      {
+        "name": "The Enseigne Rule",
+        "body": "Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. (Le nom du menu encore écrit en Permanent Marker incliné est un reste de Docubus, à remplacer par Poppins.)",
+        "section": "typography"
+      },
+      {
+        "name": "The Warm Shadow Rule",
+        "body": "Les ombres sont chaudes et diffuses, jamais décalées ni dures, jamais en lueur colorée.",
+        "section": "elevation & depth"
+      }
+    ],
+    "dos": [
+      "Do garder l'ambre pour l'action principale et les signaux d'attention, avec texte encre d'ambre (`#2b1d05`) dessus.",
+      "Do poser chaque contenu sur une carte papier (14px, ombre chaude) au-dessus du fond crème.",
+      "Do écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.",
+      "Do libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.",
+      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus ambre 3px visible partout, titres réels.",
+      "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères."
+    ],
+    "donts": [
+      "Don't utiliser le Permanent Marker ni le nom incliné hérités de Docubus.",
+      "Don't introduire une deuxième couleur chaude ou colorer de grandes surfaces en ambre.",
+      "Don't utiliser d'ombres dures, décalées ou en lueur colorée.",
+      "Don't descendre sous 12px pour du texte lu.",
+      "Don't adapter les écrans pour le téléphone au détriment de l'ordinateur."
+    ]
+  }
+}
