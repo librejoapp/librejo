@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-26T07:04:39+00:00",
+  "generatedAt": "2026-11-26T07:24:34+00:00",
   "title": "Design System: Librejo",
   "extensions": {
     "colorMeta": {
@@ -367,6 +367,20 @@
           "#f4e8c8",
           "#faf6eb"
         ]
+      },
+      "menu-clair": {
+        "role": "neutral",
+        "displayName": "Menu clair",
+        "tonalRamp": [
+          "#24231d",
+          "#3b3a31",
+          "#555447",
+          "#706e5f",
+          "#9a9886",
+          "#c3c1ae",
+          "#e2e0d2",
+          "#f4f3ec"
+        ]
       }
     },
     "typographyMeta": {
@@ -389,6 +403,10 @@
       "etiquette": {
         "displayName": "Étiquette",
         "purpose": "Groupes du menu latéral."
+      },
+      "aide-compacte": {
+        "displayName": "Aide compacte",
+        "purpose": "Métadonnées serrées."
       }
     },
     "shadows": [
@@ -405,7 +423,7 @@
       {
         "name": "fenetre",
         "value": "0 18px 40px -14px rgba(13,42,94,.45)",
-        "purpose": "Fenêtres modales."
+        "purpose": "Fenêtres modales. Valeur marine héritée de Docubus, à réchauffer."
       }
     ],
     "motion": [
@@ -430,7 +448,7 @@
       "refersTo": "bouton-principal",
       "description": "L'action principale d'une zone (Créer, Entrer).",
       "html": "<button class=\"ds-btn\">Créer le document</button>",
-      "css": ".ds-btn{background:#E9A23B;color:#2b1d05;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer;transition:filter .15s}.ds-btn:hover{filter:brightness(.95)}.ds-btn:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+      "css": ".ds-btn{background:#E9A23B;color:#2b1d05;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer;transition:filter .15s}.ds-btn:hover{filter:brightness(.95)}.ds-btn:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
     },
     {
       "name": "Bouton alternatif",
@@ -438,7 +456,7 @@
       "refersTo": "bouton-principal-alt",
       "description": "Action principale sur fond clair quand l'ambre est déjà pris.",
       "html": "<button class=\"ds-btn-alt\">Entrer</button>",
-      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
     },
     {
       "name": "Bouton secondaire",
@@ -446,7 +464,7 @@
       "refersTo": "bouton-principal",
       "description": "Actions secondaires (Annuler, Revenir).",
       "html": "<button class=\"ds-btn-2\">Revenir sans effacer</button>",
-      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
     },
     {
       "name": "Champ",
@@ -470,22 +488,22 @@
       "refersTo": "pastille",
       "description": "Choix rapide ; état choisi par remplissage et coche.",
       "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">✓ Sans domicile</button><button class=\"ds-chip\" aria-pressed=\"false\">Hébergé(e) chez un tiers</button></div>",
-      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}"
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
     },
     {
       "name": "Menu latéral",
       "kind": "nav",
       "refersTo": "menu-lateral",
-      "description": "Le meuble du bureau : sombre, stable, toujours au même endroit.",
+      "description": "Le meuble du bureau : clair par défaut, stable, toujours au même endroit.",
       "html": "<nav class=\"ds-side\"><div class=\"ds-brand\">librejo</div><button aria-selected=\"true\">Accueil</button><button>Formulaires</button><button>Impression rapide</button><button>Annuaire</button></nav>",
-      "css": ".ds-side{background:#174f4c;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#fff;padding:0 8px 14px}.ds-side button{all:unset;color:#d3e5e2;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.07);color:#fff}.ds-side button[aria-selected=\"true\"]{background:rgba(255,255,255,.11);color:#fff}.ds-side button:focus-visible{outline:3px solid #E9A23B}"
+      "css": ".ds-side{background:#f0eee4;border-right:1px solid #ece5d8;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#174f4c;padding:0 8px 14px}.ds-side button{all:unset;color:#174f4c;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.7)}.ds-side button[aria-selected=\"true\"]{background:#fff;font-weight:700}.ds-side button:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     }
   ],
   "narrative": {
     "northStar": "Le bureau d'accueil",
-    "overview": "Librejo est le bureau d'accueil d'une petite structure : l'endroit chaleureux où, la personne en face de soi, on trouve tout de suite le bon papier, rempli proprement, à l'en-tête de la maison. Tout le système sert ce geste : un menu sombre et stable à gauche, comme le meuble du bureau ; à droite, une surface crème et calme où les documents et formulaires sont posés comme des fiches sur la table, à portée de main. Rien ne doit faire hésiter : on voit d'abord ce qu'on cherche, puis l'action qui suit.\n\nLa densité est moyenne : assez d'air pour lire vite entre deux rendez-vous, assez d'information pour qu'un admin range une cinquantaine de documents sans tourner les pages. La chaleur vient de la matière (fond crème, ombres dorées très douces, arrondis généreux, une seule touche ambre), pas de la décoration. Le logo donne la mesure : une étagère bien rangée, rassurante, ordonnée, bienveillante.\n\nLes écrans d'équipe restent simples et directs ; les écrans d'administration peuvent être plus denses, mais toujours rangés par tâche. Librejo est fait pour l'ordinateur (Chrome ou Edge) : la mise en page n'est pas pensée pour le téléphone.",
+    "overview": "Librejo est le bureau d'accueil d'une petite structure : l'endroit chaleureux où, la personne en face de soi, on trouve tout de suite le bon papier, rempli proprement, à l'en-tête de la maison. Tout le système sert ce geste : un menu stable à gauche, comme le meuble du bureau (clair par défaut, sombre au choix de la structure) ; à droite, une surface crème et calme où les documents et formulaires sont posés comme des fiches sur la table, à portée de main. Rien ne doit faire hésiter : on voit d'abord ce qu'on cherche, puis l'action qui suit.\n\nLa densité est moyenne : assez d'air pour lire vite entre deux rendez-vous, assez d'information pour qu'un admin range une cinquantaine de documents sans tourner les pages. La chaleur vient de la matière (fond crème, ombres dorées très douces, arrondis généreux, une seule touche ambre), pas de la décoration. Le logo donne la mesure : une étagère bien rangée, rassurante, ordonnée, bienveillante.\n\nLes écrans d'équipe restent simples et directs ; les écrans d'administration peuvent être plus denses, mais toujours rangés par tâche. Librejo est fait pour l'ordinateur (Chrome ou Edge) : la mise en page n'est pas pensée pour le téléphone.",
     "keyCharacteristics": [
-      "Menu latéral fixe bleu canard nuit, contenu sur fond crème.",
+      "Menu latéral fixe, clair par défaut (crème teintée de canard) ou sombre (bleu canard nuit) ; contenu sur fond crème.",
       "Cartes blanches arrondies, posées par une ombre chaude et légère.",
       "Une seule couleur chaude, l'ambre, pour l'action principale et les repères.",
       "Une police de lecture unique (Asap) pour l'interface ; Poppins réservé au nom.",
@@ -504,7 +522,7 @@
       },
       {
         "name": "The Enseigne Rule",
-        "body": "Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. (Le nom du menu encore écrit en Permanent Marker incliné est un reste de Docubus, à remplacer par Poppins.)",
+        "body": "Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. (Le nom est affiché par le logo SVG en tracés. La police Permanent Marker, `--f-brand` et `.wordmark`, hérités de Docubus, sont du code mort à retirer.)",
         "section": "typography"
       },
       {
@@ -518,13 +536,14 @@
       "Do poser chaque contenu sur une carte papier (14px, ombre chaude) au-dessus du fond crème.",
       "Do écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.",
       "Do libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.",
-      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus ambre 3px visible partout, titres réels.",
+      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus de 3px contrasté (3:1) sur chaque fond, titres réels, fenêtres vraiment modales.",
       "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères."
     ],
     "donts": [
       "Don't utiliser le Permanent Marker ni le nom incliné hérités de Docubus.",
       "Don't introduire une deuxième couleur chaude ou colorer de grandes surfaces en ambre.",
-      "Don't utiliser d'ombres dures, décalées ou en lueur colorée.",
+      "Don't utiliser d'ombres dures, décalées, grises ou en lueur colorée.",
+      "Don't coder une couleur en dur hors des jetons : une couleur codée en dur ne suit pas les couleurs choisies par la structure.",
       "Don't descendre sous 12px pour du texte lu.",
       "Don't adapter les écrans pour le téléphone au détriment de l'ordinateur."
     ]
