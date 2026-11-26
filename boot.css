@@ -1,7 +1,7 @@
 /* Écran d'ouverture (avant le choix du dossier). Couleurs de la charte écrites en clair : les variables de l'application
    ne sont pas encore là. Asap vient de app/polices.css, chargée par la page avant cet écran.
    L'écran défile quand il dépasse la fenêtre (zoom 200 à 400 %) : la carte est centrée par margin:auto, jamais coupée. */
-#lj-boot{position:fixed;inset:0;z-index:99999;background:#FBF6EC;display:flex;overflow:auto;overscroll-behavior:contain;padding:24px;font:16px/1.5 "Asap",system-ui,-apple-system,"Segoe UI",sans-serif;color:#17302F}
+#lj-boot{position:fixed;inset:0;z-index:99999;background:#FBF6EC;display:flex;overflow:auto;overscroll-behavior:contain;padding:24px;font:1rem/1.5 "Asap",system-ui,-apple-system,"Segoe UI",sans-serif;color:#17302F}
 #lj-boot[hidden]{display:none}
 #lj-boot .lj-card{margin:auto;background:#fff;border:1px solid #ece5d8;border-radius:18px;max-width:560px;width:100%;padding:28px 30px;box-shadow:0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07)}
 #lj-boot img{height:52px;display:block;margin-bottom:18px}
