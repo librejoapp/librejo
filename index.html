@@ -27,7 +27,7 @@
   --navy:#174f4c;            /* canard foncé : menu, titres */
   --blue:#1F6F6B;            /* bleu canard : liens, sélection */
   --accent:#E9A23B;          /* ambre : actions principales, repères */
-  --accent-ink:#2b1d05;      /* texte sur fond ambre */
+  --accent-ink:#2b1d05;      /* texte sur fond --accent plein, et nulle part ailleurs */
   --accent-soft:#fcf1dc;     /* fond ambré léger */
   --accent-text:#8a5a0b;     /* texte ambré lisible sur fond clair */
   --accent-on-dark:#f2c26b;  /* ambre lisible sur le canard foncé */
@@ -1051,7 +1051,7 @@ button.hrow:hover,div.hrow:hover{background:var(--surface-2)}
 a.hrow .hn:hover b,.hrow a.hn:hover b{text-decoration:underline}
 .hrow .hn small{font-size:var(--fs-2);color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hrow .ha{flex:none;display:flex;align-items:center;gap:4px}
-.hrow .hgo{flex:none;font-weight:700;font-size:var(--fs-2);color:var(--accent-ink,var(--navy));background:var(--accent-soft);padding:4px 12px;border-radius:var(--r-full)}
+.hrow .hgo{flex:none;font-weight:700;font-size:var(--fs-2);color:var(--accent-text);background:var(--accent-soft);padding:4px 12px;border-radius:var(--r-full)}
 .hempty{padding:var(--sp-3) var(--sp-4);color:var(--text-muted)}
 .hmore{padding:var(--sp-1) var(--sp-3)}
 .hlist>li.hsub{padding:var(--sp-2) var(--sp-4) 2px;font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-top:0}
@@ -1937,15 +1937,19 @@ function reach(c,bg,target,toward){ let r=c, i=0; while(ratio(r,bg)<target&&i<60
 function themeVars(t){
   const W=[255,255,255], K=[0,0,0];
   const m0=hexRgb(t.menu)||hexRgb(THEME_DEF.menu), a=hexRgb(t.accent)||hexRgb(THEME_DEF.accent);
-  const m=reach(m0,W,7,K);   // le texte blanc du menu doit rester très lisible
   const CREAM=[251,246,236], BG=[247,244,236], mbg=mixRgb(m0,CREAM,.95);
+  /* Les jetons de texte tirés du thème sont lisibles sur tous les fonds clairs où ils sont posés, pas seulement
+     sur le blanc : papier, crème, papier 2 (survols), les quatre fonds de saison de l'accueil et le menu clair. */
+  const SURF=[W,BG,[240,236,226],[230,238,249],[234,245,230],[253,243,220],[248,233,220],mbg];
+  const onAll=(c,t)=>SURF.reduce((x,bg)=>reach(x,bg,t,K),c);
+  const m=onAll(reach(m0,W,7,K),4.6);   // le texte blanc du menu doit rester très lisible ; sert aussi de titre sur les fonds clairs
   /* menu sombre : texte et intitulés tirés de la couleur du menu, éclaircis jusqu'à rester lisibles
      sur le fond du menu et sur son survol (voile blanc de 7 %) */
   const hov=mixRgb(m,W,.07);
-  return {vars:{'--menu-bg':rgbHex(mbg),'--menu-ink':rgbHex(reach(m0,mbg,7,K)),'--navy':rgbHex(t.menuStyle==='clair'?reach(m0,W,7,K):m),'--blue':rgbHex(reach(m0,W,4.6,K)),'--accent':rgbHex(a),
+  return {vars:{'--menu-bg':rgbHex(mbg),'--menu-ink':rgbHex(reach(m0,mbg,7,K)),'--navy':rgbHex(t.menuStyle==='clair'?onAll(reach(m0,W,7,K),4.6):m),'--blue':rgbHex(onAll(m0,4.6)),'--accent':rgbHex(a),
     '--accent-ink':ratio(a,K)>=ratio(a,W)?'#1d1405':'#ffffff','--accent-soft':rgbHex(mixRgb(a,W,.86)),
     // texte ambré : lisible sur blanc, sur le fond ambré pâle des badges et sur le fond du menu clair
-    '--accent-text':rgbHex([W,mixRgb(a,W,.86),mixRgb(mbg,W,.5),mbg].reduce((c,bg)=>reach(c,bg,4.6,K),a)),'--accent-on-dark':rgbHex(reach(a,m,4.6,W)),
+    '--accent-text':rgbHex([...SURF,mixRgb(a,W,.86),mixRgb(mbg,W,.5)].reduce((c,bg)=>reach(c,bg,4.6,K),a)),'--accent-on-dark':rgbHex(reach(a,m,4.6,W)),
     // ambre des repères non textuels (choix, bordures d'état, barres) : au moins 3:1 sur la crème et le blanc (WCAG 1.4.11)
     '--accent-line':rgbHex(reach(a,BG,3,K)),
     '--text-on-dark':rgbHex(reach(mixRgb(m,W,.82),hov,4.6,W)),'--text-on-dark-2':rgbHex(reach(mixRgb(m,W,.62),hov,4.6,W)),
