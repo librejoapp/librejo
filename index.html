@@ -1270,6 +1270,20 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
 html.menu-clair .sidebar nav.top button:focus-visible,html.menu-clair .catbtn:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
 html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair) .catbtn:focus-visible{outline:3px solid var(--accent-on-dark);outline-offset:2px}
 .rsec-b:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+/* Formulaires seulement (sans dossier) : bandeau discret et permanent, rappel de ce qui manque */
+#sdbar{display:flex;align-items:center;gap:var(--sp-3);background:var(--accent-soft);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin:-10px 0 var(--sp-4);font-size:var(--fs-3);color:var(--text)}
+#sdbar>svg{width:18px;height:18px;flex:none;color:var(--accent-text)}
+#sdbar p{margin:0;flex:1;line-height:1.45}
+#sdbar .sd-acts{display:flex;gap:var(--sp-3);align-items:center;flex:none}
+.sd-off{margin:var(--sp-4) 4px 0;padding:var(--sp-3);border:1px dashed currentColor;border-radius:var(--r-md);opacity:.72;font-size:var(--fs-2)}
+.sd-off-t{margin:0 0 4px;font-weight:700}
+.sd-off ul{margin:0;padding-left:18px;line-height:1.6}
+.sd-ent{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);margin:0 0 var(--sp-4);box-shadow:var(--shadow-card)}
+.sd-ent.todo{border-color:var(--accent);background:var(--accent-soft)}
+.sd-ent small{color:var(--text-muted)}
+.sd-modh{margin-top:calc(-1 * var(--sp-4))}
+.sd-modh h3{margin:0 0 var(--sp-1);font-size:var(--fs-6);color:var(--navy)}
+.sd-modh+.homecol{margin-top:calc(-1 * var(--sp-2))}
 </style>
 </head>
 <body>
@@ -1637,7 +1651,7 @@ function makePdf(pt,logo,tp){
   doc.text('Traitement de substitution aux opiacés',R,47,{align:'right'});
   let y=72;
   doc.setTextColor(...INK); doc.setFontSize(11.5); doc.setFont(PF(),'normal');
-  doc.text(`${st.ville||''}, le ${F.date?frDate(F.date):BL}`,L,y); y+=12;
+  doc.text(`${villeLe(st)}${F.date?frDate(F.date):BL}`,L,y); y+=12;
   doc.setFont(PF(),'bold'); doc.text("À l'attention de :",L,y);
   doc.setFont(PF(),'normal');
   const att=[D.structure,F.attention.trim()].filter(Boolean); if(!att.length) att.push(BL+BL);
@@ -1713,9 +1727,19 @@ function makePdf(pt,logo,tp){
    DONNÉES
    ====================================================================== */
 const DEFAULT_STRUCT={nom:'',signataire:'',ville:'',entete:[],pied:[]};
+const villeLe=st=>st&&String(st.ville||'').trim()?String(st.ville).trim()+', le ':'Le '; // « Marseille, le 26/11/2026 », ou « Le 26/11/2026 » sans ville
 const DATA=window.DOCUBUS_DONNEES||{categories:[],documents:[],formulaires:[]};
 DATA.categories=DATA.categories||[]; DATA.documents=DATA.documents||[]; DATA.formulaires=DATA.formulaires||[];
 let PAR=window.DOCUBUS_PARAMETRES||{};
+/* Mode « formulaires seulement » : pas de dossier (navigateur sans accès aux dossiers, accès refusé,
+   dossier introuvable). L'en-tête (nom et adresse de la structure) est saisi sur ce poste et gardé
+   dans ce navigateur : c'est un réglage de la structure, jamais une donnée de personne. */
+const SANS=window.LJ_SANS_DOSSIER||null, SD_ENT='librejo-entete-poste';
+function sdEnt(){ try{ return JSON.parse(localStorage.getItem(SD_ENT)||'null')||{}; }catch(e){ return {}; } }
+function sdAtt(E){ const v=k=>String(E[k]||'').trim(), n=v('nom'), a=v('adresse'), cp=v('cp'), vi=v('ville');
+  return {nom:n,signataire:n,ville:vi,entete:[n,a,[cp,vi.toUpperCase()].filter(Boolean).join(' ')].filter(Boolean),
+    pied:[n,[a,[cp,vi].filter(Boolean).join(' ')].filter(Boolean).join(' – '),[v('tel')&&'Tél. : '+v('tel'),v('mail')].filter(Boolean).join(' – ')].filter(Boolean)}; }
+if(SANS) PAR={...PAR,attestation:sdAtt(sdEnt())};
 let structure, dests, envoi, webmail;
 /* Destinataire relié à une fiche de l'annuaire : ses adresses viennent de la fiche (sauf celles décochées).
    Si la fiche a disparu ou n'a plus d'adresse, on garde les adresses enregistrées dans les réglages. */
@@ -2040,7 +2064,7 @@ function downloadBlob(blob,name){ const u=URL.createObjectURL(blob), a=document.
    dossier ; l'autorisation est mémorisée sur ce PC. Pour écrire (admin),
    il faut en plus le droit d'écriture dans le dossier.
    ====================================================================== */
-const FSA=!!window.showDirectoryPicker;
+const FSA=!!window.showDirectoryPicker&&!SANS; // sans dossier : rien n'est jamais demandé au navigateur
 // Librejo ouvert par un chemin réseau (file://NAS/partage/…) plutôt que par une lettre de lecteur (Z:)
 const UNC_OPEN=location.protocol==='file:'&&!!location.host;
 const UNC_PARTS=UNC_OPEN?decodeURIComponent(location.pathname).split('/').filter(Boolean):[];
@@ -2171,6 +2195,7 @@ $('#adminbtn').addEventListener('click',()=>{
 /* ---------- Onglets ---------- */
 let tab=({'#formulaires':'forms','#annuaire':'annu','#partenaires':'annu','#semaine':'semaine'})[location.hash]||'docs';
 function setTab(t){
+  if(SANS&&['docs','semaine','annu','admin'].includes(t)) t='forms'; // formulaires seulement
   if(t==='admin'&&!isAdmin) t='docs';
   if(t!=='admin'&&tab==='admin'&&asub==='reg'&&isAdmin&&regDirty()){ regAsk(()=>setTab(t)); return; }
   tab=t;
@@ -3067,7 +3092,8 @@ function renderForms(){
   if(formView&&formView!=='__deliv'){ return renderFill(); }
   p.innerHTML=`<h2 class="sec">Formulaires</h2>
     <p class="hint">Remplissez, Librejo crée le PDF à l'en-tête de la structure, puis prépare le mail. Rien n'est enregistré.</p>
-    ${formsByGroupHTML()}
+    ${SANS?sdEnteteHTML():''}
+    ${formsByGroupHTML()}${SANS?sdPacksHTML():''}
     ${isAdmin?`<div class="adminbar"><b>Mode admin</b><button class="secondary" data-newform>${ICON.plus}Créer un formulaire</button>${cerfaDocs().length?`<button class="secondary" data-czcheck>Vérifier les Cerfa${cerfaDocs().some(d=>czAge(d)>CZ_DAYS)?' (à faire)':''}</button>`:''}<span class="hint">Les formulaires se modifient dans l'onglet Administration.</span></div>`:''}`;
 }
 $('#p-forms').addEventListener('click',e=>{
@@ -3168,7 +3194,7 @@ function makeLetter({titre,confidentiel,date,paras,signataire,tp}){
   const ly=30+(tl.length-1)*7.5+4; doc.setDrawColor(...ORANGE); doc.setLineWidth(1.2); doc.line(R-62,ly,R,ly);
   let y=Math.max(72,ly+22);
   doc.setTextColor(...INK); doc.setFontSize(11.5); doc.setFont(PF(),'normal');
-  doc.text(`${st.ville||''}, le ${frDate(date)}`,L,y); y+=14;
+  doc.text(`${villeLe(st)}${frDate(date)}`,L,y); y+=14;
   const footTop=297-14-((st.pied||[]).length)*4-8;
   const room=n=>{ if(y+n>footTop){ doc.addPage(); y=25; doc.setFontSize(11.5); doc.setFont(PF(),'normal'); doc.setTextColor(...INK); } };
   paras.forEach(p=>{ p.split('\n').forEach(line=>{ doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); }); y+=4; });
@@ -4862,7 +4888,7 @@ function relaisPdf(){
   const footTop=297-12-((st.pied||[]).length-1)*4-6-3; // juste au-dessus du trait orange du pied de page
   const room=n=>{ if(y+n>footTop){ doc.addPage(); y=25; } };
   doc.setTextColor(...INK); doc.setFontSize(11); doc.setFont(PF(),'normal');
-  doc.text(`${st.ville||''}, le ${frDate(RL.date||today())}`,R,y,{align:'right'});
+  doc.text(`${villeLe(st)}${frDate(RL.date||today())}`,R,y,{align:'right'});
   doc.setFont(PF(),'bold'); doc.text('À :',L,y); doc.setFont(PF(),'normal');
   const dl=doc.splitTextToSize(RL.dest.trim()+(RL.attention.trim()?' – à l’attention de '+RL.attention.trim():''),W-62); doc.text(dl,L+10,y); y+=5*dl.length+4;
   const intro=`Nous vous adressons ${who}, né${fem?'e':''} le ${RL.ddn}${RL.tel.trim()?' (tél. '+RL.tel.trim()+')':''}, suivi${fem?'e':''} dans notre structure, pour un relais de son traitement de substitution aux opiacés.`;
@@ -5499,7 +5525,7 @@ function mtPdf(){
   const who=fmtCivNom(MT.civ,MT.nom,MT.prenom);
   const P=letterPdf('Courrier médical','Confidentiel – secret médical');
   P.y=64; P.right([MT.dest.trim(),...MT.adresse.split('\n').map(s=>s.trim())],{after:6});
-  P.right([`${st.ville||''}, le ${frDate(MT.date||today())}`],{after:5});
+  P.right([`${villeLe(st)}${frDate(MT.date||today())}`],{after:5});
   P.para(`Objet : ${MT.objet} – ${who}, né${e_} le ${MT.ddn.trim()}`,{bold:true,after:5});
   P.para('Chère consœur, cher confrère,',{after:4});
   MT.texte.trim().split(/\n\s*\n/).forEach(par=>P.para(par.replace(/\s*\n\s*/g,' ')));
@@ -5563,7 +5589,7 @@ const guideSeen=()=>{ try{ return !!localStorage.getItem('docubus-guide'); }catc
 function guideInit(){
   const b=$('#guidebtn'); if(b) b.onclick=()=>openGuide(0);
   // jamais par-dessus l'assistant de première installation : il est montré après « C’est parti »
-  if(!guideSeen()) setTimeout(()=>{ const wz=document.getElementById('wiz'); if($('#modal').hidden&&!wizNeeded()&&!(wz&&!wz.hidden)) openGuide(0); },700);
+  if(!guideSeen()&&!SANS) setTimeout(()=>{ const wz=document.getElementById('wiz'); if($('#modal').hidden&&!wizNeeded()&&!(wz&&!wz.hidden)) openGuide(0); },700);
 }
 attBind(); mtBind(); guideInit();
 
@@ -5870,7 +5896,7 @@ function ordoPdf(){
   if(errs.length){ renderOrdo(); const el=$('#p-ordo .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
   const st=structure, e_=OR.civ==='Mme'?'e':'', T=ordoType(OR.type), cat=ordoCat();
   const P=letterPdf('Ordonnance',T.sub), {doc,C,L,R,W}=P;
-  P.y=64; P.right([`${st.ville||''}, le ${frDate(OR.date)}`],{after:4});
+  P.y=64; P.right([`${villeLe(st)}${frDate(OR.date)}`],{after:4});
   { const mds=meds(); let yy=64;
     mds.forEach(m=>{ doc.setFont(PF(),'bold'); doc.setFontSize(8.5); doc.setTextColor(...C.NAVY); doc.text(m.nom,L,yy);
       if(m.rpps){ const w=doc.getTextWidth(m.nom); doc.setFont(PF(),'normal'); doc.setFontSize(8); doc.setTextColor(...C.GREY); doc.text('RPPS '+m.rpps,L+w+2,yy); }
@@ -6284,7 +6310,7 @@ function urPdf(){
   const st=structure, fem=UR.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(UR.civ,UR.nom,UR.prenom);
   const P=letterPdf('Orientation aux urgences','Confidentiel – données de santé');
   P.y=64; P.right([UR.hopital.trim(),UR.service.trim()],{bold:true,after:2});
-  P.right([`${st.ville||''}, le ${frDate(UR.date||today())}${UR.heure?' à '+UR.heure.replace(':',' h '):''}`],{after:5});
+  P.right([`${villeLe(st)}${frDate(UR.date||today())}${UR.heure?' à '+UR.heure.replace(':',' h '):''}`],{after:5});
   P.para('À l’attention de l’équipe des urgences',{bold:true,after:4});
   P.para('Madame, Monsieur,',{after:3});
   P.para(`Nous vous adressons ${who}${UR.ddn.trim()?`, né${e_} le ${UR.ddn.trim()}`:''}, que notre équipe a rencontré${e_} ce jour.`);
@@ -6387,7 +6413,7 @@ function cpPdf(){
   const st=structure;
   const P=letterPdf('Courrier','');
   P.y=64; P.right([CP.dest.trim(),CP.attention.trim()?'À l’attention de '+CP.attention.trim():'',...CP.adresse.split('\n').map(s=>s.trim())],{after:6});
-  P.right([`${st.ville||''}, le ${frDate(CP.date||today())}`],{after:5});
+  P.right([`${villeLe(st)}${frDate(CP.date||today())}`],{after:5});
   P.para(`Objet : ${CP.objet.trim()}`,{bold:true,after:5});
   P.para(CP.appel,{after:4});
   CP.message.trim().split(/\n\s*\n/).forEach(par=>P.para(par.replace(/\s*\n\s*/g,' '),{after:3}));
@@ -6612,7 +6638,7 @@ function elPdf(){
   if(errs.length){ renderEl(); const el=$('#p-el .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
   const st=structure, P=letterPdf(EL.titre.trim(),'');
   P.y=64; P.right(EL.dest.split('\n').map(s=>s.trim()),{after:5});
-  P.right([`${st.ville||''}, le ${frDate(EL.date)}`],{after:6});
+  P.right([`${villeLe(st)}${frDate(EL.date)}`],{after:6});
   if(EL.objet.trim()) P.para(`Objet : ${EL.objet.trim()}`,{bold:true,after:5});
   EL.texte.trim().split(/\n\s*\n/).filter(Boolean).forEach(par=>P.para(par.replace(/[ \t]*\n[ \t]*/g,' '),{after:3}));
   const sig=EL.signature.split('\n').map(s=>s.trim()).filter(Boolean);
@@ -8011,7 +8037,7 @@ const formGroup=f=>{ const b=BUILTIN_CARDS.find(x=>x[0]===f.id); if(b&&f.id==='_
   return b?b[1]:(FORM_GROUPS.some(g=>g[0]===f.groupe)?f.groupe:'mixte'); };
 function formsByGroupHTML(){ // une liste déroulante par rubrique (même présentation que l'accueil)
   return `<div class="homecol">${FORM_GROUPS.map(([g,nom,emo])=>{
-    const l=formItems().filter(f=>formGroup(f)===g);
+    const l=formItems().filter(f=>formGroup(f)===g&&!f.sd);
     if(g==='med'&&!l.length&&!meds().length&&!isAdmin) return '';
     if(g==='med'&&!l.length&&!meds().length) return homeSec('fg:'+g,emo,nom,'masqués : aucun médecin enregistré',`<li class="hempty">Les formulaires médicaux ne sont proposés que si des médecins sont enregistrés (Réglages › Équipe), ou si vous les activez un par un dans Administration › Formulaires et modèles.</li>`);
     const body=l.length?l.map(homeFormRow).join(''):`<li class="hempty">Aucun formulaire pour l’instant.${isAdmin?' Créez-en un avec « Créer un formulaire » et choisissez la rubrique « '+esc(nom)+' ».':''}</li>`;
@@ -8196,7 +8222,7 @@ function ccPdf(){
   const st=structure, fem=CC.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(CC.civ,CC.nom,CC.prenom);
   const P=letterPdf('Bon d’orientation','Centre communal d’action sociale');
   P.y=64; P.right([CC.dest.trim(),CC.attention.trim()?'À l’attention de '+CC.attention.trim():''],{bold:true,after:2});
-  P.right([`${st.ville||''}, le ${frDate(CC.date||today())}`],{after:5});
+  P.right([`${villeLe(st)}${frDate(CC.date||today())}`],{after:5});
   P.para('Madame, Monsieur,',{after:3});
   P.para(`Nous orientons vers vos services ${who}${CC.ddn.trim()?`, né${e_} le ${CC.ddn.trim()}`:''}, rencontré${e_} par notre équipe${CC.tel.trim()?` (téléphone : ${CC.tel.trim()})`:''}.`);
   const sec=(t,lines)=>{ lines=lines.filter(Boolean); if(!lines.length) return; P.room(12+lines.length*5); P.para(t,{bold:true,after:.5,color:P.C.NAVY}); lines.forEach(l=>P.para(l,{after:1})); P.y+=2; };
@@ -8308,10 +8334,73 @@ function errsRefresh(e){ const panel=e.target&&e.target.closest&&e.target.closes
     if(now!==shown) keepFocus(panel,F[2]); },300); }
 document.addEventListener('input',errsRefresh); document.addEventListener('change',errsRefresh);
 
+/* ======================================================================
+   FORMULAIRES SEULEMENT (sans dossier)
+   Les formulaires intégrés et les modèles de la bibliothèque marchent sans dossier : PDF, impression,
+   téléchargement, mail .eml, avec tous les garde-fous habituels. Pas de documents, d'annuaire, de
+   réglages ni de mode admin. L'en-tête est saisi ici et gardé dans le navigateur de ce poste.
+   ====================================================================== */
+const SD_RAISON={api:'Ce navigateur ne sait pas ouvrir le dossier de la structure : il faut Microsoft Edge ou Google Chrome sur ordinateur.',
+  refus:'L’accès au dossier de la structure a été refusé sur ce poste (par le navigateur ou par le service informatique).',
+  introuvable:'Le dossier de la structure est introuvable depuis ce poste.',
+  choix:'Vous travaillez sans le dossier de la structure.'};
+const SD_PACK_EMO={droits:'🤝',qualite:'🏅',social:'🧺',liaison:'🔗',handicap:'♿',enfance:'🧸',agees:'🌿',asile:'🏠',addicto:'🩺'};
+const SD_KIT='https://github.com/librejoapp/librejo#si-lacc%C3%A8s-aux-dossiers-est-bloqu%C3%A9';
+function sdStart(){
+  // modèles de la bibliothèque (pas les liens, pas les modèles médicaux : il faudrait les médecins de la structure)
+  DATA.formulaires=MODELES.filter(m=>m.formulaire&&m.formulaire.groupe!=='med').map(m=>{ const f=JSON.parse(JSON.stringify(m.formulaire));
+    f.id='m-'+m.id; f.categorie=''; f.modele_src=m.id; f.sd=m.pack; f.champs.forEach((c,i)=>{ c.id='c'+i; }); return f; });
+  document.body.classList.add('sans-dossier');
+  ['docs','semaine','annu','admin'].forEach(t=>{ const b=document.querySelector(`nav.top [data-tab=${t}]`); if(b) b.hidden=true; });
+  ['#sidecats','#conn','#adminbtn'].forEach(s=>{ const el=$(s); if(el) el.hidden=true; });
+  const nav=document.querySelector('nav.top'), off=document.createElement('div'); off.className='sd-off';
+  off.innerHTML=`<p class="sd-off-t">Avec le dossier de la structure</p><ul><li>Accueil et documents</li><li>Impression rapide</li><li>Annuaire</li><li>Accès admin</li></ul>`;
+  nav.after(off);
+  const bar=document.createElement('div'); bar.id='sdbar'; bar.setAttribute('role','region'); bar.setAttribute('aria-label','Formulaires seulement');
+  bar.innerHTML=`${svg('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>')}<p><b>Formulaires seulement.</b> ${esc(SD_RAISON[SANS.raison]||SD_RAISON.choix)} Les documents, l’annuaire et les réglages de la structure ne sont pas disponibles.</p>
+    <div class="sd-acts"><button type="button" class="linkbtn" id="sd-why">Pourquoi ?</button>${SANS.api?'<button type="button" class="secondary sm" id="sd-pick">Choisir le dossier</button>':''}</div>`;
+  $('.content').prepend(bar);
+  $('#sd-why').onclick=sdWhy;
+  const pk=$('#sd-pick'); if(pk) pk.onclick=()=>window.LJ_CHOISIR_DOSSIER&&window.LJ_CHOISIR_DOSSIER();
+  const r=document.querySelector('footer .reassure'); if(r) r.lastChild.textContent='Rien n’est enregistré : le formulaire ne va que dans le PDF ou le mail';
+  tab='forms';
+}
+function sdWhy(){
+  openModal(`<h3 id="modal-title">Pourquoi « formulaires seulement » ?</h3>
+    <p>${esc(SD_RAISON[SANS.raison]||SD_RAISON.choix)}</p>
+    <p>Librejo n’a pas de serveur : les documents, l’annuaire et les réglages de la structure sont rangés dans un dossier partagé (NAS, lecteur réseau, OneDrive, Google Drive…), que le navigateur ouvre avec votre accord. Sans ce dossier, seuls les formulaires marchent : PDF, impression, téléchargement et mail, comme d’habitude.</p>
+    <p class="hint">${SANS.raison==='api'?'Ouvrez Librejo dans <b>Microsoft Edge</b> ou <b>Google Chrome</b> sur un ordinateur pour retrouver tout le reste.':'Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement : aucune donnée n’est envoyée sur Internet.'}</p>
+    <p><a href="${SD_KIT}" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>
+    <div class="btns">${SANS.api?'<button class="primary" id="sdw-pick">Choisir le dossier</button>':''}<button class="secondary" data-close>Fermer</button></div>`);
+  const b=$('#sdw-pick'); if(b) b.onclick=()=>window.LJ_CHOISIR_DOSSIER&&window.LJ_CHOISIR_DOSSIER();
+}
+function sdEnteteHTML(){ const E=sdEnt(), n=String(E.nom||'').trim();
+  return n?`<div class="sd-ent"><span><b>En-tête des documents :</b> ${esc(n)}${E.ville?' · '+esc(E.ville):''} <small>(gardé dans ce navigateur)</small></span><button type="button" class="secondary sm" data-sdent>Modifier</button></div>`
+    :`<div class="sd-ent todo"><span><b>Votre structure n’apparaît pas encore sur les documents.</b> Saisissez son nom et son adresse pour l’en-tête des PDF.</span><button type="button" class="primary sm" data-sdent>Saisir l’en-tête</button></div>`; }
+function sdPacksHTML(){
+  const l=formItems().filter(f=>f.sd); if(!l.length) return '';
+  return `<div class="sd-modh"><h3 class="sec">Modèles de la bibliothèque</h3><p class="hint">Des trames prêtes à remplir, à faire relire par votre direction avant usage.</p></div>
+    <div class="homecol">${MODELE_PACKS.map(([k,nom])=>{ const ff=l.filter(f=>f.sd===k); return ff.length?homeSec('sd:'+k,SD_PACK_EMO[k]||'📝',nom,`${ff.length} modèle${ff.length>1?'s':''}`,ff.map(homeFormRow).join('')):''; }).join('')}</div>`; }
+function sdEntete(){
+  const E=sdEnt(), f=(k,l,o='')=>`<label class="field${o.includes('wide')?' wide':''}"><span>${l}</span><input class="in" id="sde-${k}" value="${esc(E[k]||'')}" ${o.replace('wide','')}></label>`;
+  openModal(`<h3 id="modal-title">En-tête des documents</h3>
+    <p class="hint">Le nom et l’adresse de la structure, en haut et en bas des PDF.</p>
+    <div class="fieldgrid">${f('nom','Nom de la structure','wide data-autofocus')}${f('adresse','Adresse','wide')}${f('cp','Code postal','inputmode="numeric"')}${f('ville','Ville')}${f('tel','Téléphone')}${f('mail','Mail de la structure','spellcheck="false"')}</div>
+    <div class="privacy"><span class="pemo" aria-hidden="true">💻</span><span>Gardé dans le navigateur de ce poste seulement, puisqu’il n’y a pas de dossier : c’est un réglage de la structure, pas une donnée de personne. N’y mettez rien sur une personne accompagnée.</span></div>
+    <div class="btns"><button class="primary" id="sde-ok">Enregistrer sur ce poste</button><button class="secondary" data-close>Annuler</button></div>`);
+  $('#sde-ok').onclick=()=>{ const N={}; ['nom','adresse','cp','ville','tel','mail'].forEach(k=>{ N[k]=$('#sde-'+k).value.trim(); });
+    if(N.mail&&!MAIL.test(N.mail)){ toast('L’adresse mail de la structure semble incorrecte.'); $('#sde-mail').focus(); return; }
+    try{ localStorage.setItem(SD_ENT,JSON.stringify(N)); }catch(e){ toast('Ce navigateur n’a pas pu garder l’en-tête : il servira jusqu’à la fermeture de la page.'); }
+    PAR={...PAR,attestation:sdAtt(N)}; applyParams(); applyTheme(PAR.apparence); closeModal(); renderForms(); liveSoon(0); toast('En-tête enregistré sur ce poste'); };
+  ['nom','adresse','cp','ville','tel','mail'].forEach(k=>$('#sde-'+k).addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#sde-ok').click(); } }));
+}
+document.addEventListener('click',e=>{ if(SANS&&e.target.closest('[data-sdent]')) sdEntete(); });
+
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
-if(!FSA){ $('#gen-info').textContent='Pour imprimer en un clic et administrer, ouvrez Librejo avec Microsoft Edge ou Google Chrome.'; $('#gen-info').hidden=false; }
+if(!FSA&&!SANS){ $('#gen-info').textContent='Pour imprimer en un clic et administrer, ouvrez Librejo avec Microsoft Edge ou Google Chrome.'; $('#gen-info').hidden=false; }
+if(SANS) sdStart();
 setAdmin(isAdmin);
 setTab(tab);
 renderDocs();

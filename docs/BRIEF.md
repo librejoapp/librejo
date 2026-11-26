@@ -93,7 +93,7 @@ Une version que n'importe quelle petite structure médico-sociale peut installer
 2. **Assistant au premier lancement** : détaillé dans une section dédiée. → **Fait dans le prototype 2x** (voir « Le premier lancement »).
 3. **Mail sans Outlook** : PDF téléchargé et messagerie web pré-remplie. → **Fait** (réglage « Messagerie » : Outlook ou web).
 4. **Edge en plus de Chrome**, puisqu'il est installé sur tous les Windows. Firefox et Safari donnent un mode consultation seule. → À tester.
-5. **Distribution et installation** : PWA en voie principale, zip hors ligne en secours, mode dégradé et kit DSI. → **PWA prototypée** (voir « État du prototype ») ; zip, mode dégradé et kit DSI à faire.
+5. **Distribution et installation** : PWA en voie principale, zip hors ligne en secours, mode dégradé et kit DSI. → **PWA prototypée** (voir « État du prototype ») ; **mode dégradé fait** (26/11/2026, voir « Mode dégradé ») ; zip et kit DSI à faire.
 6. **Documentation et support** : un mode d'emploi générique, et une décision sur qui maintient (licence libre, diffusion par un réseau comme la Fédération Addiction ?). → Un `LISEZ-MOI.md` accompagne le prototype ; le reste est à faire.
 7. **Prévenir dans la doc** : si deux admins modifient les réglages en même temps, le dernier enregistrement l'emporte. → Écrit dans le LISEZ-MOI.
 8. **Ordonnance** : la remplacer par un « En-tête d'ordonnance ». → **Fait** : c'est un modèle de la bibliothèque, et l'ancien formulaire est masqué par défaut.
@@ -235,7 +235,7 @@ Le champ `{Association}` d'un modèle est rempli tout seul avec le nom de la str
 
 **Comparer deux documents (prototype 3a, 25/11/2026).** Demande de Julien : un admin trouve deux versions d'un même document sur le NAS. Documents › Outils › « Comparer deux documents » : on glisse les deux fichiers (ou on prend un document déjà dans Librejo), le texte s'affiche côte à côte, les lignes différentes sont encadrées, les mots retirés barrés en rouge et les mots ajoutés surlignés en vert ; les longs passages identiques sont repliés. PDF (avec n° de page), Word, LibreOffice et texte ; fichiers identiques à l'octet près signalés. Puis « Garder A », « Garder B », « Garder les deux » ou « Aucun » : un fichier gardé s'ajoute avec le formulaire habituel (titre, catégorie, mots-clés) ; si l'autre est déjà dans Librejo, le fichier gardé en devient la nouvelle version ; un document écarté qui était dans Librejo est archivé, jamais supprimé. Limites : PDF scannés (pas de texte) et images non comparables ; la mise en forme n'est pas comparée.
 
-**Ordinateurs non reliés au NAS (réflexion du 25/11, rien de codé).** Pistes : dossier cloud synchronisé sur ce poste (OneDrive, Google Drive) ; copie datée en lecture seule, refaite par l'admin ; mode « formulaires seulement » (les formulaires intégrés marchent sans dossier, mais les documents et réglages de la structure manquent) ; accès au NAS à distance (VPN) si la DSI le permet.
+**Ordinateurs non reliés au NAS (réflexion du 25/11).** Pistes : dossier cloud synchronisé sur ce poste (OneDrive, Google Drive) ; copie datée en lecture seule, refaite par l'admin ; mode « formulaires seulement » (**codé le 26/11**, voir « Mode dégradé » : les formulaires marchent sans dossier, mais les documents et réglages de la structure manquent) ; accès au NAS à distance (VPN) si la DSI le permet.
 
 **Équipe (prototype 2z, 25/11/2026).** Demande de Julien : en plus des médecins, une liste d'autres professionnels gérée par l'admin (Réglages › Équipe : nom, fonction, téléphone, mail, n° professionnel). Dans l'éditeur, un type de champ « Professionnel(s) de l'équipe » (une ou plusieurs personnes) : au remplissage, on choisit les personnes d'un clic et ce qui apparaît sur le document (fonction, téléphone, mail, n°), l'admin réglant ce qui est coché par défaut. Dans l'attestation de suivi, l'orientation aux urgences et le courrier à un partenaire, « Choisir dans l'équipe » remplit le nom et la fonction du signataire. Coordonnées professionnelles seulement. Les Réglages ont maintenant cinq sections (Documents, Apparence, Mail, Équipe, Accès) ; les médecins sont passés dans Équipe.
 
@@ -311,6 +311,13 @@ Pas de `.cmd`, `.bat` ou `.vbs` : un script téléchargé déclenche l'alerte «
 ### Mode dégradé
 
 Si le service informatique a bloqué l'accès aux dossiers dans le navigateur, l'outil ne plante pas. Il passe en mode **« formulaires seulement »** : on remplit, on obtient le PDF, on l'imprime ou on l'envoie. Les formulaires n'ont besoin d'aucune autorisation.
+
+**Codé le 26/11/2026.**
+- Navigateur sans accès aux dossiers (Firefox, Safari) : le mode s'active tout seul. Autorisation refusée, `SecurityError` (stratégie de l'informatique), dossier introuvable : l'écran de démarrage propose « Remplir un formulaire sans dossier », avec une phrase qui dit ce qui manque et pourquoi, et un lien vers la section « Si l'accès aux dossiers est bloqué » du README (en attendant le kit DSI). Le choix est gardé sur le poste : au lancement suivant, sans dossier connu, Librejo y retourne directement.
+- Ce qui marche : les formulaires intégrés et les modèles de la bibliothèque (rangés par rubrique, sauf les liens et les modèles médicaux), PDF, impression, téléchargement, .eml, avec tous les garde-fous (caractères des PDF, rappel Téléchargements, MSSanté). Hors ligne aussi (service worker).
+- En-tête : nom, adresse, téléphone et mail de la structure, saisis sur le poste et gardés **dans ce navigateur** (`localStorage`, clé `librejo-entete-poste`) : c'est un réglage de la structure, pas une donnée de personne, et l'écran le dit.
+- Ce qui manque, dit dans le menu (« Avec le dossier de la structure ») : accueil et documents, impression rapide, annuaire, accès admin. Pas d'assistant, pas de mode d'emploi automatique.
+- Bandeau discret et permanent « Formulaires seulement », avec la raison, « Pourquoi ? » et « Choisir le dossier » si le navigateur le permet.
 
 ### Le kit DSI
 

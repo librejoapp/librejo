@@ -8,3 +8,8 @@
 #lj-boot .lj-btn.lj-sec{background:#fff;color:#1F6F6B;border:2px solid #1F6F6B}
 #lj-boot .lj-btn:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}
 .lj-link{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+#lj-boot .lj-sd{margin-top:22px;padding-top:18px;border-top:1px solid #ece5d8}
+#lj-boot .lj-sd .lj-btn{margin-top:0}
+#lj-boot .lj-sd .lj-aide{margin:10px 0 0}
+#lj-boot a{color:#1F6F6B;font-weight:600;text-underline-offset:2px}
+#lj-boot a:focus-visible,.lj-link:focus-visible{outline:3px solid #E9A23B;outline-offset:2px;border-radius:4px}

@@ -1,5 +1,5 @@
 // Librejo : met en cache le code du site pour fonctionner hors ligne. Les documents de la structure ne passent jamais par ici.
-const VERSION='librejo-proto3j';
+const VERSION='librejo-proto3k';
 const BASE=['./','index.html','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
  'app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js', // PDF : créer, assembler, remplir
  'app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-preview.min.js','app/polices-pdf/repli.js', // aperçus, impression, caractères des PDF
