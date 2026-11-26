@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* L'application est dans appli/. Un poste qui l'avait installée quand elle était à la racine ouvre encore cette page dans sa fenêtre d'application : on l'envoie vers appli/. */
+try{if((window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone)location.replace("appli/")}catch(e){}</script>
+<title>Librejo, les documents de votre structure, à jour</title>
+<meta name="description" content="Librejo range les documents et les formulaires d’une structure sociale ou médico-sociale. Sans serveur, gratuit et libre.">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="slab">
+  <div class="container">
+    <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+    <nav aria-label="Pages du site">
+      <a href="installer.html">Installer</a>
+      <a href="guides.html">Guides</a>
+      <a href="faq.html">Questions</a>
+      <a href="telecharger.html">Télécharger</a>
+    </nav>
+    <button class="btn btn--card" type="button" disabled>Démo, bientôt</button>
+  </div>
+</header>
+
+<main id="contenu">
+<section class="hero desk">
+  <div class="container">
+    <div class="rise">
+      <h1>Le bon document, <span class="marker">tout de suite.</span></h1>
+      <p class="lead">Librejo range les documents de votre équipe, pour que chacun s’y retrouve.</p>
+      <div class="actions">
+        <a class="btn btn--go" href="installer.html">Installer Librejo</a>
+        <a class="btn btn--card" href="#film">Voir comment ça marche</a>
+      </div>
+      <small>Gratuit et libre. Né dans un CSAPA-CAARUD de Marseille.</small>
+    </div>
+    <div class="shot shot--tilt rise" data-slot="accueil" data-kind="product">
+      <img src="images/accueil.webp" width="1600" height="1000" alt="L’accueil de Librejo : la recherche, les documents les plus utilisés et les formulaires à remplir">
+      <span class="stamp" data-keep aria-hidden="true">à jour</span>
+    </div>
+  </div>
+</section>
+
+<section class="film reveal" id="film">
+  <div class="container">
+    <h2>Librejo en une minute et demie</h2>
+    <figure class="shot" data-slot="film" data-kind="product" style="margin:0">
+      <img src="images/dash.webp" width="1600" height="1000" alt="Le tableau de bord de l’admin : ce qui est à surveiller et les statistiques d’utilisation" loading="lazy">
+    </figure>
+    <p class="muted">La vidéo de présentation est en préparation. En attendant, voici l’essentiel en quatre écrans.</p>
+  </div>
+</section>
+
+<section class="row reveal">
+  <div class="container">
+    <div>
+      <h2>La bonne version, sans chercher</h2>
+      <p class="lead">Tapez deux mots. Le document à jour arrive, prêt à imprimer ou à envoyer. Les anciennes versions sont rangées aux archives, jamais effacées.</p>
+    </div>
+    <div class="shot loop" data-slot="recherche" data-kind="product">
+      <img src="images/rech-0.webp" width="1600" height="1000" alt="" loading="lazy">
+      <img src="images/rech-1.webp" width="1600" height="1000" alt="" loading="lazy">
+      <img src="images/rech-2.webp" width="1600" height="1000" alt="Une recherche du mot « livret » trouve le livret d’accueil, avec les boutons Imprimer et Envoyer" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="row row--even reveal">
+  <div class="container">
+    <div>
+      <h2>Des formulaires qui font le travail</h2>
+      <p class="lead">Attestation, courrier, bon d’orientation : vous remplissez, le PDF sort à l’en-tête de la structure et le mail est prêt. Cinquante modèles sont fournis, à faire relire avant usage.</p>
+    </div>
+    <div class="shot loop" data-slot="formulaire" data-kind="product">
+      <img src="images/form-0.webp" width="1600" height="1000" alt="" loading="lazy">
+      <img src="images/form-1.webp" width="1600" height="1000" alt="" loading="lazy">
+      <img src="images/form-2.webp" width="1600" height="1000" alt="Une attestation de suivi se remplit, son aperçu se dessine à côté" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="board reveal">
+  <div class="container">
+    <h2>Rien ne sort de chez vous.</h2>
+    <ul class="facts">
+      <li>Pas de serveur : tout reste dans le dossier partagé de la structure.</li>
+      <li>Aucune donnée de personne accompagnée n’est gardée.</li>
+      <li>Vos fichiers d’origine ne sont jamais modifiés.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="row row--even reveal">
+  <div class="container">
+    <div>
+      <h2>Prêt pour l’évaluation HAS</h2>
+      <p class="lead">Reliez chaque document au critère qu’il prouve. Librejo montre ce qui est à jour, ce qui est à relire et ce qui manque.</p>
+      <ul class="facts">
+        <li>Les 18 critères impératifs du référentiel</li>
+        <li>Une date de relecture par document</li>
+        <li>Un journal de chaque modification</li>
+      </ul>
+    </div>
+    <div class="shot" data-slot="has" data-kind="product">
+      <img src="images/has.webp" width="1600" height="1000" alt="L’écran Préparer l’évaluation HAS : des critères avec leur preuve à jour, d’autres sans preuve" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section class="row row--even close reveal" id="installer">
+  <div class="container">
+    <div>
+      <h2>Prêt en dix minutes</h2>
+      <p class="lead">Il faut Chrome ou Edge sur un ordinateur, et un dossier que tous les postes voient. Un assistant fait le reste.</p>
+      <div class="actions">
+        <a class="btn btn--go" href="installer.html">Installer Librejo</a>
+        <button class="btn btn--card" type="button" disabled>Tester la démo, bientôt</button>
+      </div>
+      <div class="note">
+        <h3>Un prototype, à l’essai</h3>
+        <p>Essayez-le avec des données fictives. Nous cherchons des structures pilotes.</p>
+      </div>
+    </div>
+    <div class="shot" data-slot="demarrage" data-kind="product">
+      <img src="images/boot.webp" width="1600" height="1000" alt="Le premier écran de Librejo : choisir le dossier de la structure" loading="lazy">
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot" id="pages">
+  <div class="container">
+    <div>
+      <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+      <p>Né dans un CSAPA-CAARUD de Marseille. Gratuit et libre.</p>
+    </div>
+    <div>
+      <h2>Démarrer</h2>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li>Tester la démo, bientôt</li></ul>
+    </div>
+    <div>
+      <h2>Apprendre</h2>
+      <ul><li><a href="guides.html#equipe">Guide de l’équipe</a></li><li><a href="guides.html#admin">Guide de l’admin</a></li><li><a href="faq.html">Questions</a></li></ul>
+    </div>
+    <div>
+      <h2>Le projet</h2>
+      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Les boucles ne tournent que lorsqu'elles sont à l'écran
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.4 });
+  document.querySelectorAll('.loop').forEach((l) => io.observe(l));
+  const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.18 });
+  document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
+}
+const ready = (s) => s.classList.add('ready');
+document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
+
+</script>
+<noscript><style>.reveal > .container > *, .shot { opacity: 1 !important; transform: none !important; }</style></noscript>
+</body>
+</html>

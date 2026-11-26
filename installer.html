@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installer Librejo</title>
+<meta name="description" content="Installer Librejo en trois étapes : un navigateur, un dossier partagé, un assistant.">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="slab">
+  <div class="container">
+    <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+    <nav aria-label="Pages du site">
+      <a href="installer.html" aria-current="page">Installer</a>
+      <a href="guides.html">Guides</a>
+      <a href="faq.html">Questions</a>
+      <a href="telecharger.html">Télécharger</a>
+    </nav>
+    <button class="btn btn--card" type="button" disabled>Démo, bientôt</button>
+  </div>
+</header>
+<main id="contenu">
+<section class="page-head desk">
+  <div class="container rise">
+    <h1>Installer Librejo</h1>
+    <p class="lead">Dix minutes, avec Chrome ou Edge, sur un ordinateur.</p>
+  </div>
+</section>
+
+<section class="part reveal">
+  <div class="container">
+    <h2>Trois étapes</h2>
+    <ol class="steps">
+      <li><h3>Ouvrez Librejo</h3><p>Avec Chrome ou Edge, cliquez sur « Installer ».</p></li>
+      <li><h3>Choisissez le dossier</h3><p>Le dossier partagé de votre structure.</p></li>
+      <li><h3>Suivez l’assistant</h3><p>Nom, logo, catégories, mot de passe.</p></li>
+    </ol>
+    <div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--go" href="appli/">Ouvrir Librejo</a><a class="btn btn--card" href="guides/installer-librejo.pdf" target="_blank" rel="noopener">La fiche d’installation en PDF</a></div>
+  </div>
+</section>
+<section class="part reveal guide">
+  <div class="container duo">
+    <div>
+      <h2>Le détail, pas à pas</h2>
+      <div class="acc"><details><summary><span class="n">1</span><span>Ouvrez Librejo</span></summary><p>Avec Chrome ou Edge, sur un ordinateur, ouvrez l’application et cliquez sur « Installer ». Une icône arrive sur le bureau. Si l’installation est interdite sur votre poste, Librejo marche aussi dans un simple onglet.</p></details><details><summary><span class="n">2</span><span>Choisissez le dossier de la structure</span></summary><p>Pour une première installation, cliquez sur « Créer le dossier Librejo de votre structure » et indiquez le dossier partagé. Librejo y prépare son rangement.</p></details><details><summary><span class="n">3</span><span>Suivez l’assistant</span></summary><p>Nom de la structure, logo, équipe, catégories, noms des fichiers, modèles, messagerie et mot de passe admin. Chaque étape peut être passée, et tout se modifie ensuite.</p></details><details><summary><span class="n">4</span><span>Installez les autres postes</span></summary><p>Sur chaque poste, ouvrez Librejo et choisissez le même dossier. Il n’y a pas d’assistant : tout est déjà réglé.</p></details><details><summary><span class="n">5</span><span>Quel dossier partagé choisir ?</span></summary><p>Un dossier que tous les postes voient : un NAS ou un serveur de fichiers ; OneDrive, SharePoint ou Teams synchronisé sur chaque poste ; Google Drive pour ordinateur, Dropbox ou Nextcloud. Sur un seul ordinateur, cela marche aussi, sans partage.</p></details><details><summary><span class="n">6</span><span>Que dire au service informatique ?</span></summary><p>Le site ne sert que le code : aucune donnée n’y est envoyée, et le code est public. Il suffit d’autoriser l’adresse du site, et l’accès aux dossiers pour ce seul site dans Chrome ou Edge. La fiche PDF reprend ces points.</p></details><details><summary><span class="n">7</span><span>Le navigateur redemande l’accès au dossier</span></summary><p>C’est normal : par sécurité, Chrome et Edge le redemandent de temps en temps. Un clic sur « Autoriser » suffit.</p></details></div>
+    </div>
+    <div class="shot" data-slot="demarrage" data-kind="product"><img src="images/boot.webp" width="1600" height="1000" alt="Le premier écran de Librejo : choisir le dossier de la structure" loading="lazy"></div>
+  </div>
+</section>
+
+</main>
+<footer class="foot" id="pages">
+  <div class="container">
+    <div>
+      <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+      <p>Né dans un CSAPA-CAARUD de Marseille. Gratuit et libre.</p>
+    </div>
+    <div>
+      <h2>Démarrer</h2>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li>Tester la démo, bientôt</li></ul>
+    </div>
+    <div>
+      <h2>Apprendre</h2>
+      <ul><li><a href="guides.html#equipe">Guide de l’équipe</a></li><li><a href="guides.html#admin">Guide de l’admin</a></li><li><a href="faq.html">Questions</a></li></ul>
+    </div>
+    <div>
+      <h2>Le projet</h2>
+      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+    </div>
+  </div>
+</footer>
+<script>
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.4 });
+  document.querySelectorAll('.loop').forEach((l) => io.observe(l));
+  const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
+}
+const ready = (s) => s.classList.add('ready');
+document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
+
+</script>
+<noscript><style>.reveal > .container > *, .shot { opacity: 1 !important; transform: none !important; }</style></noscript>
+</body>
+</html>
