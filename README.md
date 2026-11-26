@@ -10,6 +10,7 @@ La boîte à outils documentaire des petites structures sociales et médico-soci
 - Aucune donnée de personne accompagnée n'est enregistrée : elle ne va que dans le PDF ou le mail produit.
 - Les fichiers d'origine ne sont jamais écrasés : les anciennes versions vont aux archives.
 - Chrome ou Edge sur ordinateur. Pas prévu pour les téléphones.
+- Aucune case n'est bloquante : quand il manque quelque chose dans un formulaire, Librejo le liste (« Revenir compléter » ou « Continuer quand même ») ; les cases vides sont laissées en pointillés sur le PDF, à compléter à la main.
 
 ## Essayer
 
@@ -50,6 +51,33 @@ Dans ce mode, les formulaires intégrés et les modèles de la bibliothèque mar
 - que tous les postes voient **le même dossier** (lecteur réseau avec une lettre, NAS, ou dossier OneDrive, SharePoint, Google Drive, Dropbox synchronisé sur chaque poste).
 
 Librejo n'envoie aucune donnée : le site ne sert que le code, les PDF sont faits sur le poste. On ne cherche jamais à contourner la sécurité de la structure : on lui donne de quoi dire oui.
+
+## Dossier sur un NAS : le lecteur réseau qui disparaît
+
+Retour d'expérience de Docubus (BPM, Marseille, novembre 2026). Librejo s'ouvre depuis le web : il ne dépend plus d'un chemin `\\NAS\…`, ni de la lettre du lecteur dans une icône, ni d'un fichier renommé à la mise à jour. Mais si les documents sont sur un NAS, le **lecteur réseau** (Z:, X:…) doit être connecté pour que Librejo les trouve.
+
+**Ce que fait Librejo :**
+
+- Si le dossier ne répond pas à l'ouverture, Librejo affiche **« Le dossier ne répond pas »**, avec **Réessayer**, **Choisir un autre dossier** et le mode formulaires seulement, au lieu d'une erreur.
+- Sur cet écran (et dans Administration › Vérifications du poste › **Lecteur réseau…**), Librejo prépare un **programme de réparation** pour le poste : on indique la lettre et le chemin réseau (`\\192.168.1.10\Partage`), Librejo télécharge `Librejo - lecteur Z.cmd`. Lancé d'un double-clic, il :
+  1. mémorise l'identifiant du NAS dans le Gestionnaire d'identification Windows (le mot de passe est demandé par Windows et n'est jamais écrit dans le fichier) ;
+  2. connecte le lecteur, avec reconnexion automatique ;
+  3. se copie dans le dossier de démarrage de Windows (`shell:startup`) : à chaque ouverture de session, il attend le réseau (jusqu'à 2 minutes) et reconnecte le lecteur ; il ne s'affiche que s'il échoue, avec la réponse de Windows ;
+  4. propose de couper le démarrage rapide de Windows (s'il est lancé en administrateur).
+- La lettre et le chemin sont gardés sur le poste (pas dans le dossier partagé) : chaque poste peut avoir sa propre lettre.
+- **Pas encore essayé sur un vrai poste Windows.** Les étapes viennent de ce qui a été diagnostiqué chez BPM ; à confirmer sur un poste.
+
+**Les causes connues**, de la plus fréquente à la moins fréquente : lecteur créé sans « Se reconnecter lors de la connexion » ; identifiant du NAS non mémorisé (Windows échoue sans rien dire) ; lecteur créé depuis une session administrateur ; démarrage rapide (un arrêt est en fait une veille prolongée) ; réseau pas prêt à l'ouverture de session (sur Windows Pro, la stratégie « Toujours attendre le réseau lors du démarrage de l'ordinateur et de l'ouverture de session » règle ce cas) ; script du prestataire informatique qui supprime le lecteur.
+
+**Sans NAS**, la question ne se pose pas : un dossier OneDrive, SharePoint, Google Drive ou Dropbox synchronisé sur chaque poste est la piste conseillée pour une petite structure.
+
+## Mail préparé : la signature Outlook au-dessus du texte
+
+Librejo prépare un brouillon (.eml) ; Outlook y ajoute la signature automatique en l'ouvrant, au-dessus du texte. Aucun en-tête connu ne l'empêche. Sur chaque poste : Outlook › Fichier › Options › Courrier › Signatures, et pour **Nouveaux messages**, choisir **(aucune)**. Des brouillons mal ouverts ont aussi été signalés avec le « nouvel Outlook » : à surveiller.
+
+## Signaler un problème
+
+Dans l'aide (« ? ») et dans les vérifications du poste, **Signaler un problème** prépare un mail avec la version de Librejo, le navigateur, l'adresse d'ouverture et le résultat des vérifications, jamais de données sur les personnes. Il part par défaut à l'équipe Librejo, **librejo@proton.me** ; une structure peut mettre une autre adresse dans Réglages › Mail. Rien n'est envoyé par Librejo.
 
 ## Deux postes qui modifient en même temps
 

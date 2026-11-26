@@ -38,6 +38,7 @@ Aucun outil trouvé ne combine, pour une petite structure, documents à jour, fo
 ## Capabilities and Constraints
 
 - **Aucune donnée de personne accompagnée enregistrée** : elle ne va que dans le PDF ou le mail produit ; le formulaire est vidé après usage ; ne demander que le nécessaire.
+- **Aucune case n'est bloquante** : ce qui manque est listé (« Revenir compléter » ou « Continuer quand même ») et laissé en pointillés sur le PDF, à compléter à la main. Seule exception : un caractère que le PDF ne sait pas écrire.
 - **Aucun serveur.** Le site ne reçoit rien. Seule lecture externe : la liste publique des Cerfa (robot mensuel, données ouvertes DILA), sur demande d'un admin.
 - Les fichiers d'origine ne sont jamais écrasés : les anciennes versions vont aux archives.
 - Ne jamais chercher à contourner la sécurité informatique d'une structure : l'aider à dire oui (kit DSI).

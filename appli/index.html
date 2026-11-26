@@ -1348,6 +1348,13 @@ body.demo.is-admin #demobar{padding-right:400px}   /* place du badge « Vous mod
 .ck b{color:var(--navy)}
 .ck-do{margin:4px 0 0;color:var(--text-3);max-width:75ch}
 .ck-acts{margin-top:var(--sp-3);gap:var(--sp-2)}
+/* Lecteur réseau (Vérifications du poste) */
+.nas-ul{margin:0 0 var(--sp-3);padding-left:1.3em}
+.nas-row{gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap}
+.nas-l{flex:0 0 7.5em;margin:0}
+.nas-l .in{text-transform:uppercase;text-align:center}
+.nas-c{flex:1 1 260px;margin:0}
+#nas-err{color:var(--danger-text);font-weight:600;margin:var(--sp-2) 0 0}
 .wz-checks{margin-top:var(--sp-5);max-width:820px}
 .wz-checks h3{margin:0 0 var(--sp-2);font-size:var(--fs-5);color:var(--navy)}
 /* Modifications simultanées : fenêtre au-dessus de tout, différences par section, copies en conflit */
@@ -1538,7 +1545,9 @@ const TOAST_ERR=/impossible|introuvable|erreur|incorrect|manquant|trop lourd|ref
 const TOAST_OK=/enregistr|ajouté|créé|copié|supprimé|connecté|prêt|effacé|activé|quitté|retiré|mis à jour|actualisée|téléchargé|imprim/i;
 function toast(msg,kind){ const t=$('#toast'); kind=kind||(TOAST_ERR.test(msg)?'err':TOAST_OK.test(msg)?'ok':''); t.className='toast'+(kind?' '+kind:''); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,3000); }
 const pad=n=>String(n).padStart(2,'0');
-function frDate(iso){ if(!iso) return ''; const [y,m,d]=String(iso).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
+const BLANK='………………'; // case laissée vide sur le PDF, à compléter à la main
+let MISS_OK=false;  // « Continuer quand même » en cours (voir missingStop)
+function frDate(iso){ if(!iso) return ''; if(iso===BLANK) return BLANK; const [y,m,d]=String(iso).slice(0,10).split('-'); return `${d}/${m}/${y}`; }
 const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const sizeTxt=n=>!n?'':n>1048576?(n/1048576).toFixed(1).replace('.',',')+' Mo':Math.max(1,Math.round(n/1024))+' Ko';
 
@@ -1649,6 +1658,8 @@ function dest(){
 }
 function splitMails(s){ return String(s||'').split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean); }
 const MAIL=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/* posologie écrite sur un PDF : en chiffres et en lettres, ou en pointillés si elle manque (« Continuer quand même ») */
+function doseTxt(v){ return parseDose(v)>0?`${fmtDose(v)} mg par jour (${doseLettres(v)} par jour)`:`${BLANK} mg par jour`; }
 function parseDose(v){ const n=parseFloat(String(v).replace(',','.')); return isFinite(n)?n:NaN; }
 function fmtDose(v){ return (Math.round(parseDose(v)*100)/100).toString().replace('.',','); }
 /* Dose en toutes lettres (orthographe traditionnelle : vingt et un, quatre-vingts, deux cents…) */
@@ -2288,7 +2299,8 @@ const extOf=n=>(String(n).split('.').length>1?String(n).split('.').pop():'').toL
 const printable=d=>['pdf','png','jpg','jpeg','webp','docx'].includes(d.ext);
 const docDate=v=>{ v=String(v||''); if(/^\d{4}-\d{2}$/.test(v)){ const [y,m]=v.split('-'); return m+'/'+y; } return frDate(v); };
 // Nom de fichier lisible et sûr pour Windows (accents conservés)
-const fileSafe=s=>String(s).trim().replace(/[\\/:*?"<>|#%]+/g,' ').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'document';
+const isoOr=d=>/^\d{4}-\d{2}-\d{2}/.test(String(d||''))?d:today(); // date d'un nom de fichier (pointillés ou vide : aujourd'hui)
+const fileSafe=s=>String(s).trim().replace(/[\\/:*?"<>|#%…]+/g,' ').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'document';
 function parseName(base){
   const pn=parseByNom(base); if(pn) return pn;
   const m=/^(.+?)(?:_v(\d+))?(?:_(\d{4}-\d{2}(?:-\d{2})?))?$/.exec(base)||[];
@@ -2556,7 +2568,7 @@ function sortDocs(list){
 /* Emoji de chaque formulaire : se repérer d'un coup d'œil (formulaires de l'admin : champ « Emoji », sinon 📝) */
 const FORM_EMOJI={__ccas:'🏛️',__el:'📄',__cp:'📨',__urg:'🚑',__ordo:'🧾',__cl:'🖊️',__deliv:'💊',__relais:'🔁',__cmi:'🩺',__att:'📋',__mt:'✉️'};
 const formEmoji=f=>FORM_EMOJI[f.id]||(f.emoji||'').trim()||'📝';
-const DOCUBUS_VERSION='2026-11-25';
+const DOCUBUS_VERSION='2026-11-26';
 /* Ce que chaque formulaire intégré utilise, et où cela se règle */
 const BUILTIN_FORMS=[
   {tab:'ordo',id:'__ordo',titre:'Ordonnance',sets:['catalogue','entete']},
@@ -2720,6 +2732,7 @@ $('#p-docs').addEventListener('click',e=>{
   if((d=byPath('edit'))) return editDoc(d);
   if((d=byPath('more'))) return moreMenu(e.target.closest('[data-more]'),d);
   const a=e.target.closest('[data-a]'); if(!a) return;
+  const dm=a.closest('details.ab-more'); if(dm) dm.open=false; // le menu Outils se referme : il ne reste pas par-dessus la fenêtre ouverte
   ({hasprep:()=>hasPrep(),dashboard:()=>dashboard(),backup:()=>backup(),journal:()=>journal(),archives:()=>archives(),txsetup:()=>txSetup(),compare:()=>comparer(),inventaire:()=>inventaire(),wizard:()=>wizOpen(),checks:()=>openChecks(),adddocs:()=>addDocs(),addlink:()=>editLink(null),addcat:addCat,emojicat:emojiCat,rescan:rescan,renamecat:renameCat,delcat:delCat,addsous:addSous,delsous:delSous,thumbs:makeAllThumbs,rethumbs:()=>askConfirm('Refaire toutes les miniatures ?','Librejo relit chaque document du dossier pour refaire sa miniature. Cela peut prendre une minute.','Refaire',()=>makeAllThumbs(false,true))})[a.dataset.a]();
 });
 
@@ -2772,6 +2785,7 @@ function emlTip(){
     <ol><li>Dans les téléchargements du navigateur (en haut à droite), faites un <b>clic droit</b> sur le fichier <b>.eml</b>.</li>
     <li>Choisissez <b>« Toujours ouvrir les fichiers de ce type »</b>.</li></ol>
     <span>Ensuite, Outlook s'ouvrira tout seul à chaque envoi. À faire une fois sur ce poste.</span>
+    <span>Si Outlook place votre signature au-dessus du texte : dans Outlook, Fichier › Options › Courrier › Signatures, choisissez <b>(aucune)</b> pour les nouveaux messages.</span>
     <div class="row"><button class="primary alt" data-tip="ok">C'est réglé</button><button class="secondary" data-tip="later">Plus tard</button></div>`;
   t.onclick=e=>{ const b=e.target.closest('[data-tip]'); if(!b) return; if(b.dataset.tip==='ok'){ try{ localStorage.setItem(EML_TIP,'1'); }catch(_){} } t.remove(); };
   document.body.appendChild(t); setTimeout(()=>t.remove(),30000);
@@ -3440,11 +3454,11 @@ function formBlob(f,tp){
 }
 async function makeFormPdf(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f) return;
-  fShowErr=true; if(validateFill(f).length){ renderFill(); errsShow('#p-forms'); return; } fShowErr=false;
+  fShowErr=true; if(missingStop(validateFill(f),'#p-forms',renderFill,makeFormPdf,()=>FV)) return; fShowErr=false;
   let tp=null; try{ tp=await loadTampon(); }catch(e){}
   try{ await pdfReady(); }catch(e){ return; }
   const blob=formBlob(f,tp);
-  const file=new File([blob],`${fileSafe(f.titre)}_${FV._date||today()}.pdf`,{type:'application/pdf'});
+  const file=new File([blob],`${fileSafe(f.titre)}_${isoOr(FV._date)}.pdf`,{type:'application/pdf'});
   const to=String(FV._to||'').split(/[\s,;]+/).filter(Boolean);
   showSendGeneric({files:[file],to,subject:(f.objet||f.titre)+' – '+frDate(FV._date||today()),body:`Bonjour,\n\nVeuillez trouver ci-joint : ${f.titre}.\n\nCordialement,\n${f.signataire||structure.signataire}`,sensitive:!!f.confidentiel,
     onDone:()=>{ FV={_date:today(),_to:f.destinataires||''}; renderFill(); }});
@@ -3741,7 +3755,7 @@ const DEFAULT_MED_LINE='';
 var LIVE_DRY=false, LIVE_OUT=null;
 const meds=()=>(PAR.medecins||[]).filter(m=>m&&m.nom);
 const MED_KEY='docubus-medecin';
-function medChoice(){ let v=''; try{ v=localStorage.getItem(MED_KEY)||''; }catch(e){} return meds().find(m=>m.rpps===v)||(LIVE_DRY?{nom:'Dr …',rpps:'…'}:null); }
+function medChoice(){ let v=''; try{ v=localStorage.getItem(MED_KEY)||''; }catch(e){} return meds().find(m=>m.rpps===v)||(LIVE_DRY?{nom:'Dr …',rpps:'…'}:MISS_OK?{nom:'Dr '+BLANK,rpps:BLANK}:null); }
 function medSelectHTML(id){ const c=medChoice(); return meds().length?`<label class="field"><span>Signé par</span><select class="in" id="${id}" data-med>
   <option value="">${esc(structure.signataire)} (sans nom de médecin)</option>${meds().map(m=>`<option value="${esc(m.rpps)}" ${c&&c.rpps===m.rpps?'selected':''}>${esc(m.nom)} – RPPS ${esc(m.rpps)}</option>`).join('')}</select></label>`:''; }
 document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('[data-med]')){ try{ localStorage.setItem(MED_KEY,e.target.value); }catch(_){} } });
@@ -4299,7 +4313,7 @@ function ppColAdj(M){ return [['c1','Couleur imprimée pour les titres'],['c2','
 function drawReg(){
   if(!rdraft) rdraft={medecins:meds().map(m=>({...m})),medecinLigne:PAR.medecinLigne||DEFAULT_MED_LINE,attestation:{...structure},destinataires:dests.map(d=>{ const o={nom:d.nom||'',structure:d.structure||'',attention:d.attention||'',adresses:[...(d.adresses||[])],partenaire:annuPart(d.partenaire)?d.partenaire:'',exclues:[...(d.exclues||[])]};
       if(!o.partenaire&&o.adresses.length){ const c=ANNU.partenaires.filter(p=>o.adresses.every(a=>(p.emails||[]).includes(a))); if(c.length===1){ o.partenaire=c[0].id; o.exclues=c[0].emails.filter(m=>!o.adresses.includes(m)); o.auto=true; } }
-      return o; }),envoi:[...envoi],webmail,mail:PAR.mail||'outlook',motdepasse:PAR.motdepasse||'docubus',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})},fiche:{...(PAR.fiche||{})},nommage:{...NOMMAGE()}};
+      return o; }),envoi:[...envoi],webmail,support:PAR.support||'',mail:PAR.mail||'outlook',motdepasse:PAR.motdepasse||'docubus',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})},fiche:{...(PAR.fiche||{})},nommage:{...NOMMAGE()}};
   if(rdraftBase===null) rdraftBase=JSON.stringify(rdraft);
   const a=rdraft.attestation, ap=rdraft.apparence, th=applyTheme(ap), own=ownLogo(ap);
   /* Couleur réellement appliquée quand le contraste a demandé de l'ajuster */
@@ -4334,7 +4348,9 @@ function drawReg(){
     <div class="card top" data-rsec="mail"><h3>Envoi des mails</h3>
       <div class="choice">${[['outlook','Application Outlook (mail prêt avec pièces jointes)'],['web','Outlook dans le navigateur']].map(([v,l])=>`<button type="button" class="chip" data-mail="${v}" aria-pressed="${rdraft.mail===v}">${l}</button>`).join('')}</div>
       <label class="field"><span>Adresses proposées pour les documents (une par ligne)</span><textarea class="in" id="r-envoi" rows="3" spellcheck="false">${esc(rdraft.envoi.join('\n'))}</textarea></label>
-      <label class="field"><span>Adresse d'Outlook dans le navigateur</span><input class="in" id="r-webmail" value="${esc(rdraft.webmail)}" spellcheck="false"></label></div>
+      <label class="field"><span>Adresse d'Outlook dans le navigateur</span><input class="in" id="r-webmail" value="${esc(rdraft.webmail)}" spellcheck="false"></label>
+      <label class="field"><span>Adresse pour « Signaler un problème » <small>(facultatif)</small></span><input class="in" id="r-support" type="email" value="${esc(rdraft.support)}" spellcheck="false" placeholder="librejo@proton.me (par défaut)" aria-describedby="r-support-h"></label>
+      <p class="hint muted" id="r-support-h">Par défaut, le mail part à l’équipe Librejo (librejo@proton.me). Mettez une autre adresse si quelqu’un s’en occupe dans votre structure. Le mail contient la version, le navigateur et les vérifications du poste ; jamais de données sur les personnes.</p></div>
     <div class="card top" data-rsec="mail"><h3>Destinataires de la délivrance</h3>
       <p class="muted m-0">Reliez chaque destinataire à sa fiche de l'annuaire : ses adresses mail sont alors celles de l’Annuaire, à corriger à un seul endroit.</p>
       <datalist id="r-parts">${ANNU.partenaires.map(x=>`<option value="${esc(x.nom)}">${esc(x.type||'')}</option>`).join('')}</datalist>
@@ -4435,6 +4451,7 @@ function drawReg(){
     if(el.dataset.misec){ rdraft.mise[el.dataset.misec]=el.value; const j=$('#pp-coladj'); if(j) j.innerHTML=ppColAdj(rdraft.mise); ppSchedule(); return; }
     if(el.id==='r-envoi') rdraft.envoi=el.value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     if(el.id==='r-webmail') rdraft.webmail=el.value.trim();
+    if(el.id==='r-support') rdraft.support=el.value.trim();
     if(el.id==='r-pw') rdraft.motdepasse=el.value;
     const mr=el.closest('[data-mi]'); if(mr&&el.dataset.m){ rdraft.medecins[+mr.dataset.mi][el.dataset.m]=el.dataset.m==='rpps'?el.value.replace(/\D/g,''):el.value; }
     if(el.id==='r-medline') rdraft.medecinLigne=el.value;
@@ -4508,12 +4525,13 @@ async function saveReg(){
   if(!String(r.attestation.signataire||'').trim()) errs.push('Le signataire est obligatoire.');
   (r.equipe||[]).forEach(p=>{ if(String(p.mail||'').trim()&&!MAIL.test(String(p.mail).trim())) errs.push(`Équipe : l’adresse de ${p.nom||'une personne'} est incorrecte.`); });
   if(!/^https:\/\//.test(r.webmail)) errs.push("L'adresse d'Outlook doit commencer par https://");
+  if(r.support&&!MAIL.test(r.support)) errs.push(`Signaler un problème : adresse incorrecte « ${r.support} ».`);
   if(!r.motdepasse) errs.push('Le mot de passe ne peut pas être vide.');
   else if(r.motdepasse!==PAR.motdepasse&&pwLikeName(r.motdepasse,r.attestation.nom||structure.nom||'')) errs.push('Le mot de passe ressemble trop au nom de la structure : choisissez autre chose.');
   r.medecins.forEach((m,i)=>{ if(!String(m.nom||'').replace(/^Dr\s*/,'').trim()) errs.push(`Médecin ${i+1} : nom manquant.`); if(!/^\d{11}$/.test(m.rpps||'')) errs.push(`${m.nom||'Médecin '+(i+1)} : le n° RPPS doit compter 11 chiffres.`); });
   if(errs.length){ openModal(`<h3 id="modal-title">À corriger</h3><ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="secondary" data-close>OK</button>`); return false; }
   const old=PAR, nomChange=JSON.stringify(r.nommage)!==JSON.stringify(NOMMAGE());
-  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,mail:r.mail,motdepasse:r.motdepasse,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff,fiche:Object.fromEntries(Object.entries(r.fiche||{}).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>v)),nommage:{...r.nommage}};
+  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,support:r.support||'',mail:r.mail,motdepasse:r.motdepasse,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff,fiche:Object.fromEntries(Object.entries(r.fiche||{}).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>v)),nommage:{...r.nommage}};
   const newLogo=r.apparence.logo&&r.apparence.logo!==((old.apparence||{}).logo);
   if(r.persoFont&&!await run(()=>writeRel('app/polices-pdf/perso.json',new Blob([JSON.stringify(r.persoFont)],{type:'application/json'})))){ PAR=old; return false; }
   if(await run(saveParams,'Réglages enregistrés')){ jlog('Réglages enregistrés',''); if(nomChange) jlog('Réglages enregistrés','Nom des fichiers',PAR.nommage.fichier+' · dossiers : '+PAR.nommage.dossier);
@@ -5168,7 +5186,7 @@ function rlBind(){
 }
 function relaisPdf(){
   const errs=LIVE_DRY?[]:(rlErr=true,rlValidate());
-  if(errs.length){ renderRelais(); errsShow('#p-relais'); return; }
+  if(missingStop(errs,'#p-relais',renderRelais,relaisPdf,()=>RL)) return;
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
   const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); const st=structure;
   const NAVY=pdfRGB('--navy'),ORANGE=pdfRGB('--accent'),GREY=[93,103,121],INK=[20,32,58],SOFT=[238,241,246]; const {L,R,W,PL}=GEO();
@@ -5198,7 +5216,7 @@ function relaisPdf(){
     lines.forEach((l,i)=>doc.text(l,L+52,y+i*4.7)); y+=4.7*lines.length+1.2; };
   section('Traitement de substitution');
   row('Molécule',RL.trt);
-  row('Posologie actuelle',`${fmtDose(RL.dose)} mg par jour (${doseLettres(RL.dose)} par jour)`);
+  row('Posologie actuelle',doseTxt(RL.dose));
   row('Début du traitement',RL.debut?frDate(RL.debut):'');
   row('Dernière délivrance',RL.derniere?frDate(RL.derniere):'');
   row('Délivré jusqu’au',RL.jusqua?frDate(RL.jusqua)+' inclus':'');
@@ -5223,7 +5241,7 @@ function relaisPdf(){
     pdfMarge(doc,pg,fy); pdfFilet(doc,PL,R,fy,ORANGE); doc.setFontSize(8); doc.setTextColor(...GREY);
     pdfPied(doc,pied,fy,PL);
     if(doc.getNumberOfPages()>1){ doc.setFontSize(8); doc.text(`${pg}/${doc.getNumberOfPages()}`,R,fy+(pied.length-1)*4,{align:'right'}); } }
-  const file=new File([doc.output('blob')],`Demande-relais_${RL.nom.trim().slice(0,1).toUpperCase()}${RL.prenom.trim().slice(0,1).toUpperCase()}_${RL.date||today()}.pdf`,{type:'application/pdf'});
+  const file=new File([doc.output('blob')],`Demande-relais_${[RL.nom,RL.prenom].map(x=>x===BLANK?'':x.trim().slice(0,1).toUpperCase()).join('')}_${isoOr(RL.date)}.pdf`.replace('__','_'),{type:'application/pdf'});
   const to=rlRecip?rlRecip.get():[];
   const sign=md?md.nom:st.signataire;
   showSendGeneric({files:[file],to,subject:`${st.nom} – Demande de relais TSO – ${frDate(RL.date||today())}`,
@@ -5452,7 +5470,7 @@ async function cmPhotoJpeg(x,n){
 async function cmiPdf(){
   try{ await pdfReady(); }catch(e){ return; }
   const errs=LIVE_DRY?[]:(cmErr=true,cmValidate());
-  if(errs.length){ renderCmi(); errsShow('#p-cmi'); return; }
+  if(missingStop(errs,'#p-cmi',renderCmi,cmiPdf,()=>CM)) return;
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
   const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); const st=structure;
   const NAVY=pdfRGB('--navy'),ORANGE=pdfRGB('--accent'),GREY=[93,103,121],INK=[20,32,58],SOFT=[238,241,246]; const {L,R,W,PL}=GEO();
@@ -5564,7 +5582,7 @@ async function cmiPdf(){
     pdfMarge(doc,pg,fy); pdfFilet(doc,PL,R,fy,ORANGE); doc.setFontSize(8); doc.setTextColor(...GREY);
     pdfPied(doc,pied,fy,PL);
     doc.setFont(PF(),'normal'); doc.setFontSize(7); doc.text(idLine,L,fy-9); doc.text(`${pg}/${N}`,R,fy-9,{align:'right'}); }
-  const name=`Certificat-initial_${CM.nom.trim().slice(0,1).toUpperCase()}${CM.prenom.trim().slice(0,1).toUpperCase()}_${CM.dateExam}.pdf`;
+  const name=`Certificat-initial_${[CM.nom,CM.prenom].map(x=>x===BLANK?'':String(x).trim().slice(0,1).toUpperCase()).join('')}_${isoOr(CM.dateExam)}.pdf`.replace('__','_');
   const blob=doc.output('blob');
   openModal(`<h3 id="modal-title">Certificat prêt</h3>
     <p>${N} page${N>1?'s':''}${cmPhotos.length?`, dont ${Math.ceil(cmPhotos.length/2)} de photos`:''}. Rien n'a été enregistré.</p>
@@ -5627,7 +5645,8 @@ const initiales=(nom,prenom)=>`${nom.trim().slice(0,1).toUpperCase()}${prenom.tr
    dans Téléchargements ou dans les mails envoyés. Les initiales ne s'ajoutent que si l'admin les a choisies
    (Réglages › Nom des fichiers). */
 const NOM_SORTIES=[['sans','Orientation-urgences_2026-11-25.pdf (par défaut : rien sur la personne)'],['initiales','Orientation-urgences_NT_2026-11-25.pdf : initiales de la personne']];
-const outName=(type,nom,prenom,date)=>{ const ini=NOMMAGE().sortie==='initiales'&&String(nom||'').trim()?initiales(nom,prenom||'-'):''; return `${type}${ini?'_'+ini:''}_${date}.pdf`; };
+const outName=(type,nom,prenom,date)=>{ date=isoOr(date); if(nom===BLANK) nom=''; if(prenom===BLANK) prenom='';
+  const ini=NOMMAGE().sortie==='initiales'&&String(nom||'').trim()?initiales(nom,prenom||'-'):''; return `${type}${ini?'_'+ini:''}_${date}.pdf`; };
 const dateMask=v=>{ const d=v.replace(/\D/g,'').slice(0,8); return d.length>4?`${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`:d.length>2?`${d.slice(0,2)}/${d.slice(2)}`:d; };
 
 /* --- Fenêtre « document prêt » : imprimer, télécharger ou envoyer par mail --- */
@@ -5719,7 +5738,7 @@ function attBind(){
 }
 function attPdf(){
   const errs=LIVE_DRY?[]:(asErr=true,asValidate());
-  if(errs.length){ renderAtt(); errsShow('#p-att'); return; }
+  if(missingStop(errs,'#p-att',renderAtt,attPdf,()=>AS)) return;
   const st=structure, md=medChoice(), fem=AS.civ==='Mme', e_=fem?'e':'';
   const who=fmtCivNom(AS.civ,AS.nom,AS.prenom);
   const P=letterPdf('Attestation de suivi','');
@@ -5821,7 +5840,7 @@ function mtBind(){
 }
 function mtPdf(){
   const errs=LIVE_DRY?[]:(mtErr=true,mtValidate());
-  if(errs.length){ renderMt(); errsShow('#p-mt'); return; }
+  if(missingStop(errs,'#p-mt',renderMt,mtPdf,()=>MT)) return;
   const st=structure, md=medChoice(), fem=MT.civ==='Mme', e_=fem?'e':'';
   const who=fmtCivNom(MT.civ,MT.nom,MT.prenom);
   const P=letterPdf('Courrier médical','Confidentiel – secret médical');
@@ -5831,7 +5850,7 @@ function mtPdf(){
   P.para('Chère consœur, cher confrère,',{after:4});
   MT.texte.trim().split(/\n\s*\n/).forEach(par=>P.para(par.replace(/\s*\n\s*/g,' ')));
   if(!tsoOn()) MT.trt='';
-  if(MT.trt&&MT.trt!=='Aucun') P.para(`Traitement de substitution en cours : ${MT.trt}, ${fmtDose(MT.dose)} mg par jour (${doseLettres(MT.dose)} par jour).`);
+  if(MT.trt&&MT.trt!=='Aucun') P.para(`Traitement de substitution en cours : ${MT.trt}, ${doseTxt(MT.dose)}.`);
   else if(MT.trt==='Aucun') P.para('Pas de traitement de substitution en cours.');
   if(MT.autres.trim()) P.para('Autres traitements : '+MT.autres.trim().replace(/\s*\n\s*/g,' ; ').replace(/\.?$/,'.'));
   if(MT.demande.trim()) P.para(MT.demande.trim());
@@ -5967,7 +5986,7 @@ function clBind(){
 }
 function clPdf(){
   const errs=LIVE_DRY?[]:(clErr=true,clValidate());
-  if(errs.length){ renderCl(); errsShow('#p-cl'); return; }
+  if(missingStop(errs,'#p-cl',renderCl,clPdf,()=>CL)) return;
   const md=medChoice(), e_=CL.civ==='Mme'?'e':'';
   const P=letterPdf('Certificat médical','');
   P.y=80;
@@ -6194,7 +6213,7 @@ function ordoBind(){
 }
 function ordoPdf(){
   const errs=LIVE_DRY?[]:(orErr=true,orValidate());
-  if(errs.length){ renderOrdo(); errsShow('#p-ordo'); return; }
+  if(missingStop(errs,'#p-ordo',renderOrdo,ordoPdf,()=>OR)) return;
   const st=structure, e_=OR.civ==='Mme'?'e':'', T=ordoType(OR.type), cat=ordoCat();
   const P=letterPdf('Ordonnance',T.sub), {doc,C,L,R,W}=P;
   P.y=64; P.right([`${villeLe(st)}${frDate(OR.date)}`],{after:4});
@@ -6606,7 +6625,7 @@ function urBind(){
 }
 function urPdf(){
   const errs=LIVE_DRY?[]:(urErr=true,urValidate());
-  if(errs.length){ renderUrg(); errsShow('#p-urg'); return; }
+  if(missingStop(errs,'#p-urg',renderUrg,urPdf,()=>UR)) return;
   const st=structure, fem=UR.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(UR.civ,UR.nom,UR.prenom);
   const P=letterPdf('Orientation aux urgences','Confidentiel – données de santé');
   P.y=64; P.right([UR.hopital.trim(),UR.service.trim()],{bold:true,after:2});
@@ -6621,7 +6640,7 @@ function urPdf(){
   sec('Antécédents',UR.atcd.trim());
   const tr=[];
   if(!tsoOn()) UR.trt='';
-  if(UR.trt&&UR.trt!=='Aucun') tr.push(`Traitement de substitution : ${UR.trt}, ${fmtDose(UR.dose)} mg par jour (${doseLettres(UR.dose)} par jour)${UR.derniere.trim()?', dernière prise : '+UR.derniere.trim():''}.`);
+  if(UR.trt&&UR.trt!=='Aucun') tr.push(`Traitement de substitution : ${UR.trt}, ${doseTxt(UR.dose)}${UR.derniere.trim()?', dernière prise : '+UR.derniere.trim():''}.`);
   else if(UR.trt==='Aucun') tr.push('Pas de traitement de substitution.');
   if(UR.autres.trim()) tr.push('Autres traitements : '+UR.autres.trim().replace(/\s*\n\s*/g,' ; ').replace(/\.?$/,'.'));
   sec('Traitements en cours',tr.join('\n\n'));
@@ -6710,7 +6729,7 @@ function cpBind(){
 }
 function cpPdf(){
   const errs=LIVE_DRY?[]:(cpErr=true,cpValidate());
-  if(errs.length){ renderCp(); errsShow('#p-cp'); return; }
+  if(missingStop(errs,'#p-cp',renderCp,cpPdf,()=>CP)) return;
   const st=structure;
   const P=letterPdf('Courrier','');
   P.y=64; P.right([CP.dest.trim(),CP.attention.trim()?'À l’attention de '+CP.attention.trim():'',...CP.adresse.split('\n').map(s=>s.trim())],{after:6});
@@ -6721,7 +6740,7 @@ function cpPdf(){
   P.para(cpPolitesse(CP.appel),{after:6});
   if(CP.signe==='med'){ const md=medChoice(); P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]); }
   else P.sign(CP.signNom.trim(),[CP.signFonction.trim(),st.nom]);
-  const file=P.finish(`Courrier_${fileSafe(CP.dest.trim()).slice(0,40)}_${CP.date||today()}.pdf`);
+  const file=P.finish(`Courrier_${fileSafe(CP.dest.trim()).slice(0,40)}_${isoOr(CP.date)}.pdf`);
   readyModal({file,title:'Courrier prêt',steps:['Imprimez-le et signez-le pour un envoi postal, ou envoyez-le par mail.'],
     mail:{to:cpRecip?cpRecip.get():[],subject:`${st.nom} – ${CP.objet.trim()}`,body:`${CP.appel}\n\nVeuillez trouver ci-joint notre courrier : ${CP.objet.trim()}.\n\nCordialement,\n${CP.signe==='med'?medChoice().nom:CP.signNom.trim()}`},
     onDone:()=>{ cpReset(); cpRecip=null; renderCp(); }});
@@ -6942,7 +6961,7 @@ function elBind(){
 }
 function elPdf(){
   const errs=LIVE_DRY?[]:(elErr=true,elValidate());
-  if(errs.length){ renderEl(); errsShow('#p-el'); return; }
+  if(missingStop(errs,'#p-el',renderEl,elPdf,()=>EL)) return;
   const st=structure, P=letterPdf(EL.titre.trim(),'');
   P.y=64; P.right(EL.dest.split('\n').map(s=>s.trim()),{after:5});
   P.right([`${villeLe(st)}${frDate(EL.date)}`],{after:6});
@@ -6952,7 +6971,7 @@ function elPdf(){
   if(sig.length){ P.room(14+sig.length*5); P.y+=6; const d=P.doc;
     sig.forEach((s,i)=>{ d.setFont(PF(),i===0?'bold':'normal'); d.setFontSize(i===0?11:9.5); d.setTextColor(...(i===0?P.C.NAVY:P.C.GREY)); d.text(s,P.R,P.y,{align:'right'}); P.y+=5; }); }
   const base=(EL.titre.trim()||EL.objet.trim()||'Document').slice(0,40);
-  const file=P.finish(`${fileSafe(base)}_${EL.date}.pdf`);
+  const file=P.finish(`${fileSafe(base)}_${isoOr(EL.date)}.pdf`);
   readyModal({file,title:'Document prêt',steps:['Vérifiez-le avec « Aperçu », puis imprimez-le ou envoyez-le par mail.'],
     mail:{to:elRecip?elRecip.get():[],subject:`${st.nom}${EL.objet.trim()?' – '+EL.objet.trim():EL.titre.trim()?' – '+EL.titre.trim():''}`,body:`Bonjour,\n\nVeuillez trouver ci-joint notre document.\n\nCordialement`},
     onDone:()=>{ elReset(); elRecip=null; renderEl(); }});
@@ -8546,7 +8565,7 @@ function ccBind(){
 }
 function ccPdf(){
   const errs=LIVE_DRY?[]:(ccErr=true,ccValidate());
-  if(errs.length){ renderCcas(); errsShow('#p-ccas'); return; }
+  if(missingStop(errs,'#p-ccas',renderCcas,ccPdf,()=>CC)) return;
   const st=structure, fem=CC.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(CC.civ,CC.nom,CC.prenom);
   const P=letterPdf('Bon d’orientation','Centre communal d’action sociale');
   P.y=64; P.right([CC.dest.trim(),CC.attention.trim()?'À l’attention de '+CC.attention.trim():''],{bold:true,after:2});
@@ -8630,6 +8649,32 @@ function delivMissing(errs,go,keys){
     const el=$('#p-deliv').querySelector(`[data-errk="${CSS.escape(k)}"]:not(li)`); if(!el) return;
     const f=el.matches('input,select,textarea')?el:el.querySelector('input:not([type=hidden]),select,textarea,button:not(:disabled)')||el;
     f.scrollIntoView({block:'center'}); f.focus({preventScroll:true}); });
+}
+
+/* Aucune case n'est bloquante (tous les formulaires) : ce qui manque est listé, on revient compléter
+   ou on continue. Les cases texte vides passent en pointillés le temps de fabriquer le PDF, puis sont rendues vides. */
+function missingStop(errs,sel,render,again,state){
+  if(!errs.length) return false;
+  if(MISS_OK) return false;
+  render(); errsShow(sel);
+  const L=errs.map(x=>Array.isArray(x)?{k:x[0],m:x[1]}:typeof x==='string'?{k:'',m:x}:{k:x.k,m:x.m});
+  openModal(`<h3 id="modal-title">Il manque des informations</h3>
+    <ul class="errors dm-list" aria-label="À corriger">${L.map(x=>`<li>${x.k?`<button type="button" class="errgo" data-msgo="${esc(x.k)}">${esc(x.m)}</button>`:esc(x.m)}</li>`).join('')}</ul>
+    <p class="hint">Si vous continuez, les cases vides sont laissées en pointillés sur le PDF, à compléter à la main.</p>
+    <div class="btns"><button class="primary" id="ms-back" data-autofocus>Revenir compléter</button><button class="secondary" id="ms-go">Continuer quand même</button></div>`);
+  const focusK=k=>{ const panel=$(sel); const el=panel&&(k?panel.querySelector(`[data-errk="${CSS.escape(k)}"]:not(li)`):panel.querySelector('.bad')); if(!el) return;
+    const f=(el.matches('input,select,textarea')?el:el.querySelector('input:not([type=hidden]),select,textarea,button:not(:disabled)'))||el;
+    f.scrollIntoView({block:'center'}); f.focus({preventScroll:true}); };
+  $('#ms-back').onclick=()=>{ closeModal(); focusK(L[0]&&L[0].k); };
+  $('#modal-box').querySelectorAll('[data-msgo]').forEach(b=>b.onclick=()=>{ const k=b.dataset.msgo; closeModal(); focusK(k); });
+  $('#ms-go').onclick=async()=>{ closeModal();
+    const o=state&&state(), filled=[];
+    if(o) L.forEach(x=>{ if(x.k&&typeof o[x.k]==='string'&&!o[x.k].trim()){ o[x.k]=BLANK; filled.push(x.k); } });
+    MISS_OK=true;
+    try{ await again(); }
+    finally{ MISS_OK=false; filled.forEach(k=>{ if(o[k]===BLANK) o[k]=''; }); }
+  };
+  return true;
 }
 
 /* Dr Vermersch (cabinet du 24 bd Clemenceau) ajouté aux destinataires de la délivrance,
@@ -8924,11 +8969,42 @@ function checksText(L){ const d=new Date(), B=ckBrowser(), sym={ok:'[OK]',info:'
 /* Encadré de vérifications (dans une fenêtre ou dans l'assistant), avec « Relancer » et « Copier pour l'informatique » */
 async function checksInto(box,opt={}){ if(!box) return null; box.innerHTML=`<p class="hint">Vérification en cours…</p>`;
   const L=await ljChecks(opt); if(!box.isConnected) return L;
-  box.innerHTML=checksHTML(L)+`<div class="row ck-acts"><button type="button" class="secondary sm" data-ckcopy>${ICON.copy}Copier pour l’informatique</button><button type="button" class="ghost sm" data-ckagain>Relancer</button></div>`;
+  box.innerHTML=checksHTML(L)+`<div class="row ck-acts"><button type="button" class="secondary sm" data-ckcopy>${ICON.copy}Copier pour l’informatique</button><button type="button" class="secondary sm" data-ckreport>${ICON.mail}Signaler un problème</button><button type="button" class="ghost sm" data-cknas>Lecteur réseau…</button><button type="button" class="ghost sm" data-ckagain>Relancer</button></div>`;
   box.querySelector('[data-ckcopy]').onclick=async()=>{ const ok=await copyText(checksText(L)); toast(ok?'Copié : collez-le dans un mail à l’informatique':'Copie impossible : faites une capture d’écran'); };
   box.querySelector('[data-ckagain]').onclick=()=>checksInto(box,opt);
+  box.querySelector('[data-ckreport]').onclick=()=>reportProblem(L);
+  box.querySelector('[data-cknas]').onclick=()=>openNas();
   const w=box.querySelector('[data-ckwrite]'); if(w) w.onclick=()=>checksInto(box,{...opt,askWrite:true});
   return L; }
+const LJ_SUPPORT='librejo@proton.me'; // l'équipe Librejo : destinataire par défaut de « Signaler un problème »
+/* « Signaler un problème » : un brouillon de mail avec le rapport du poste (version, navigateur, adresse, vérifications).
+   Rien sur les personnes ; rien n'est envoyé par Librejo : la personne relit, décrit le problème et envoie elle-même. */
+function reportProblem(L){
+  const to=String(PAR.support||LJ_SUPPORT).split(/[\s,;]+/).filter(a=>MAIL.test(a));
+  const subject=`Librejo : un problème sur un poste${structure&&structure.nom?' – '+structure.nom:''}`;
+  const body=`Bonjour,\n\nCe qui ne marche pas (ce que vous faisiez, ce qui s’est affiché) :\n\n\n\n---- Rapport préparé par Librejo ----\n${checksText(L)}\n`;
+  if((PAR.mail||'outlook')==='web') window.open(composeUrl(to,subject,body),'_blank','noopener');
+  else openMailto(mailtoUrl({to,subject,body}));
+  toast('Mail préparé : décrivez le problème, puis envoyez');
+}
+/* Lecteur réseau qui disparaît au démarrage : le programme de réparation (préparé par boot.js, window.LJ_NAS) */
+function openNas(){
+  const N=window.LJ_NAS; if(!N){ toast('Outil indisponible dans cette version.'); return; }
+  const o=N.get();
+  openModal(`<h3 id="modal-title">Lecteur réseau qui disparaît au démarrage</h3>
+    <p>Si vos documents sont sur un NAS ou un serveur (lecteur Z:, X:…), Windows peut oublier de reconnecter le lecteur après le démarrage : Librejo affiche alors « Le dossier ne répond pas ». Librejo peut préparer pour <b>ce poste</b> un petit programme Windows qui :</p>
+    <ul class="nas-ul"><li>mémorise l’identifiant du NAS (le mot de passe est demandé par Windows, jamais écrit dans le fichier) ;</li><li>connecte le lecteur, puis le reconnecte à chaque démarrage, en attendant que le réseau soit prêt ;</li><li>propose de couper le «&nbsp;démarrage rapide&nbsp;» de Windows, qui empêche souvent la reconnexion.</li></ul>
+    <div class="row nas-row"><label class="field nas-l"><span>Lettre du lecteur</span><input class="in" id="nas-l" maxlength="2" autocomplete="off" value="${esc((o.lettre||'Z:').charAt(0))}"></label>
+      <label class="field nas-c"><span>Chemin réseau du dossier partagé</span><input class="in" id="nas-c" autocomplete="off" spellcheck="false" placeholder="\\\\192.168.1.10\\Partage" value="${esc(o.chemin||'')}" aria-describedby="nas-h"></label></div>
+    <p class="hint" id="nas-h">Il se lit dans l’Explorateur de fichiers : clic droit sur le lecteur › Propriétés, ou dans la barre d’adresse. Chaque poste peut avoir sa propre lettre.</p>
+    <p class="err" id="nas-err" role="alert" hidden></p>
+    <p class="hint">Ouvrez ensuite le fichier téléchargé. Si Windows affiche «&nbsp;Windows a protégé votre ordinateur&nbsp;», cliquez sur «&nbsp;Informations complémentaires&nbsp;» puis «&nbsp;Exécuter quand même&nbsp;». Pour couper le démarrage rapide, lancez-le par clic droit › «&nbsp;Exécuter en tant qu’administrateur&nbsp;». <b>Pas encore essayé sur un vrai poste Windows</b> : signalez-nous ce qui ne marche pas.</p>
+    <div class="btns"><button class="primary" id="nas-dl">${ICON.dl}Télécharger le programme</button><button class="secondary" data-close>Fermer</button></div>`,'wide');
+  $('#nas-dl').onclick=()=>{ const r=N.check($('#nas-l').value,$('#nas-c').value), er=$('#nas-err');
+    ['#nas-l','#nas-c'].forEach(q=>$(q).removeAttribute('aria-invalid'));
+    if(r.err){ er.textContent=r.err; er.hidden=false; const f=$(r.k==='lettre'?'#nas-l':'#nas-c'); f.setAttribute('aria-invalid','true'); f.focus(); return; }
+    er.hidden=true; N.download(r); toast(`Programme téléchargé : « Librejo - lecteur ${r.lettre.charAt(0)}.cmd »`); };
+}
 function openChecks(lead){
   openModal(`<h3 id="modal-title">Vérifications de ce poste</h3><p class="hint">${lead?esc(lead):'Librejo vérifie le navigateur, l’autorisation du dossier et le type de dossier, puis dit quoi faire. Le résultat peut être copié pour l’informatique : il ne contient aucune donnée de personne.'}</p><div id="ck-box"></div>
     <div class="btns"><button class="secondary" data-close>Fermer</button></div>`,'wide');
@@ -9219,6 +9295,8 @@ const AIDE={
     etapes:['Lisez chaque ligne : coche verte, tout va bien ; orange ou rouge, un point à régler.',
       'Sous chaque point, la marche à suivre.',
       '<b>Copier pour l’informatique</b> : le résultat, à coller dans un mail. Il ne contient aucune donnée de personne.',
+      '<b>Signaler un problème</b> : prépare un mail avec ce résultat, la version et le navigateur. Décrivez ce qui ne marche pas, puis envoyez.',
+      '<b>Lecteur réseau…</b> : si le lecteur du NAS (Z:, X:…) disparaît au démarrage, Librejo prépare un programme de réparation pour ce poste.',
       '<b>Relancer</b> après une correction, puis <b>Fermer</b>.']},
   defaut:{
     but:'Une page de Librejo. Les boutons disent ce qu’ils font, et rien n’est enregistré sur les personnes accompagnées.',
@@ -9337,7 +9415,9 @@ const AIDE_REGLAGES={
     etapes:['<b>Envoi des mails</b> : l’application Outlook du poste, ou Outlook dans le navigateur.',
       '<b>Adresses proposées pour les documents</b> : une par ligne.',
       '<b>Destinataires de la délivrance</b> (si ce formulaire est proposé) : les CSAPA et leurs adresses.',
-      'Cliquez sur <b>Enregistrer les réglages</b>.']},
+      '<b>Adresse pour « Signaler un problème »</b> (facultatif) : par défaut, l’équipe Librejo (librejo@proton.me). Mettez une autre adresse si quelqu’un s’en occupe dans votre structure. Le mail préparé contient la version, le navigateur et les vérifications du poste, jamais de données sur les personnes.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.',
+      '<b>Signature Outlook au-dessus du texte</b> : c’est Outlook qui l’ajoute en ouvrant le mail préparé, Librejo ne peut pas l’empêcher. Dans Outlook : Fichier › Options › Courrier › Signatures, et pour <b>Nouveaux messages</b>, choisissez <b>(aucune)</b>. À faire sur chaque poste.']},
   equipe:{titre:'Réglages : Équipe',
     but:'Les professionnels proposés dans les formulaires, et les médecins qui signent.',
     etapes:['<b>Professionnels de l’équipe</b> : nom, fonction et coordonnées professionnelles. L’équipe les choisit dans les formulaires.',
@@ -9460,7 +9540,7 @@ function aideHTML(c){
         <li>Pour votre structure : <a href="${esc(DEMO.installer)}">Installer Librejo</a>.</li></ul></section>`:''}
       ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
     </div>
-    <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer l’aide, puis la fenêtre</small></div>`;
+    <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<button type="button" class="linkbtn" id="aide-report">Signaler un problème</button><small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer l’aide, puis la fenêtre</small></div>`;
 }
 /* L'aide suit la fenêtre ouverte (assistant, fenêtre de dialogue) : elle y est rattachée pour rester atteignable au clavier */
 function aideHost(){
@@ -9522,6 +9602,7 @@ function aideInit(){
   aidePan.addEventListener('click',e=>{
     if(e.target.closest('#aide-x')){ aideHide(); return; }
     if(e.target.closest('#aide-guide')){ aideOpener=null; aideHide(); openGuide(0); }
+    if(e.target.closest('#aide-report')){ aideHide(); ljChecks({}).then(reportProblem,()=>reportProblem([])); }
   });
   aidePan.addEventListener('change',e=>{ if(e.target.id==='aide-saisie'){ saisieSet(e.target.checked); toast(e.target.checked?'Saisie libre activée sur ce poste':'Saisie libre coupée sur ce poste : cliquez dans la recherche, ou appuyez sur /'); } });
   /* taper une lettre dans le panneau ne doit pas lancer la recherche de la page */
