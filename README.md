@@ -35,6 +35,15 @@ Dans ce mode, les formulaires intégrés et les modèles de la bibliothèque mar
 
 Librejo n'envoie aucune donnée : le site ne sert que le code, les PDF sont faits sur le poste. On ne cherche jamais à contourner la sécurité de la structure : on lui donne de quoi dire oui.
 
+## Deux postes qui modifient en même temps
+
+Librejo n'a pas de serveur : deux admins (ou un dossier OneDrive, Google Drive, Dropbox, Nextcloud) peuvent enregistrer les mêmes réglages presque en même temps.
+
+- **Avant chaque enregistrement** de `app/parametres.js`, `app/donnees.js`, `app/annuaire.js` ou `app/logo-association.js`, Librejo relit le fichier et le compare à ce qu'il avait lu au démarrage (ou à son dernier enregistrement). S'il a changé entre-temps, rien n'est écrasé en silence : « Ce fichier a été modifié sur un autre poste depuis que vous l'avez ouvert », avec **Recharger ses modifications** (vos changements pas encore enregistrés sont perdus, après confirmation), **Enregistrer quand même** (ceux de l'autre poste sont remplacés, après confirmation, et c'est noté dans le journal) et **Voir les différences** (les sections changées de chaque côté : équipe, apparence, documents ajoutés ou retirés…). Pas de fusion automatique.
+- **Copies en conflit** : quand le service de synchronisation garde deux versions (`parametres-NOMDUPOSTE.js`, `parametres (1).js`, `… (conflicted copy …).js`, `…_conflict-….js`, `Copie de ….js`), Librejo les signale à l'admin avec la marche à suivre (comparer, garder la bonne, supprimer l'autre) et montre ce qui diffère. Il ne les supprime jamais lui-même.
+- **En entrant en mode admin**, Librejo prévient si un autre poste vient de modifier (« Quelqu'un a modifié les réglages il y a 2 minutes », d'après le journal des modifications) ou si les fichiers ont changé depuis l'ouverture (il propose alors de recharger).
+- Le journal (`app/journal.json`) est relu avant chaque ajout ; les statistiques sont rangées dans un fichier par poste. L'index de la recherche dans le texte (`app/recherche-texte.json`) et la police de la structure (`app/polices-pdf/perso.json`) ne sont pas vérifiés : ils se refont.
+
 ## Contenu du dépôt
 
 - `index.html`, `boot.js`, `sw.js`, `app/` : l'application (`app/lib/ocr` : lecture des PDF scannés, Tesseract.js, licence Apache 2.0 ; `app/polices-pdf` : polices libres OFL, dont les polices de repli pour le latin étendu, le grec, le cyrillique, l'arabe et le géorgien ; `app/lib/bidi.min.js` : ordre d'affichage de l'arabe, bidi-js, licence MIT).

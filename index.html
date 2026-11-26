@@ -1296,6 +1296,27 @@ html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair
 .ck-acts{margin-top:var(--sp-3);gap:var(--sp-2)}
 .wz-checks{margin-top:var(--sp-5);max-width:820px}
 .wz-checks h3{margin:0 0 var(--sp-2);font-size:var(--fs-5);color:var(--navy)}
+/* Modifications simultanées : fenêtre au-dessus de tout, différences par section, copies en conflit */
+.cf-ov{z-index:80}
+.cf-diff summary{cursor:pointer;font-weight:700;color:var(--blue)}
+.cf-diffin{margin-top:var(--sp-2)}
+.cf-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+.cf-cols h4,.cf-diffin h4{margin:0 0 var(--sp-1);font-size:var(--fs-3);color:var(--navy)}
+.cf-l{margin:0;padding-left:18px;display:grid;gap:4px;font-size:var(--fs-3)}
+.cf-l span{color:var(--text-3)}
+.cf-both{background:var(--accent-soft);border:1px solid var(--warn-line);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3);color:var(--text)!important}
+.cf-confirm{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:var(--sp-3);display:grid;gap:var(--sp-2)}
+.cf-confirm p{color:var(--text)!important}
+.cf-item{display:grid;gap:4px;padding-bottom:var(--sp-3);border-bottom:1px solid var(--line-soft)}
+.cf-item p{color:var(--text)}
+.cf-steps{margin:var(--sp-1) 0;padding-left:20px;display:grid;gap:4px;font-size:var(--fs-3)}
+.cf-copies{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-2)}
+.cf-copies>li{border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3)}
+.cf-copies code{font-size:var(--fs-2);overflow-wrap:anywhere}
+.cf-copies .cf-l{margin-top:4px}
+.cf-row{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.cf-row small{color:var(--text-muted)}
+.cf-note{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap}
 .sd-modh+.homecol{margin-top:calc(-1 * var(--sp-2))}
 </style>
 </head>
@@ -2162,6 +2183,7 @@ async function updateConn(){
   const b=$('#conn'); if(!FSA){ b.hidden=true; return; }
   const h=dirH||await idb.get('dossier'); const st=h?await permState(h,'read'):'none';
   if(st==='granted'&&MISE().police==='perso') loadPdfFont('perso').catch(()=>{});
+  if(st==='granted') cfBaseline();
   b.className='conn'+(st==='granted'?' ok status':h&&!isAdmin?' status quiet':'');
   b.title=st==='granted'?'Librejo peut lire son dossier':'Autoriser Librejo à lire son dossier (impression en un clic, pièces jointes)';
   b.innerHTML=st==='granted'?`${svg('<path d="m5 12 5 5 9-10"/>')}Dossier connecté`:`${svg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}${h?(isAdmin?'Réautoriser le dossier':'Accès au dossier : demandé à la 1re impression'):'Connecter le dossier'}`;
@@ -2171,13 +2193,13 @@ $('#conn').addEventListener('click',async()=>{ try{ await getDir('read'); toast(
 async function saveData(){
   DATA.maj=nowStr();
   const text="// Librejo : liste des documents, descriptions et formulaires (écrit par le mode admin de Librejo.html).\n// Mis à jour le "+DATA.maj+"\nwindow.DOCUBUS_DONNEES = "+JSON.stringify(DATA,null,1)+";\n";
-  await writeRel('app/donnees.js',new Blob([text],{type:'text/javascript'}));
+  await guardedWrite('app/donnees.js',text);
 }
 async function saveParams(){
   const text="// Librejo : réglages (écrit par le mode admin de Librejo.html).\n// Mis à jour le "+nowStr()+"\nwindow.DOCUBUS_PARAMETRES = "+JSON.stringify(PAR,null,1)+";\n";
-  await writeRel('app/parametres.js',new Blob([text],{type:'text/javascript'}));
+  await guardedWrite('app/parametres.js',text);
 }
-async function run(fn,ok){ try{ await fn(); if(ok) toast(ok); return true; }catch(e){ console.error(e); const m=fsErr(e); m&&openModal(`<h3 id="modal-title">Action impossible</h3><p>${esc(m)}</p><button class="secondary" data-close>OK</button>`); return false; } }
+async function run(fn,ok){ try{ await fn(); if(ok) toast(ok); return true; }catch(e){ if(!(e instanceof Cancel)) console.error(e); const m=fsErr(e); m&&openModal(`<h3 id="modal-title">Action impossible</h3><p>${esc(m)}</p><button class="secondary" data-close>OK</button>`); return false; } }
 
 /* ---------- Mode admin (mot de passe simple, la vraie protection = droits du dossier) ---------- */
 let isAdmin=false;
@@ -2198,7 +2220,7 @@ $('#adminbtn').addEventListener('click',()=>{
     <label class="field"><span>Votre prénom <small>(facultatif, pour le journal des modifications)</small></span><input class="in" id="pw-who" value="${esc(jrWho())}" autocomplete="given-name"></label>
     <div class="btns"><button class="primary alt" id="pw-ok">Entrer</button><button class="secondary" data-close>Annuler</button></div>`);
   const go=()=>{ const pw=$('#pw');
-    if(pw.value===(PAR.motdepasse||'docubus')){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>setTimeout(autoThumbs,600)).catch(e=>{ const m=fsErr(e); m&&toast(m); }); }
+    if(pw.value===(PAR.motdepasse||'docubus')){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>cfAdminCheck()).then(ok=>{ if(ok) setTimeout(autoThumbs,600); }).catch(e=>{ const m=fsErr(e); m&&toast(m); }); }
     else { const m=$('#pw-err'); m.textContent=pw.value?'Ce n’est pas le bon mot de passe. Vérifiez les majuscules et réessayez.':'Saisissez le mot de passe admin.'; m.hidden=false; pw.setAttribute('aria-invalid','true'); pw.setAttribute('aria-describedby','pw-err'); pw.focus(); pw.select(); } };
   $('#pw-ok').onclick=go; $('#pw').addEventListener('input',()=>{ $('#pw-err').hidden=true; $('#pw').removeAttribute('aria-invalid'); });
   /* Entrée dans l'un ou l'autre champ : valider sans laisser l'appui atteindre un autre bouton */
@@ -2416,6 +2438,7 @@ function renderDocs(){
         <button data-a="rescan"><b>Actualiser depuis le dossier</b><small>Si des fichiers ont été ajoutés ou déplacés directement dans le dossier</small></button>
         ${DATA.documents.some(needThumb)?`<button data-a="thumbs"><b>Créer les miniatures</b><small>Pour les documents qui n’ont pas encore d’image</small></button>`:`<button data-a="rethumbs"><b>Refaire les miniatures</b><small>Si les images des documents ne correspondent plus</small></button>`}
       </div></details></div></div>`:''}
+    ${isAdmin&&CF_COPIES.length?cfNoticeHTML():''}
     ${home?startHTML()+renderFavs()+renderPinned()+renderHome():''}
     <div class="panel"${home?' hidden':''}>
       <div class="listhead"><h2 class="sec">${title}</h2>${filter!=='kits'||ts.length?`<div class="viewtoggle" role="group" aria-label="Affichage"><button data-view="liste" aria-pressed="${view==='liste'}">${svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}Liste</button><button data-view="vignettes" aria-pressed="${view==='vignettes'}">${svg('<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="9"/><rect x="3" y="15" width="7" height="6"/><rect x="14" y="15" width="7" height="6"/>')}Vignettes</button></div>`:''}</div>
@@ -4239,7 +4262,7 @@ async function saveReg(){
   if(r.persoFont&&!await run(()=>writeRel('app/polices-pdf/perso.json',new Blob([JSON.stringify(r.persoFont)],{type:'application/json'})))){ PAR=old; return false; }
   if(await run(saveParams,'Réglages enregistrés')){ jlog('Réglages enregistrés',''); if(nomChange) jlog('Réglages enregistrés','Nom des fichiers',PAR.nommage.fichier+' · dossiers : '+PAR.nommage.dossier);
     if(newLogo) await run(async()=>{ const j=await logoForPdf(r.apparence.logo);
-      await writeRel('app/logo-association.js',new Blob(['// Librejo : logo de la structure pour l\'en-tête des PDF (écrit par le mode admin).\nwindow.DOCUBUS_LOGO_ASSO = '+JSON.stringify(j)+';\n'],{type:'text/javascript'}));
+      await guardedWrite('app/logo-association.js','// Librejo : logo de la structure pour l\'en-tête des PDF (écrit par le mode admin).\nwindow.DOCUBUS_LOGO_ASSO = '+JSON.stringify(j)+';\n');
       window.DOCUBUS_LOGO_ASSO=j; });
     applyParams(); regReset(); if(tab==='admin'&&asub==='reg') drawReg(); renderDeliv(); return true; } else { PAR=old; return false; }
 }
@@ -4256,7 +4279,7 @@ const partAddr=p=>{ const a=String(p.adresse||'').trim(), cv=[p.cp,p.ville].filt
 async function saveAnnu(){
   ANNU.maj=nowStr(); ANNU.types=annuTypes();
   const text="// Librejo : annuaire des partenaires (écrit par le mode admin de Librejo.html).\n// Mis à jour le "+ANNU.maj+"\nwindow.DOCUBUS_ANNUAIRE = "+JSON.stringify(ANNU,null,0)+";\n";
-  await writeRel('app/annuaire.js',new Blob([text],{type:'text/javascript'}));
+  await guardedWrite('app/annuaire.js',text);
   dests=mkDests(); rdraft=null; rdraftBase=null;
 }
 const ICON_PEOPLE=svg('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.7.7 2.8 2.4 3.1 5.2"/>');
@@ -7206,7 +7229,7 @@ async function wizFinish(){
     motdepasse:W.pw,formsOff:[...off],assistant:'fait',demarrage:{debut:today(),faits:[],masque:false},
     apparence:{...THEME_DEF,...(PAR.apparence||{}),...(W.logo?{logo:W.logo,menuLogo:'both'}:{})}};
   await saveData(); await saveParams();
-  if(W.logo){ const j=await logoForPdf(W.logo); await writeRel('app/logo-association.js',new Blob(['// Librejo : logo de la structure pour l\'en-tête des PDF (écrit par l\'assistant).\nwindow.DOCUBUS_LOGO_ASSO = '+JSON.stringify(j)+';\n'],{type:'text/javascript'})); window.DOCUBUS_LOGO_ASSO=j; }
+  if(W.logo){ const j=await logoForPdf(W.logo); await guardedWrite('app/logo-association.js','// Librejo : logo de la structure pour l\'en-tête des PDF (écrit par l\'assistant).\nwindow.DOCUBUS_LOGO_ASSO = '+JSON.stringify(j)+';\n'); window.DOCUBUS_LOGO_ASSO=j; }
   try{ await readRel('app/annuaire.js'); }catch(e){ await saveAnnu(); }
   applyParams(); applyTheme(PAR.apparence); setAdmin(true); renderDocs(); renderForms();
 }
@@ -7528,7 +7551,7 @@ let jrQ=Promise.resolve();
 async function jrRead(){ try{ const t=await (await readRel(JR_REL)).text(); const j=JSON.parse(t); return Array.isArray(j)?j:[]; }catch(e){ return []; } }
 function jlog(action,objet,detail){
   if(!FSA||!isAdmin) return;
-  const e={quand:new Date().toISOString(),qui:jrWho()||'Admin',poste:'',action,objet:objet||'',detail:detail||''};
+  const e={quand:new Date().toISOString(),qui:jrWho()||'Admin',poste:stPoste(),action,objet:objet||'',detail:detail||''};
   jrQ=jrQ.then(async()=>{ const J=await jrRead(); J.push(e); while(J.length>JR_MAX) J.shift();
     await writeRel(JR_REL,new Blob([JSON.stringify(J,null,0)],{type:'application/json'})); }).catch(err=>console.warn('journal',err));
   return jrQ;
@@ -8535,6 +8558,138 @@ async function checksAfterPick(){ const L=await ljChecks();
   if(L.some(x=>x.etat==='warn'||x.etat==='err')){ if(!$('#modal').hidden) return; openChecks('Librejo a vérifié ce poste après le choix du dossier. Un point au moins mérite votre attention.'); }
   else toast('Vérifications : tout est en ordre sur ce poste'); }
 
+/* ======================================================================
+   MODIFICATIONS SIMULTANÉES (deux admins, ou un dossier synchronisé dans le cloud)
+   Avant d'écrire un fichier de réglages, Librejo relit le fichier et le compare à ce qu'il a lu au
+   démarrage (ou à son dernier enregistrement). S'il a changé entre-temps, il ne l'écrase pas en silence :
+   « Recharger ses modifications », « Enregistrer quand même » (chacun après confirmation), « Voir les
+   différences » (sections changées de chaque côté). Pas de fusion automatique.
+   Au chargement et à l'entrée en mode admin : copies en conflit dans app (jamais supprimées par Librejo),
+   modifications récentes d'un autre poste (journal) et fichiers changés depuis l'ouverture.
+   ====================================================================== */
+const LJ_LUS=window.LJ_LUS||(window.LJ_LUS={});
+const CF_FILES={'app/parametres.js':['parametres','DOCUBUS_PARAMETRES','les réglages','Le fichier des réglages'],'app/donnees.js':['donnees','DOCUBUS_DONNEES','la liste des documents et des formulaires','Le fichier des documents et des formulaires'],
+  'app/annuaire.js':['annuaire','DOCUBUS_ANNUAIRE','l’annuaire','Le fichier de l’annuaire'],'app/logo-association.js':['logo','DOCUBUS_LOGO_ASSO','le logo de la structure','Le fichier du logo de la structure']};
+const CF_LAB={parametres:{attestation:'En-tête et bas de page',fiche:'Infos de la structure (Cerfa)',typeStructure:'Type de structure',equipe:'Équipe',medecins:'Médecins',medecinLigne:'Ligne des médecins',
+    destinataires:'Destinataires de la délivrance',envoi:'Adresses d’envoi',mail:'Messagerie',webmail:'Messagerie',sansMail:'Messagerie',motdepasse:'Mot de passe admin',tampon:'Tampon',
+    apparence:'Apparence (couleurs, logo)',mise:'Papier à en-tête',formsOff:'Formulaires proposés',formsOn:'Formulaires proposés',nommage:'Nom des fichiers et des dossiers',demarrage:'Liste de démarrage',assistant:'Assistant de démarrage'},
+  donnees:{categories:'Catégories',documents:'Documents',formulaires:'Formulaires',kits:'Kits',semaine:'Impression rapide',formsEpingles:'Formulaires épinglés',archives:'Archives',synonymes:'Mots de la recherche',ordoListes:'Listes de l’ordonnance',sauvegarde:'Sauvegarde',aArchiver:'Documents à archiver'},
+  annuaire:{partenaires:'Fiches de l’annuaire',types:'Types de partenaires',origine:'Import de l’annuaire'}};
+const CF_SKIP=new Set(['maj','migrations']);
+const CF_NAME={documents:d=>d.titre,formulaires:f=>f.titre,categories:c=>c.nom,kits:k=>k.titre,partenaires:p=>p.nom||p.structure,equipe:p=>p.nom,medecins:m=>m.nom,destinataires:d=>d.nom};
+let CF_COPIES=[];
+const cfEmpty=v=>v==null||v===''||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length);
+const cfSame=(a,b)=>(cfEmpty(a)&&cfEmpty(b))||JSON.stringify(a)===JSON.stringify(b);
+function cfParse(rel,txt){ const F=CF_FILES[rel]; if(!F||txt==null) return null; const m=String(txt).match(new RegExp('window\\.'+F[1]+'\\s*=\\s*([\\s\\S]*?);?\\s*$')); try{ return m?JSON.parse(m[1]):null; }catch(e){ return null; } }
+async function cfRead(rel){ try{ const f=await readRel(rel); return {t:f.lastModified,txt:await f.text()}; }catch(e){ if(e&&e.name==='NotFoundError') return null; throw e; } }
+/* Version fichier (les réglages sont chargés par des balises <script>) : la référence est la version présente au premier accès au dossier */
+let cfBaseP=null;
+function cfBaseline(){ if(!cfBaseP) cfBaseP=(async()=>{ for(const rel of Object.keys(CF_FILES)) if(!LJ_LUS[rel]){ try{ const c=await cfRead(rel); if(c) LJ_LUS[rel]=c; }catch(e){} } })(); return cfBaseP; }
+/* Une écriture à la fois par fichier ; avant chaque écriture, comparaison avec la référence */
+const cfQ={};
+function guardedWrite(rel,text){
+  const go=async()=>{
+    const base=LJ_LUS[rel];
+    if(base){ const cur=await cfRead(rel);
+      if(cur&&cur.txt!==base.txt){ const ch=await cfAsk(rel,base,cur,text);
+        if(ch==='reload'){ location.reload(); throw new Cancel(); }
+        if(ch!=='force') throw new Cancel();
+        jlog('Enregistré malgré une modification ailleurs',CF_FILES[rel]?CF_FILES[rel][2]:rel); } }
+    await writeRel(rel,new Blob([text],{type:'text/javascript'}));
+    let t=Date.now(); try{ t=(await readRel(rel)).lastModified; }catch(e){}
+    LJ_LUS[rel]={t,txt:text};
+  };
+  const p=(cfQ[rel]||Promise.resolve()).catch(()=>{}).then(go); cfQ[rel]=p; return p; }
+function cfSections(kind,A,B){ const L=CF_LAB[kind]||{}, out=[];
+  const q=l=>l.slice(0,4).map(t=>`« ${t||'sans titre'} »`).join(', ')+(l.length>4?` et ${l.length-4} autre${l.length>5?'s':''}`:'');
+  for(const k of [...new Set([...Object.keys(A||{}),...Object.keys(B||{})])]){ if(CF_SKIP.has(k)) continue; const a=(A||{})[k], b=(B||{})[k]; if(cfSame(a,b)) continue;
+    const det=[], nm=CF_NAME[k];
+    if(nm&&(Array.isArray(a)||Array.isArray(b))){ const key=x=>x&&(x.id||x.chemin||nm(x)); const ma=new Map((a||[]).map(x=>[key(x),x])), mb=new Map((b||[]).map(x=>[key(x),x]));
+      const add=[...mb.keys()].filter(x=>!ma.has(x)).map(x=>nm(mb.get(x))), del=[...ma.keys()].filter(x=>!mb.has(x)).map(x=>nm(ma.get(x))), mod=[...mb.keys()].filter(x=>ma.has(x)&&!cfSame(ma.get(x),mb.get(x))).map(x=>nm(mb.get(x)));
+      if(add.length) det.push('ajouté : '+q(add)); if(mod.length) det.push('modifié : '+q(mod)); if(del.length) det.push('retiré : '+q(del)); if(!det.length) det.push('ordre changé'); }
+    const lab=L[k]||k, ex=out.find(o=>o.label===lab); if(ex) ex.det.push(...det); else out.push({label:lab,det}); }
+  return out; }
+const cfListHTML=(S,empty)=>S.length?`<ul class="cf-l">${S.map(x=>`<li><b>${esc(x.label)}</b>${x.det.length?` <span>${esc(x.det.join(' · '))}</span>`:''}</li>`).join('')}</ul>`:`<p class="hint">${esc(empty)}</p>`;
+function cfDiffHTML(rel,base,cur,mine){ const F=CF_FILES[rel];
+  if(!F||F[0]==='logo') return `<p>Le logo de la structure a été changé sur l’autre poste.</p>`;
+  const B=cfParse(rel,base.txt), C=cfParse(rel,cur.txt), M=cfParse(rel,mine);
+  if(!B||!C||!M) return `<p>Les différences ne peuvent pas être détaillées : le fichier de l’autre poste est illisible ou incomplet (synchronisation en cours ?).</p>`;
+  const other=cfSections(F[0],B,C), me=cfSections(F[0],B,M), both=other.filter(o=>me.some(m=>m.label===o.label)).map(o=>o.label);
+  return `<div class="cf-cols"><div><h4>Changé sur l’autre poste</h4>${cfListHTML(other,'Rien de lisible : seule la mise en forme du fichier a changé.')}</div>
+    <div><h4>Changé par vous, pas encore enregistré</h4>${cfListHTML(me,'Rien d’autre que l’enregistrement en cours.')}</div></div>
+    ${both.length?`<p class="cf-both"><b>Changé des deux côtés :</b> ${esc(both.join(', '))}. Si vous rechargez, refaites vos changements sur ces points ; si vous enregistrez quand même, ceux de l’autre poste sont perdus.</p>`:''}`; }
+const cfAgo=t=>{ const m=Math.max(0,Math.round((Date.now()-t)/60000)); return m<1?'il y a moins d’une minute':m<60?`il y a ${m} minute${m>1?'s':''}`:`le ${new Date(t).toLocaleDateString('fr-FR')} à ${new Date(t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':',' h ')}`; };
+/* Fenêtre au-dessus de tout (y compris d'une fenêtre ouverte) : « Recharger ses modifications », « Enregistrer quand même », « Voir les différences » */
+function cfAsk(rel,base,cur,mine){ return new Promise(resolve=>{
+  const F=CF_FILES[rel]||[rel,'',rel,'Le fichier '+rel], prev=document.activeElement;
+  const o=document.createElement('div'); o.className='overlay cf-ov'; o.id='cfdlg';
+  o.innerHTML=`<div class="dialog wide" role="alertdialog" aria-modal="true" aria-labelledby="cf-t" aria-describedby="cf-d">
+    <h3 id="cf-t">Ce fichier a été modifié sur un autre poste depuis que vous l’avez ouvert</h3>
+    <p id="cf-d"><b>${esc(F[3])}</b> (${esc(rel)}) ${cur.t?'a changé '+cfAgo(cur.t):'a changé'}. Si vous enregistrez maintenant, ces modifications seront remplacées par les vôtres. Librejo n’a rien écrit.</p>
+    <details class="cf-diff"><summary>Voir les différences</summary><div class="cf-diffin">${cfDiffHTML(rel,base,cur,mine)}</div></details>
+    <div class="cf-confirm" id="cf-c" hidden></div>
+    <div class="btns" id="cf-b"><button type="button" class="primary" id="cf-reload">Recharger ses modifications</button><button type="button" class="secondary" id="cf-force">Enregistrer quand même</button><button type="button" class="ghost" id="cf-no">Ne rien enregistrer pour l’instant</button></div></div>`;
+  document.body.appendChild(o);
+  const end=v=>{ o.remove(); document.removeEventListener('keydown',key,true); if(prev&&prev.isConnected&&prev.focus) prev.focus(); resolve(v); };
+  const key=e=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); const c=o.querySelector('#cf-c'); if(!c.hidden){ c.hidden=true; o.querySelector('#cf-b').hidden=false; o.querySelector('#cf-reload').focus(); } else end('cancel'); } };
+  document.addEventListener('keydown',key,true);
+  const ask=(txt,yes,danger,v)=>{ const c=o.querySelector('#cf-c'), b=o.querySelector('#cf-b'); b.hidden=true; c.hidden=false;
+    c.innerHTML=`<p><b>${txt}</b></p><div class="btns"><button type="button" class="primary${danger?' danger':''}" id="cf-yes">${esc(yes)}</button><button type="button" class="secondary" id="cf-back">Retour</button></div>`;
+    c.querySelector('#cf-yes').onclick=()=>end(v); c.querySelector('#cf-back').onclick=()=>{ c.hidden=true; b.hidden=false; o.querySelector('#cf-reload').focus(); }; c.querySelector('#cf-back').focus(); };
+  o.querySelector('#cf-reload').onclick=()=>ask('Librejo va se recharger avec la version de l’autre poste. Vos modifications pas encore enregistrées seront perdues.','Recharger',false,'reload');
+  o.querySelector('#cf-force').onclick=()=>ask('Les modifications faites sur l’autre poste seront remplacées par les vôtres, sans retour possible.','Remplacer par mes modifications',true,'force');
+  o.querySelector('#cf-no').onclick=()=>end('cancel');
+  o.querySelector('#cf-reload').focus(); }); }
+/* Ce qui a bougé ailleurs : copies en conflit, fichiers changés depuis l'ouverture, modification récente d'un autre poste */
+async function cfScan(){ const R={copies:[],changed:[],recent:null};
+  try{ const app=await dirAt(['app'],'read',false); R.copies=await conflictsIn(app);
+    for(const c of R.copies){ try{ c.t=(await c.h.getFile()).lastModified; }catch(e){} } }catch(e){}
+  CF_COPIES=R.copies;
+  for(const rel of Object.keys(CF_FILES)){ const b=LJ_LUS[rel]; if(!b) continue; try{ const c=await cfRead(rel); if(c&&c.txt!==b.txt) R.changed.push({rel,t:c.t}); }catch(e){} }
+  const now=Date.now(), me=stPoste(), J=await jrRead();
+  for(let i=J.length-1;i>=0;i--){ const e=J[i], t=Date.parse(e.quand); if(!(now-t<10*60000)) break; if(e.poste&&e.poste!==me){ R.recent=e; break; } }
+  if(!R.recent){ const c=R.changed.filter(x=>now-x.t<10*60000).sort((a,b)=>b.t-a.t)[0]; if(c) R.recent={quand:new Date(c.t).toISOString(),rel:c.rel}; }
+  return R; }
+function cfWhat(e){ if(e.rel) return (CF_FILES[e.rel]||[])[2]||'les réglages'; const a=String(e.action||'');
+  return /^Réglages/.test(a)?'les réglages':/Formulaire/.test(a)?'les formulaires':/Catégorie/.test(a)?'les catégories':/annuaire/i.test(a)?'l’annuaire':'les documents'; }
+function cfNoticeHTML(){ const n=CF_COPIES.length;
+  return `<div class="notice cf-note" role="status"><span><b>${n} copie${n>1?'s':''} en conflit dans le dossier app</b> (${esc(CF_COPIES.slice(0,3).map(c=>c.nom).join(', '))}${n>3?'…':''}) : deux postes ont enregistré en même temps. Librejo ne les supprime pas lui-même.</span><button type="button" class="secondary sm" data-cfcopies>Que faire ?</button></div>`; }
+/* Entrée en mode admin (ou admin déjà ouvert au chargement) : prévenir avant de modifier. Renvoie false s'il vaut mieux recharger d'abord. */
+async function cfAdminCheck(quiet){ const R=await cfScan(); renderDocs();
+  if(!R.changed.length&&!R.recent&&(quiet||!R.copies.length)) return true;
+  const parts=[];
+  if(R.recent){ const qui=R.recent.qui&&R.recent.qui!=='Admin'?`Quelqu’un (${R.recent.qui})`:'Quelqu’un';
+    parts.push(`<div class="cf-item"><p><b>${esc(qui)} a modifié ${esc(cfWhat(R.recent))} ${esc(cfAgo(Date.parse(R.recent.quand)))}</b>${R.recent.action?` (${esc(R.recent.action)}${R.recent.objet?' · '+esc(R.recent.objet):''})`:''}, sur un autre poste.</p><p class="hint">S’il ou elle est encore en train de modifier, mettez-vous d’accord avant de faire vos changements. Librejo vous préviendra avant d’écraser quoi que ce soit.</p></div>`); }
+  if(R.changed.length) parts.push(`<div class="cf-item"><p><b>${R.changed.length>1?'Ces fichiers ont':'Ce fichier a'} changé depuis l’ouverture de Librejo sur ce poste :</b> ${esc(R.changed.map(c=>CF_FILES[c.rel][2]).join(', '))}.</p><p class="hint">Rechargez pour partir de la dernière version avant de modifier.</p></div>`);
+  if(R.copies.length&&!quiet) parts.push(`<div class="cf-item"><p><b>${R.copies.length} copie${R.copies.length>1?'s':''} en conflit</b> dans le dossier app (créée${R.copies.length>1?'s':''} par le service de synchronisation quand deux postes enregistrent en même temps).</p>${cfCopiesHTML(R.copies)}</div>`);
+  return new Promise(res=>{
+    openModal(`<h3 id="modal-title">Avant de modifier</h3>${parts.join('')}
+      <div class="btns">${R.changed.length?'<button class="primary" id="cf-rl">Recharger maintenant</button>':''}<button class="${R.changed.length?'secondary':'primary'}" data-close id="cf-go">Continuer</button></div>`,'wide');
+    cfCopiesBind($('#modal-box'));
+    const rl=$('#cf-rl'); if(rl) rl.onclick=()=>location.reload();
+    $('#cf-go').addEventListener('click',()=>res(!R.changed.length));
+    const ob=new MutationObserver(()=>{ if($('#modal').hidden){ ob.disconnect(); res(!R.changed.length); } }); ob.observe($('#modal'),{attributes:true,attributeFilter:['hidden']});
+  }); }
+function cfCopiesHTML(C){
+  return `<ol class="cf-steps"><li>Ouvrez le dossier <b>app</b> de Librejo dans l’Explorateur de fichiers.</li><li>Comparez chaque copie avec le fichier en place : « Voir les différences » ci-dessous, et la date de modification.</li>
+    <li>Si le fichier en place est le bon : supprimez la copie. Si c’est la copie : renommez d’abord le fichier en place (par exemple en <code>parametres-ancien.txt</code>), puis renommez la copie avec le nom d’origine, et rechargez Librejo.</li>
+    <li>Pour que cela ne revienne pas : un seul admin à la fois, et laissez la synchronisation finir avant de modifier.</li></ol>
+    <ul class="cf-copies">${C.map((c,i)=>`<li><div class="cf-row"><span><code>${esc(c.nom)}</code> <small>copie de ${esc(c.de)}${c.t?' · modifiée '+esc(cfAgo(c.t)):''}</small></span>${CF_FILES['app/'+c.de]&&c.de!=='logo-association.js'?`<button type="button" class="ghost sm" data-cfdiff="${i}">Voir les différences</button>`:''}</div><div class="cf-diffin" data-cfout="${i}" hidden></div></li>`).join('')}</ul>
+    <p class="hint">Librejo ne supprime jamais ces copies lui-même.</p>`; }
+function cfCopiesBind(box){ if(!box) return; box.querySelectorAll('[data-cfdiff]').forEach(b=>b.onclick=async()=>{ const i=+b.dataset.cfdiff, c=CF_COPIES[i], out=box.querySelector(`[data-cfout="${i}"]`); if(!c||!out) return;
+  if(!out.hidden){ out.hidden=true; return; }
+  try{ const rel='app/'+c.de, A=cfParse(rel,(await cfRead(rel)||{}).txt), B=cfParse(rel,await (await c.h.getFile()).text());
+    out.innerHTML=!A||!B?'<p class="hint">L’un des deux fichiers est illisible : ouvrez-les dans un éditeur de texte pour comparer.</p>'
+      :`<p class="hint">Ce que la copie a de différent par rapport au fichier en place${' '}:</p>${cfListHTML(cfSections(CF_FILES[rel][0],A,B),'Aucune différence de contenu : la copie peut être supprimée.')}`; }
+  catch(e){ out.innerHTML=`<p class="hint">${esc(fsErr(e)||'Lecture impossible.')}</p>`; }
+  out.hidden=false; }); }
+function cfCopiesModal(){ openModal(`<h3 id="modal-title">Copies en conflit dans le dossier app</h3><p>Deux postes ont enregistré en même temps : le service de synchronisation (OneDrive, Google Drive, Dropbox, Nextcloud…) a gardé les deux versions.</p>${cfCopiesHTML(CF_COPIES)}<div class="btns"><button class="secondary" data-close>Fermer</button></div>`,'wide'); cfCopiesBind($('#modal-box')); }
+document.addEventListener('click',e=>{ if(e.target.closest('[data-cfcopies]')) cfScan().then(()=>{ renderDocs(); CF_COPIES.length?cfCopiesModal():toast('Plus de copie en conflit : tout est réglé'); }); });
+/* Au chargement : copies en conflit (pour l'avis de l'accueil) ; admin déjà ouvert : la même vérification qu'à l'entrée */
+async function cfStartup(){ if(!FSA) return; const h=dirH||await idb.get('dossier'); if(!h||await permState(h,'read')!=='granted') return; dirH=h; await cfBaseline();
+  if(isAdmin&&await permState(h,'readwrite')==='granted'){ if($('#modal').hidden) await cfAdminCheck(true); else { await cfScan(); renderDocs(); } }
+  else{ await cfScan(); if(isAdmin) renderDocs(); } }
+
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
@@ -8546,6 +8701,7 @@ renderDocs();
 renderDeliv();
 updateConn();
 if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().catch(e=>console.warn('vérifications',e)),700);
+else setTimeout(()=>cfStartup().catch(e=>console.warn('modifications simultanées',e)),900);
 })();
 </script>
 <div id="lj-boot" hidden><div class="lj-card"><img src="logo.svg" alt="Librejo"><div class="lj-in"></div></div></div>
