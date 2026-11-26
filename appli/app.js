@@ -2433,10 +2433,14 @@ let pdfjsReady=null;
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Chargement impossible : '+src)); document.head.appendChild(s); }); }
 function getPdfjs(){
   if(!pdfjsReady) pdfjsReady=(async()=>{
-    // Le moteur PDF tourne dans la page (pas de « worker » : interdit pour une page ouverte depuis le dossier)
+    // Le moteur PDF tourne dans la page (pas de « worker » : interdit pour une page ouverte depuis le dossier).
+    // pdf.js 5 (outils/pdfjs-classique.py) : décodeurs d'images en WebAssembly dans app/lib/pdfjs-wasm/.
+    self.LJ_PDFJS_BASE=new URL('app/lib/',location.href).href;
     await loadScript('app/lib/pdf.worker.min.js'); await loadScript('app/lib/pdf.min.js');
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc='app/lib/pdf.worker.min.js';
-    return window.pdfjsLib;
+    const lib=window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc='app/lib/pdf.worker.min.js';
+    // réglages imposés à chaque ouverture : jamais de code exécuté depuis un PDF
+    const open=lib.getDocument.bind(lib);
+    return Object.assign(Object.create(lib),{getDocument:o=>open({...o,isEvalSupported:false,enableScripting:false,wasmUrl:self.LJ_PDFJS_BASE+'pdfjs-wasm/'})});
   })();
   return pdfjsReady;
 }
