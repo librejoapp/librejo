@@ -12,15 +12,10 @@ var MIME = {pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/j
   doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',odt:'application/vnd.oasis.opendocument.text'};
 
-/* Bibliothèques PDF : chargées seulement une fois le dossier choisi (l'écran d'accueil reste léger).
-   Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
-var LIBS = ['app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js'];
-function loadLib(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error(src)); }; document.head.appendChild(s); }); }
-var libsP = null;
-function loadLibs(){ if(!libsP) libsP = Promise.all(LIBS.map(loadLib)).catch(function(e){ libsP=null; throw e; }); return libsP; }
+/* Bibliothèques PDF (jsPDF, pdf-lib, JSZip, police de repli : ~1,3 Mo) : l'application les charge elle-même
+   à la première demande (ouverture d'un formulaire, de l'administration…), pas au choix du dossier : l'accueil
+   arrive plus vite. Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
 async function startMain(){
-  try { await loadLibs(); }
-  catch(e){ if (WEB) { show('<h1>Librejo n’a pas pu se charger entièrement</h1><p>Un fichier de l’application manque ('+esc(e.message||'')+'). Vérifiez la connexion, puis rechargez la page.</p><button class="lj-btn" id="lj-re">Recharger</button>'); document.getElementById('lj-re').onclick=function(){ location.reload(); }; return false; } }
   var src = document.getElementById('docubus-main');
   var s = document.createElement('script'); s.textContent = src.textContent; document.body.appendChild(s);
   return true;
@@ -35,8 +30,16 @@ function idbGet(k){ return idbOpen().then(function(db){ return new Promise(funct
 function idbSet(k,v){ return idbOpen().then(function(db){ return new Promise(function(res){ var t=db.transaction('h','readwrite'); t.objectStore('h').put(v,k); t.oncomplete=function(){ res(true); }; t.onerror=function(){ res(false); }; }); }); }
 
 var dir = null;
+/* Mode « formulaires seulement » : choisi sur ce poste (ou imposé quand le navigateur n'a pas l'accès aux dossiers) */
+var SD_KEY = 'librejo-sans-dossier';
+var KIT_DSI = 'https://github.com/librejoapp/librejo#si-lacc%C3%A8s-aux-dossiers-est-bloqu%C3%A9';
+function sdSet(v){ try { if (v) localStorage.setItem(SD_KEY, v); else localStorage.removeItem(SD_KEY); } catch(e){} }
+function sdGet(){ try { return localStorage.getItem(SD_KEY); } catch(e){ return null; } }
 async function sub(parts, h){ var d=h||dir; for (var i=0;i<parts.length;i++) d=await d.getDirectoryHandle(parts[i]); return d; }
-async function readText(rel){ var p=rel.split('/'), n=p.pop(); var d=await sub(p); return (await (await d.getFileHandle(n)).getFile()).text(); }
+/* Ce qui a été lu au démarrage (date et contenu) : avant d'écrire un fichier de réglages, l'application
+   vérifie qu'il n'a pas été modifié entre-temps sur un autre poste */
+window.LJ_LUS = {};
+async function readText(rel){ var p=rel.split('/'), n=p.pop(); var d=await sub(p); var f=await (await d.getFileHandle(n)).getFile(); var t=await f.text(); window.LJ_LUS[rel]={t:f.lastModified, txt:t}; return t; }
 function parseData(text, name){
   var m = text.match(new RegExp('window\\.'+name+'\\s*=\\s*([\\s\\S]*?);?\\s*$'));
   if (!m) throw new Error('format');
@@ -50,8 +53,42 @@ async function looksRight(h){
 
 /* ---------- écran d'ouverture ---------- */
 var ui = document.getElementById('lj-boot');
-function show(html){ ui.hidden=false; ui.querySelector('.lj-in').innerHTML = html; }
+/* Tant que l'écran d'ouverture est affiché, l'application (cachée dessous) est inerte : ni Tab, ni clic,
+   ni lecteur d'écran. Le premier arrêt de Tab est le premier bouton de l'écran d'ouverture. */
+function cover(on){
+  for (var i=0, k=document.body.children; i<k.length; i++){ var el=k[i];
+    if (el===ui || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName)) continue;
+    if (on && !el.inert){ el.inert=true; el.setAttribute('data-lj-boot-inert',''); }
+    else if (!on && el.hasAttribute('data-lj-boot-inert')){ el.inert=false; el.removeAttribute('data-lj-boot-inert'); } }
+  if (!on && window.LJ_LAYERS_SYNC) window.LJ_LAYERS_SYNC();
+}
+cover(true);
+function done(){ ui.hidden = true; cover(false); cacheSuite(); }
+/* Service worker : second temps de la mise en cache (aperçus, polices arabe et géorgienne), une fois l'application ouverte */
+function cacheSuite(){ if (!('serviceWorker' in navigator)) return;
+  setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (r.active) r.active.postMessage('librejo-cache-suite'); }).catch(function(){}); }, 4000); }
+function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
+  var h=ui.querySelector('.lj-in h1'); if (h) { h.id='lj-t';
+    /* titre de l'onglet : l'écran affiché (« Accès au dossier refusé – Librejo ») ; l'application prend ensuite le relais */
+    var t=h.textContent.trim(); document.title = /Librejo/.test(t) ? t : t+' – Librejo'; } }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+/* Entrée « Remplir un formulaire sans dossier », sous le choix du dossier (raison : refus, introuvable, choix) */
+function sdOffer(raison){
+  var b=document.createElement('div'); b.className='lj-sd';
+  b.innerHTML='<button class="lj-btn lj-sec" id="lj-sd">Remplir un formulaire sans dossier</button>'
+    +'<p class="lj-aide">Sans le dossier, vous n’aurez pas les documents, l’annuaire ni les réglages de la structure : seulement les formulaires, avec l’en-tête que vous saisissez. C’est la solution quand le navigateur ou le service informatique bloque l’accès aux dossiers. <a href="'+KIT_DSI+'" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>';
+  ui.querySelector('.lj-in').appendChild(b);
+  document.getElementById('lj-sd').onclick=function(){ formsOnly(raison||'choix'); };
+}
+/* Lancer l'application sans dossier : formulaires intégrés et modèles de la bibliothèque, en-tête saisi sur ce poste */
+async function formsOnly(raison){
+  if (raison!=='api') sdSet(raison==='choix'?'choix':'refus');
+  window.LJ_SANS_DOSSIER = {raison:raison, api:!!window.showDirectoryPicker};
+  window.DOCUBUS_PARAMETRES = {assistant:'fait'}; window.DOCUBUS_DONNEES = {categories:[],documents:[],formulaires:[]};
+  window.DOCUBUS_ANNUAIRE = {partenaires:[],types:[]}; window.DOCUBUS_LOGO_ASSO = null;
+  if (!(await startMain())) return;
+  done();
+}
 
 async function load(){
   var missing = [];
@@ -62,11 +99,12 @@ async function load(){
   }
   if (missing.length) {
     show('<h1>Le dossier ne contient pas les réglages attendus</h1><p>Fichiers manquants ou illisibles :</p><ul>'+missing.map(function(m){ return '<li>'+esc(m)+'</li>'; }).join('')+'</ul><p>Choisissez le dossier qui contient <b>app</b> et <b>Documents</b>.</p><button class="lj-btn" id="lj-pick">Choisir un autre dossier</button>');
-    document.getElementById('lj-pick').onclick = pick;
+    document.getElementById('lj-pick').onclick = pick; sdOffer('introuvable');
     return;
   }
+  sdSet(null);
   if (!(await startMain())) return;
-  ui.hidden = true;
+  done();
   try { var n=(window.DOCUBUS_PARAMETRES||{}).attestation; var f=document.getElementById('lj-foot'); if(f&&n&&n.nom) f.textContent='Librejo · '+n.nom; } catch(e){}
 }
 async function pick(){
@@ -75,58 +113,71 @@ async function pick(){
     if (!(await looksRight(h))) {
       var inner = null;
       for await (var e of h.values()) if (e.kind==='directory' && (await looksRight(e).catch(function(){ return false; }))) { inner=e; break; }
-      if (!inner) { show('<h1>Ce n’est pas le bon dossier</h1><p>Le dossier <b>'+esc(h.name)+'</b> ne contient pas les sous-dossiers <b>app</b> et <b>Documents</b>. Choisissez le dossier de votre structure.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>'); document.getElementById('lj-pick').onclick=pick; return; }
+      if (!inner) { show('<h1>Ce n’est pas le bon dossier</h1><p>Le dossier <b>'+esc(h.name)+'</b> ne contient pas les sous-dossiers <b>app</b> et <b>Documents</b>. Choisissez le dossier de votre structure.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>'); document.getElementById('lj-pick').onclick=pick; sdOffer('choix'); return; }
       h = inner;
     }
-    dir = h; await idbSet('dossier', h); await load();
+    dir = h; window.LJ_CHOIX = 'dossier'; await idbSet('dossier', h); await load();
   } catch(e) {
     if (e && e.name === 'AbortError') return;
-    show('<h1>Accès refusé</h1><p>Le navigateur n’a pas pu ouvrir ce dossier ('+esc(e && e.name || 'erreur')+'). Si le dossier est sur le réseau, vérifiez qu’il est bien connecté.</p><button class="lj-btn" id="lj-pick">Réessayer</button>');
-    document.getElementById('lj-pick').onclick = pick;
+    refused(e);
   }
 }
 /* Première installation : prépare un dossier vide (app + Documents) ; l'assistant s'ouvre ensuite */
 async function create(){
   try {
     var h = await window.showDirectoryPicker({id:'docubus', mode:'readwrite'});
-    if (await looksRight(h)) { dir=h; await idbSet('dossier', h); return load(); }
+    if (await looksRight(h)) { dir=h; window.LJ_CHOIX='dossier'; await idbSet('dossier', h); return load(); }
     var empty=true; for await (var e of h.values()){ if (e.name.charAt(0)!=='.') { empty=false; break; } }
     var root = empty ? h : await h.getDirectoryHandle('Librejo', {create:true});
     var app = await root.getDirectoryHandle('app', {create:true}); await root.getDirectoryHandle('Documents', {create:true});
     var files = [['parametres.js','window.DOCUBUS_PARAMETRES = {"assistant":"a-faire"};\n'],['donnees.js','window.DOCUBUS_DONNEES = {"categories":[],"documents":[],"formulaires":[]};\n'],['annuaire.js','window.DOCUBUS_ANNUAIRE = {"partenaires":[],"types":[]};\n']];
     for (var i=0;i<files.length;i++){ var ex=true; try { await app.getFileHandle(files[i][0]); } catch(_){ ex=false; }
       if (!ex) { var w=await (await app.getFileHandle(files[i][0], {create:true})).createWritable(); await w.write('// Librejo (créé à l\'installation)\n'+files[i][1]); await w.close(); } }
-    dir = root; await idbSet('dossier', root); await load();
+    dir = root; window.LJ_CHOIX = 'creation'; await idbSet('dossier', root); await load();
   } catch(e) {
     if (e && e.name === 'AbortError') return;
     show('<h1>Création impossible</h1><p>Le navigateur n’a pas pu écrire dans ce dossier ('+esc(e && e.name || 'erreur')+'). Choisissez un dossier où vous avez le droit d’écrire.</p><button class="lj-btn" id="lj-pick">Réessayer</button>');
-    document.getElementById('lj-pick').onclick = create;
+    document.getElementById('lj-pick').onclick = create; sdOffer('refus');
   }
 }
+/* Accès refusé (navigateur, stratégie de l'informatique, ou réponse « Bloquer ») : on le dit, et les formulaires restent possibles */
+function refused(e){
+  var n = e && e.name || '';
+  show('<h1>Accès au dossier refusé</h1><p>Le navigateur n’a pas pu ouvrir le dossier'+(n?' ('+esc(n)+')':'')+'. Si le dossier est sur le réseau, vérifiez qu’il est bien connecté. Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement.</p><button class="lj-btn" id="lj-pick">Réessayer</button>');
+  document.getElementById('lj-pick').onclick = pick; sdOffer('refus');
+}
 async function reauth(){
-  try { var st = await dir.requestPermission({mode:'read'}); if (st==='granted') return load(); } catch(e){}
+  var st = 'prompt';
+  try { st = await dir.requestPermission({mode:'read'}); } catch(e){ return refused(e); }
+  if (st==='granted') { try { return await load(); } catch(e){ return refused(e); } }
+  if (st==='denied') return refused({name:'NotAllowedError'});
   pick();
 }
 
 async function boot(){
-  if (!window.showDirectoryPicker) {
-    show('<h1>Navigateur non compatible</h1><p>Librejo a besoin de <b>Microsoft Edge</b> ou de <b>Google Chrome</b> sur ordinateur pour ouvrir le dossier de votre structure.</p>');
-    return;
-  }
+  /* Navigateur sans accès aux dossiers (Firefox, Safari…) : les formulaires marchent quand même */
+  if (!window.showDirectoryPicker) { formsOnly('api'); return; }
   dir = await idbGet('dossier');
+  /* « Formulaires seulement » choisi sur ce poste, sans dossier connu : on y retourne directement
+     (le bandeau propose « Choisir le dossier ») */
+  if (!dir && sdGet()) { formsOnly(sdGet()==='refus'?'refus':'choix'); return; }
   if (dir) {
     var st = 'prompt'; try { st = await dir.queryPermission({mode:'read'}); } catch(e){}
     if (st === 'granted') { try { await load(); return; } catch(e){} }
     show('<h1>Bonjour</h1><p>Pour ouvrir les documents de votre structure, Librejo a besoin de votre accord pour lire le dossier <b>'+esc(dir.name)+'</b>.</p><p class="lj-aide">Si le navigateur propose <b>« Autoriser à chaque visite »</b>, choisissez-le : vous n’aurez plus à le refaire.</p><button class="lj-btn" id="lj-go">Ouvrir le dossier</button> <button class="lj-btn lj-sec" id="lj-other">Choisir un autre dossier</button>');
     document.getElementById('lj-go').onclick = reauth;
     document.getElementById('lj-other').onclick = pick;
+    sdOffer('choix');
     return;
   }
   show('<h1>Bienvenue dans Librejo</h1><p>Choisissez le dossier de votre structure : celui qui contient les sous-dossiers <b>app</b> et <b>Documents</b> (sur le NAS, un lecteur réseau, OneDrive…).</p><p class="lj-aide">Les documents restent dans ce dossier. Rien n’est envoyé sur Internet.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>');
   document.getElementById('lj-pick').onclick = pick;
   var nb=document.createElement('p'); nb.className='lj-aide'; nb.innerHTML='Première installation ? <button class="lj-link" id="lj-new">Créer le dossier Librejo de votre structure</button>'; ui.querySelector('.lj-in').appendChild(nb);
   document.getElementById('lj-new').onclick = create;
+  sdOffer('choix');
 }
+/* Depuis le bandeau « formulaires seulement » : revenir à l'écran de choix du dossier */
+window.LJ_CHOISIR_DOSSIER = function(){ sdSet(null); location.reload(); };
 
 /* ---------- liens vers les documents : lus dans le dossier, pas sur le site ---------- */
 document.addEventListener('click', async function(ev){

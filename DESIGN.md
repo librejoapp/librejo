@@ -1,0 +1,292 @@
+---
+name: Librejo
+description: La boîte à outils documentaire des petites structures sociales et médico-sociales
+colors:
+  canard: "#1F6F6B"
+  canard-nuit: "#174f4c"
+  ambre: "#E9A23B"
+  ambre-encre: "#2b1d05"
+  ambre-doux: "#fcf1dc"
+  ambre-texte: "#8a5a0b"
+  ambre-sur-nuit: "#f2c26b"
+  ambre-repere: "#b67e2e"
+  encre: "#17302F"
+  encre-2: "#263d3b"
+  encre-3: "#46595a"
+  encre-attenuee: "#5b6b6a"
+  texte-sur-nuit: "#d5dfdf"
+  texte-sur-nuit-2: "#bececd"
+  creme: "#f7f4ec"
+  creme-charte: "#FBF6EC"
+  menu-clair: "#f0eee4"
+  papier: "#ffffff"
+  papier-2: "#f0ece2"
+  papier-3: "#faf8f3"
+  filet: "#ece5d8"
+  filet-fort: "#d2cbbb"
+  ok: "#178a47"
+  ok-fond: "#e3f4ea"
+  alerte: "#b0480c"
+  alerte-fond: "#fdefe2"
+  danger: "#c2410c"
+  danger-texte: "#9c3209"
+  danger-fond: "#fbe9e2"
+  surligne: "#ffe08a"
+typography:
+  marque:
+    fontFamily: "Poppins, system-ui, sans-serif"
+    fontWeight: 700
+  titre-section:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "1.625rem"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "-0.01em"
+  titre:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "1.375rem"
+    fontWeight: 700
+  intertitre:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 700
+  corps:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  aide-compacte:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "0.8125rem"
+    fontWeight: 400
+  aide:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+  etiquette:
+    fontFamily: "Asap, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 700
+    letterSpacing: "0.09em"
+rounded:
+  sm: "8px"
+  md: "14px"
+  lg: "18px"
+  full: "999px"
+spacing:
+  "1": "4px"
+  "2": "8px"
+  "3": "12px"
+  "4": "16px"
+  "5": "24px"
+  "6": "32px"
+  "7": "40px"
+components:
+  bouton-principal:
+    backgroundColor: "{colors.ambre}"
+    textColor: "{colors.ambre-encre}"
+    rounded: "{rounded.sm}"
+    height: "40px"
+  bouton-principal-alt:
+    backgroundColor: "{colors.canard-nuit}"
+    textColor: "{colors.papier}"
+    rounded: "{rounded.sm}"
+    height: "40px"
+  bouton-danger:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.papier}"
+    rounded: "{rounded.sm}"
+  champ:
+    backgroundColor: "{colors.papier}"
+    textColor: "{colors.encre}"
+    rounded: "{rounded.md}"
+    height: "48px"
+  carte:
+    backgroundColor: "{colors.papier}"
+    textColor: "{colors.encre}"
+    rounded: "{rounded.md}"
+    padding: "16px"
+  pastille:
+    backgroundColor: "{colors.papier-2}"
+    textColor: "{colors.encre-3}"
+    rounded: "{rounded.full}"
+    padding: "1px 8px"
+  pastille-accent:
+    backgroundColor: "{colors.ambre-doux}"
+    textColor: "{colors.ambre-texte}"
+    rounded: "{rounded.full}"
+  menu-lateral:
+    backgroundColor: "{colors.menu-clair}"
+    textColor: "{colors.canard-nuit}"
+    width: "16rem"
+  menu-lateral-sombre:
+    backgroundColor: "{colors.canard-nuit}"
+    textColor: "{colors.texte-sur-nuit}"
+    width: "16rem"
+---
+
+# Design System: Librejo
+
+## Overview
+
+**Creative North Star: "Le bureau d'accueil"**
+
+Librejo est le bureau d'accueil d'une petite structure : l'endroit chaleureux où, la personne en face de soi, on trouve tout de suite le bon papier, rempli proprement, à l'en-tête de la maison. Tout le système sert ce geste : un menu stable à gauche, comme le meuble du bureau (clair par défaut, sombre au choix de la structure) ; à droite, une surface crème et calme où les documents et formulaires sont posés comme des fiches sur la table, à portée de main. Rien ne doit faire hésiter : on voit d'abord ce qu'on cherche, puis l'action qui suit.
+
+La densité est moyenne : assez d'air pour lire vite entre deux rendez-vous, assez d'information pour qu'un admin range une cinquantaine de documents sans tourner les pages. La chaleur vient de la matière (fond crème, ombres dorées très douces, arrondis généreux, une seule touche ambre), pas de la décoration. Le logo donne la mesure : une étagère bien rangée, rassurante, ordonnée, bienveillante.
+
+Les écrans d'équipe restent simples et directs ; les écrans d'administration peuvent être plus denses, mais toujours rangés par tâche. Librejo est fait pour l'ordinateur (Chrome ou Edge) : la mise en page n'est pas pensée pour le téléphone.
+
+**Key Characteristics:**
+- Menu latéral fixe, clair par défaut (crème teintée de canard) ou sombre (bleu canard nuit) ; contenu sur fond crème.
+- Cartes blanches arrondies, posées par une ombre chaude et légère.
+- Une seule couleur chaude, l'ambre, pour l'action principale et les repères.
+- Une police de lecture unique (Asap) pour l'interface ; Poppins réservé au nom.
+- Vouvoiement, phrases courtes, honnêteté sur ce qui est enregistré ou non.
+
+## Colors
+
+Une palette de bureau chaleureux : bleu canard profond pour la structure, crème et papier pour les surfaces, une seule touche d'ambre pour agir.
+
+### Primary
+- **Bleu canard** (`canard`) : la couleur de la charte. Liens, titres secondaires, accents de cartes (`border-top` des cartes bleues).
+- **Bleu canard nuit** (`canard-nuit`) : les titres de section, le texte du menu clair, le contour de focus (clavier, et champs de saisie même au clic) sur tous les fonds clairs, le fond du menu en style sombre, le bouton principal alternatif. C'est la couleur du « meuble » : elle encadre, elle ne crie pas.
+
+### Secondary
+- **Ambre** (`ambre`) : l'action principale (bouton « Créer », « Entrer ») et les signaux de mode (mode admin). Le contour de focus n'est ambre que sur les fonds sombres (ambre sur nuit). Texte posé dessus : **encre d'ambre** (`ambre-encre`, jeton `--accent-ink`), jamais du blanc. `--accent-ink` ne sert que sur un fond `--accent` plein ; sur l'ambre doux (pastille « Remplir », badges), le texte est en texte ambre (`--accent-text`).
+- **Ambre doux** (`ambre-doux`) et **texte ambre** (`ambre-texte`) : fonds et textes des badges « Formulaire », rappels et bandeaux d'attention douce.
+- **Ambre sur nuit** (`ambre-sur-nuit`) : l'ambre lisible sur le menu sombre.
+- **Ambre repère** (`ambre-repere`, jeton `--accent-line`) : l'ambre des repères qui ne sont pas du texte, quand ils portent une information (choix actif d'une carte ou d'une section, cible de dépôt, barres et jauges, élément choisi du menu clair) : au moins 3:1 sur la crème et le blanc (WCAG 1.4.11). L'ambre pur reste pour les surfaces (bouton principal) et les liserés décoratifs. L'étoile des favoris est en encre atténuée éteinte, en texte ambre allumée.
+
+### Neutral
+- **Encre** (`encre`) : le texte courant ; **encre 2** et **encre 3** pour les niveaux secondaires ; **encre atténuée** pour les aides et métadonnées (toujours au-dessus de 4,5:1 sur crème et papier).
+- **Crème** (`creme`) : le fond de l'application. **Menu clair** (`menu-clair`) : le fond du menu par défaut, calculé à partir de la couleur de menu de la structure mélangée à la crème (95 %). La **crème de la charte** (`creme-charte`) est réservée au fond du manifeste et aux supports de marque.
+- **Papier** (`papier`, `papier-2`, `papier-3`) : surfaces des cartes, champs, zones secondaires.
+- **Filet** (`filet`, `filet-fort`) : bordures de cartes et de champs.
+- **Texte sur nuit** (`texte-sur-nuit`, `texte-sur-nuit-2`) : texte et étiquettes du menu en style sombre. Ils sont tirés de la couleur du menu et recalculés avec elle (au moins 4,6:1 sur le menu et sur son survol). Dans le menu clair, intitulés et compteurs prennent l'encre atténuée, recalculée sur le fond du menu (`--menu-muted`).
+- **Sur couleur** (`--on-color`, blanc) : texte et pictogrammes posés sur un fond plein coloré (bouton alternatif, pastille choisie, menu sombre). Aucune couleur n'est écrite en dur hors des jetons, sauf le blanc du papier des aperçus de PDF et les teintes de saison.
+
+### Statuts
+- **Vert** (`ok`, `ok-fond`) : réussite, « Document prêt ». **Orange brûlé** (`alerte`, `alerte-fond`) : avertissements, rappels de suppression, MSSanté. **Danger** (`danger`) : actions destructrices seulement ; **texte danger** et **fond danger** (`danger-texte`, `danger-fond`) pour ce qui est retiré ou en retard (comparaison de versions, preuves HAS). Les modules d'administration (comparaison, tableau de bord, préparation HAS, assistant) n'ont pas de couleurs à eux : modifié = alerte, ajouté = vert, retiré = danger. **Surligné** (`surligne`) : correspondances de recherche.
+- Les teintes de **saison** (`--saison`, bleu, vert, jaune, abricot pâles) colorent discrètement l'accueil selon la période ; elles restent des fonds, jamais des couleurs de texte.
+
+### Named Rules
+**The One Warm Voice Rule.** L'ambre est la seule couleur chaude de l'interface, comme le livre ambre de l'étagère. Il sert l'action principale et les signaux d'attention ; il n'habille jamais une surface entière.
+
+**The Adjusted Colour Rule.** Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée. Aucune couleur de structure ne passe sous 4,5:1 pour du texte, ni sous 3:1 pour un repère. Les jetons de texte tirés du thème (`--blue`, `--navy`, `--accent-text`) sont calculés contre le fond le plus défavorable où ils sont posés : blanc, crème, papier 2, les quatre fonds de saison et le menu clair, pas seulement le blanc. Les couleurs du papier à en-tête (Réglages › Papier à en-tête) suivent la même règle pour l'impression : titres à 4,5:1 au moins sur le blanc, traits à 2:1 au moins, et la couleur réellement imprimée est affichée sous le sélecteur.
+
+## Typography
+
+**Display Font:** Poppins Bold (nom « librejo » dans le logo et l'en-tête du menu)
+**Body Font:** Asap (avec system-ui, -apple-system, Segoe UI)
+
+**Character:** Asap, humaniste et légèrement arrondie, se lit vite et reste aimable ; Poppins, géométrique, n'apparaît que pour le nom, comme une enseigne.
+
+### Hierarchy
+Les tailles sont des jetons en rem (`--fs-1` à `--fs-7`) : à 16px, la taille par défaut des navigateurs, elles valent les valeurs ci-dessous, et elles suivent la taille de police choisie par la personne dans son navigateur.
+- **Titre de section** (700, 26px, 1,15, −0,01em) : titre de page et grands titres de section, en bleu canard nuit.
+- **Titre** (700, 22px) : titres de blocs (« Les plus utilisés », « Remplir un formulaire »).
+- **Intertitre** (700, 18px) : titres de cartes et de sections de formulaire.
+- **Corps** (400, 16px, 1,5) : texte courant et champs. Lignes de texte courant limitées à environ 70 caractères.
+- **Aide** (400, 14px) : textes d'aide sous les champs, métadonnées.
+- **Aide compacte** (400, 13px) : métadonnées serrées (listes, tableaux d'administration).
+- **Étiquette** (700, 12px, 0,09em, majuscules) : étiquettes de groupes du menu latéral.
+- Le plancher de lecture est 12px (`--fs-1`), y compris dans les vignettes de liens, les comparaisons de versions et l'aperçu en direct. 10px (`--fs-micro`) n'est admis que pour le type de fichier des pictogrammes (« PDF »), doublé d'un nom accessible (« Fichier PDF »).
+
+### Named Rules
+**The Enseigne Rule.** Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. Le nom est affiché par le logo SVG en tracés : aucune police d'affichage n'est chargée (le Permanent Marker de Docubus a été retiré, avec `--f-brand` et `.wordmark`).
+
+## Layout
+
+- Menu latéral fixe de 16rem à gauche (256px à la taille de texte par défaut, 512px quand le navigateur agrandit le texte à 200 % : ses intitulés et pictogrammes suivent, un intitulé trop long passe à la ligne) ; contenu à droite, largeur maximale 1200px, formulaires à 860px, écrans larges (réglages, administration) à 980px.
+- Grille de cartes en `auto-fill` (minimum 260px, 220px en version étroite), gouttière de 16px.
+- Rythme d'espacement par pas de 4 (4, 8, 12, 16, 24, 32, 40px) ; 24 à 32px entre sections, 12 à 16px dans une carte.
+- Champs sur deux colonnes dans les formulaires (pleine largeur pour les champs longs) ; aperçu en direct du PDF à droite, agrandissable.
+- Cibles : contrôles de 40px, champs de 48px. Pensé pour 1366×768 et 1920×1080, et confortable à 125 % de zoom. Au zoom fort (200 % et plus), les surcouches fixes se replient ou défilent : le contenu reste atteignable (WCAG 1.4.4 et 1.4.10). Sous 500px de haut, le panneau d'aide prend toute la hauteur et défile en entier, titre et pied compris ; les fenêtres défilent ; les tableaux de l'administration défilent dans leur cadre au lieu d'élargir la page. Sous 1000px de large, l'aperçu en direct est replié derrière son bouton « Afficher l'aperçu », placé sous le titre du formulaire, et le formulaire garde toute la largeur ; l'écran de démarrage défile. Sous 900px environ, le menu passe au-dessus du contenu, sans plus d'adaptation : Librejo n'est pas fait pour le téléphone.
+
+## Elevation & Depth
+
+Système en couches douces : les surfaces sont posées sur le fond crème par une ombre chaude (teinte brun doré), jamais grise ni colorée. La profondeur dit « on peut prendre cette fiche », pas « regardez-moi ».
+
+### Shadow Vocabulary
+- **Carte posée** (`box-shadow: 0 1px 2px rgba(90,60,20,.05), 0 6px 20px rgba(90,60,20,.07)`) : cartes de documents et de formulaires au repos.
+- **Carte soulevée** (`box-shadow: 0 10px 24px rgba(90,60,20,.12)`) : survol des cartes, menus déroulants.
+- **Petit relief** (`--shadow-soft`, `0 1px 3px rgba(90,60,20,.12)`) : choix actif d'un groupe, étape en cours, pastille numérotée.
+- **Page posée** (`--shadow-sheet`, `0 1px 4px rgba(90,60,20,.16)`) : pages de document dans les comparaisons et les aperçus.
+- **Fenêtre** (`--shadow-pop`, `0 18px 40px -14px rgba(70,45,12,.38)`) : fenêtres modales, volets, bulles, assistant.
+- **Voiles** : sous une fenêtre `--scrim` (`rgba(46,34,16,.45)`), sous l'aperçu d'un PDF `--scrim-strong` (`rgba(46,34,16,.74)`), brun chaud ; plus aucune ombre grise ni marine.
+
+### Mouvement
+Mouvement réduit (`prefers-reduced-motion`) : une seule règle retire animations et transitions ; le défilement vers un repère n'est plus animé, et la pulsation qui marque l'endroit atteint (réglage ouvert depuis un formulaire, écart d'une comparaison) devient un contour fixe de 3px en ambre repère pendant 3 secondes.
+
+### Named Rules
+**The Warm Shadow Rule.** Les ombres sont chaudes et diffuses, jamais décalées ni dures, jamais en lueur colorée.
+
+## Shapes
+
+Arrondis généreux et réguliers : 8px pour les boutons et petits contrôles, 14px pour les cartes et champs, 18px pour les grands panneaux et fenêtres, cercle complet pour les pastilles et badges. Bordures fines (1px, filet) ; un liseré de 4px en haut des cartes de formulaire (bleu canard nuit ou bleu canard) range les sections comme des intercalaires. Dans le menu, le logo de Librejo est le SVG de la charte ; le logo de la structure, s'il est affiché, est posé sur une tuile papier arrondie.
+
+## Components
+
+### Buttons
+**Chaleureux et tactile : un bouton invite, et dit ce qu'il fait.**
+- **Shape :** arrondi doux (8px), hauteur 40px (52px pour le grand bouton de fin de formulaire, 32px pour la petite taille).
+- **Principal :** fond ambre, texte encre d'ambre, graisse 700. Une seule action principale par zone.
+- **Principal alternatif :** fond bleu canard nuit, texte blanc (« Entrer », actions d'admin).
+- **Secondaire :** fond papier, bordure filet fort, texte encre.
+- **Danger :** fond orange brûlé foncé, texte blanc, toujours précédé d'une confirmation.
+- **Focus :** contour de 3px décalé de 2px sur tous les éléments interactifs, en bleu canard nuit (jeton `--focus`) : de 7,8:1 à 9,3:1 sur la crème, le blanc, le papier 2, le menu clair et les fonds de saison (l'ambre n'y faisait que 2:1). Sur fond sombre (menu sombre, pastilles foncées), `--focus` passe à l'ambre sur nuit (4,7:1 sur le menu). Dans un groupe qui rogne ses bords (segments, bascule d'affichage) et dans les menus « Plus d'actions », le contour est à l'intérieur de l'élément, blanc sur le bouton choisi d'un segment (WCAG 1.4.11) ; le fond des éléments de menu est réservé au survol. Aucun élément focusable ne retire son contour sans le remplacer, y compris le titre du panneau d'aide, qui reçoit le focus à l'ouverture.
+- **Couleurs forcées** (contraste élevé de Windows) : ombres et fonds disparaissent ; champs, boutons, éléments de menu, segments et titre de l'aide gardent au focus un contour de 2px en couleur système (`Highlight`).
+- **Désactivé :** opacité 45 %, curseur normal.
+
+### Chips
+- **Style :** pastilles arrondies (cercle complet) pour les choix rapides (civilité, motif, situation) ; état choisi marqué par le remplissage **et** une coche, et annoncé (`aria-pressed`).
+- **Badges :** fond papier 2 et texte encre 3 ; variante « Formulaire » en ambre doux et texte ambre.
+
+### Cards / Containers
+- **Corner Style :** 14px.
+- **Background :** papier blanc sur fond crème.
+- **Shadow Strategy :** carte posée au repos, soulevée au survol.
+- **Border :** filet 1px ; liseré haut de 4px pour les sections de formulaire.
+- **Internal Padding :** 16px, gouttière interne 12px.
+- **Carte de document :** vignette en haut, titre cliquable, actions libellées (« Imprimer », « Envoyer », « Gérer »).
+
+### Inputs / Fields
+- **Style :** fond papier, bordure filet fort 1px, arrondi 14px, hauteur 48px, texte 16px ; zones de texte de 70px minimum ; `dir="auto"` pour accueillir l'arabe.
+- **Focus :** contour plein de 2px en bleu canard nuit (`--focus`), décalé de 1px, et bordure de la même couleur, au clic comme au clavier ; pas de halo.
+- **Obligatoire :** chaque formulaire commence par « Tous les champs sont obligatoires, sauf ceux marqués « facultatif » ». Les champs exigés par la validation portent `aria-required` ; les autres affichent « (facultatif) » (« (si utile) » n'est plus employé). Pour les formulaires intégrés, c'est déduit de leur validation, réponse par réponse (« Dose » ne devient obligatoire qu'une fois le traitement choisi) ; pour ceux de la structure, de la case « Obligatoire » de l'éditeur.
+- **Error :** champ bordé et teinté d'orange brûlé, jamais la couleur seule : `aria-invalid` et `aria-describedby` vers son message. Les messages sont réunis dans la liste « À corriger », juste au-dessus du bouton de fin ; chacun est un bouton qui mène au champ. Après « Créer », le focus va sur la liste ; elle se met à jour pendant la correction. La fenêtre « Il manque des informations » de la délivrance suit la même règle : chaque message ferme la fenêtre et mène au champ.
+
+### Navigation
+- **Menu latéral (clair, par défaut) :** fond menu clair avec un filet à droite, texte bleu canard nuit 16px graisse 600, icônes 19px ; survol en voile blanc 70 %, élément actif sur fond blanc en graisse 700 ; focus en bleu canard nuit.
+- **Menu latéral (sombre, au choix) :** fond bleu canard nuit, texte « sur nuit » ; survol en voile blanc 7 %, élément actif en voile blanc 11 % et texte blanc ; focus ambre.
+- Étiquettes de groupe en petites capitales espacées. Lien « Aller au contenu » en premier.
+- Le menu principal est une navigation (`<nav aria-label="Pages de Librejo">`), pas des onglets : des boutons, et `aria-current="page"` sur la page affichée. Chaque entrée est atteinte par Tab ; les flèches, Début et Fin passent aussi d'une entrée à l'autre sans ouvrir la page. Les sections des Réglages sont de vrais onglets : `aria-controls` vers un panneau unique (`role="tabpanel"`) nommé par l'onglet choisi.
+- **Titre du document :** chaque écran nomme l'onglet du navigateur avec l'intitulé de son aide : « Bon d’orientation CCAS – Librejo », « Documents › Accueil – Librejo », « Réglages › Apparence – Librejo » ; l'écran de démarrage prend le titre de sa carte, le mode sans dossier ajoute « (formulaires seulement) ».
+- **Menus « Plus d'actions »** (`role="menu"`) : flèches haut et bas en boucle, Début, Fin ; Échap et Tab ferment le menu et rendent le focus à son bouton (`aria-expanded`), Tab continuant ensuite vers l'élément suivant. Après un choix, le focus revient au bouton. Une fenêtre sans bouton d'origine (visite guidée ouverte au démarrage) rend le focus au début du contenu.
+- **Raccourcis :** `/` et Ctrl+K mènent à la recherche de la page (celle de l'annuaire sur l'annuaire) sans écrire le caractère. La saisie libre (taper une lettre l'écrit dans la recherche) ne vaut que sur l'accueil et quand rien n'a le focus ; elle se coupe sur le poste dans l'aide « ? » de l'accueil (WCAG 2.1.4).
+- **Échap** ferme une couche à la fois, celle du dessus d'abord : menu déroulant, aperçu PDF, conflit ou confirmation, puis le panneau d'aide, puis la fenêtre.
+
+### Écran de démarrage
+Écran autonome (`boot.css`), affiché avant le choix du dossier : fond crème de la charte, une carte centrée, bouton principal « Choisir le dossier » en ambre avec texte encre d'ambre, en Asap (la police est chargée par la page avant cet écran). Il défile quand il dépasse la fenêtre (la carte est centrée par `margin:auto`, jamais coupée) et, tant qu'il est affiché, l'application cachée dessous est inerte.
+
+### Signature Component : « Document prêt »
+La fenêtre de fin de formulaire : coche verte, « Imprimer » mis en avant, puis « Envoyer » et « Télécharger », et un encadré orange qui rappelle de supprimer le fichier de Téléchargements avec son nom exact. C'est le moment où le bureau d'accueil tend le papier : clair, rassurant, honnête.
+
+## Do's and Don'ts
+
+### Do:
+- **Do** garder l'ambre pour l'action principale et les signaux d'attention, avec texte encre d'ambre (`#2b1d05`) dessus.
+- **Do** poser chaque contenu sur une carte papier (14px, ombre chaude) au-dessus du fond crème.
+- **Do** écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.
+- **Do** libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.
+- **Do** viser RGAA / WCAG AA : 4,5:1 pour le texte sur chaque fond où il est posé, focus visible et contrasté (3:1) sur chaque élément focusable, champs et menus compris, et en couleurs forcées, titres réels et titre du document à jour, champs obligatoires annoncés, fenêtres vraiment modales.
+- **Do** dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères.
+
+### Don't:
+- **Don't** réintroduire une police d'affichage ou le nom incliné de Docubus : le nom est le logo SVG.
+- **Don't** introduire une deuxième couleur chaude ou colorer de grandes surfaces en ambre.
+- **Don't** utiliser d'ombres dures, décalées, grises ou en lueur colorée.
+- **Don't** coder une couleur en dur hors des jetons : une couleur codée en dur ne suit pas les couleurs choisies par la structure.
+- **Don't** descendre sous 12px pour du texte lu.
+- **Don't** adapter les écrans pour le téléphone au détriment de l'ordinateur.
