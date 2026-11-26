@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-26T08:56:00+00:00",
+  "generatedAt": "2026-11-26T11:00:00+00:00",
   "title": "Design System: Librejo",
   "extensions": {
     "colorMeta": {
@@ -532,9 +532,9 @@
       "name": "Champ",
       "kind": "input",
       "refersTo": "champ",
-      "description": "Champ de formulaire, 48px, halo bleu canard au focus.",
+      "description": "Champ de formulaire, 48px, contour plein de 2px en bleu canard nuit au focus ; aria-required sur les champs exigés, « (facultatif) » sur les autres.",
       "html": "<label class=\"ds-f\"><span>Nom</span><input class=\"ds-in\" dir=\"auto\" value=\"NGUYỄN Thị\"></label>",
-      "css": ".ds-f{display:grid;gap:6px;font:600 14px Asap,system-ui,sans-serif;color:#17302F}.ds-in{height:48px;border:1px solid #d2cbbb;border-radius:14px;background:#ffffff;color:#17302F;padding:0 12px;font:400 16px Asap,system-ui,sans-serif}.ds-in:focus{outline:none;border-color:#1F6F6B;box-shadow:0 0 0 3px rgba(31,111,107,.3)}"
+      "css": ".ds-f{display:grid;gap:6px;font:600 14px Asap,system-ui,sans-serif;color:#17302F}.ds-in{height:48px;border:1px solid #d2cbbb;border-radius:14px;background:#ffffff;color:#17302F;padding:0 12px;font:400 16px Asap,system-ui,sans-serif}.ds-in:focus{outline:2px solid #174f4c;outline-offset:1px;border-color:#174f4c}"
     },
     {
       "name": "Carte de formulaire",
@@ -556,7 +556,7 @@
       "name": "Menu latéral",
       "kind": "nav",
       "refersTo": "menu-lateral",
-      "description": "Le meuble du bureau : clair par défaut, stable, toujours au même endroit. Une navigation (pas des onglets) : aria-current=\"page\" sur la page affichée, Tab sur chaque entrée, flèches en plus.",
+      "description": "Le meuble du bureau : clair par défaut, stable, toujours au même endroit. Une navigation (pas des onglets) : aria-current=\"page\" sur la page affichée, Tab sur chaque entrée, flèches en plus. Largeur de 16rem : il suit le texte agrandi à 200 %.",
       "html": "<nav class=\"ds-side\" aria-label=\"Pages de Librejo\"><div class=\"ds-brand\">librejo</div><button aria-current=\"page\">Accueil</button><button>Formulaires</button><button>Impression rapide</button><button>Annuaire</button></nav>",
       "css": ".ds-side{background:#f0eee4;border-right:1px solid #ece5d8;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#174f4c;padding:0 8px 14px}.ds-side button{all:unset;color:#174f4c;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.7)}.ds-side button[aria-current=\"page\"]{background:#ffffff;font-weight:700}.ds-side button:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     }
@@ -579,7 +579,7 @@
       },
       {
         "name": "The Adjusted Colour Rule",
-        "body": "Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée : 4,5:1 au moins pour le texte (menu clair et sombre compris), 3:1 pour les repères non textuels (ambre repère, --accent-line). Les couleurs du papier à en-tête des PDF suivent la même règle à l’impression : titres à 4,5:1 sur le blanc, traits à 2:1, couleur imprimée affichée.",
+        "body": "Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée : 4,5:1 au moins pour le texte (menu clair et sombre compris), 3:1 pour les repères non textuels (ambre repère, --accent-line). Les couleurs du papier à en-tête des PDF suivent la même règle à l’impression : titres à 4,5:1 sur le blanc, traits à 2:1, couleur imprimée affichée. Les jetons de texte tirés du thème (--blue, --navy, --accent-text) sont calculés contre le fond le plus défavorable où ils sont posés : blanc, crème, papier 2, les quatre fonds de saison et le menu clair. --accent-ink ne sert que sur un fond --accent plein.",
         "section": "colors"
       },
       {
@@ -594,7 +594,17 @@
       },
       {
         "name": "The Focus Ring Rule",
-        "body": "Le contour de focus clavier fait 3px, décalé de 2px, en bleu canard nuit (jeton --focus) sur tous les fonds clairs : crème, blanc, papier 2, menu clair, fonds de saison (7,8:1 à 9,3:1 ; l'ambre seul n'y faisait que 2:1). Sur fond sombre (menu sombre, pastilles foncées), il passe à l'ambre sur nuit (4,7:1 sur le menu). Dans un groupe qui rogne ses bords (segments), il est à l'intérieur du bouton, blanc sur le bouton choisi.",
+        "body": "Le contour de focus fait 3px, décalé de 2px, en bleu canard nuit (jeton --focus) sur tous les fonds clairs : crème, blanc, papier 2, menu clair, fonds de saison (7,8:1 à 9,3:1). Sur fond sombre (menu sombre, pastilles foncées), il passe à l'ambre sur nuit (4,7:1 sur le menu). Dans un groupe qui rogne ses bords (segments) et dans les menus « Plus d'actions », il est à l'intérieur de l'élément ; le fond d'un élément de menu est réservé au survol. Les champs de saisie ont un contour plein de 2px en --focus, au clic comme au clavier, sans halo. Aucun élément focusable ne retire son contour sans le remplacer (titre du panneau d'aide compris), et en couleurs forcées chacun garde un contour de 2px en Highlight.",
+        "section": "components"
+      },
+      {
+        "name": "The Reachable Overlay Rule",
+        "body": "Au zoom fort, rien de fixe ne cache du contenu : sous 500px de haut le panneau d'aide prend toute la hauteur et défile en entier, pied compris ; les fenêtres défilent ; les tableaux d'administration défilent dans leur cadre ; le menu latéral mesure 16rem et suit le texte agrandi à 200 %.",
+        "section": "layout"
+      },
+      {
+        "name": "The Keyboard Rule",
+        "body": "Une touche seule n'agit que là où l'on tape : la saisie libre ne vaut que sur l'accueil quand rien n'a le focus et se coupe sur le poste ; / et Ctrl+K mènent à la recherche sans écrire le caractère. Les menus « Plus d'actions » se parcourent aux flèches, Début et Fin ; Échap et Tab les ferment et rendent le focus à leur bouton. Le titre du document nomme toujours l'écran affiché.",
         "section": "components"
       }
     ],
@@ -603,9 +613,10 @@
       "Do poser chaque contenu sur une carte papier (14px, ombre chaude) au-dessus du fond crème.",
       "Do écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.",
       "Do libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.",
-      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus de 3px en bleu canard nuit sur fond clair et en ambre sur fond sombre (3:1 au moins sur chaque fond), titres réels, fenêtres vraiment modales (fond inerte, Tab qui boucle).",
+      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte sur chaque fond où il est posé, focus visible et contrasté (3:1) sur chaque élément focusable, champs et menus compris, et en couleurs forcées ; titres réels et titre du document à jour ; champs obligatoires annoncés avant l'envoi (légende, aria-required, « (facultatif) ») ; fenêtres vraiment modales (fond inerte, Tab qui boucle).",
       "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères.",
-      "Do passer par les jetons --fs-* (en rem) pour toute taille de texte, et par les jetons de couleur et d’ombre pour tout le reste."
+      "Do passer par les jetons --fs-* (en rem) pour toute taille de texte, et par les jetons de couleur et d’ombre pour tout le reste.",
+      "Do respecter le mouvement réduit : défilement sans animation, et un contour fixe de 3 secondes à la place de la pulsation qui marque l'endroit atteint."
     ],
     "donts": [
       "Don't réintroduire une police d'affichage ou le nom incliné de Docubus : le nom est le logo SVG.",
