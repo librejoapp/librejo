@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-26T07:24:34+00:00",
+  "generatedAt": "2026-11-26T08:17:26+00:00",
   "title": "Design System: Librejo",
   "extensions": {
     "colorMeta": {
@@ -448,7 +448,7 @@
       "refersTo": "bouton-principal",
       "description": "L'action principale d'une zone (Créer, Entrer).",
       "html": "<button class=\"ds-btn\">Créer le document</button>",
-      "css": ".ds-btn{background:#E9A23B;color:#2b1d05;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer;transition:filter .15s}.ds-btn:hover{filter:brightness(.95)}.ds-btn:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
+      "css": ".ds-btn{background:#E9A23B;color:#2b1d05;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer;transition:filter .15s}.ds-btn:hover{filter:brightness(.95)}.ds-btn:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Bouton alternatif",
@@ -456,7 +456,7 @@
       "refersTo": "bouton-principal-alt",
       "description": "Action principale sur fond clair quand l'ambre est déjà pris.",
       "html": "<button class=\"ds-btn-alt\">Entrer</button>",
-      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
+      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Bouton secondaire",
@@ -464,7 +464,7 @@
       "refersTo": "bouton-principal",
       "description": "Actions secondaires (Annuler, Revenir).",
       "html": "<button class=\"ds-btn-2\">Revenir sans effacer</button>",
-      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
+      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Champ",
@@ -488,7 +488,7 @@
       "refersTo": "pastille",
       "description": "Choix rapide ; état choisi par remplissage et coche.",
       "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">✓ Sans domicile</button><button class=\"ds-chip\" aria-pressed=\"false\">Hébergé(e) chez un tiers</button></div>",
-      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #174f4c;outline-offset:2px;box-shadow:0 0 0 5px #E9A23B}"
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Menu latéral",
@@ -529,6 +529,11 @@
         "name": "The Warm Shadow Rule",
         "body": "Les ombres sont chaudes et diffuses, jamais décalées ni dures, jamais en lueur colorée.",
         "section": "elevation & depth"
+      },
+      {
+        "name": "The Focus Ring Rule",
+        "body": "Le contour de focus clavier fait 3px, décalé de 2px, en bleu canard nuit (jeton --focus) sur tous les fonds clairs : crème, blanc, papier 2, menu clair, fonds de saison (7,8:1 à 9,3:1 ; l'ambre seul n'y faisait que 2:1). Sur fond sombre (menu sombre, pastilles foncées), il passe à l'ambre sur nuit (4,7:1 sur le menu). Dans un groupe qui rogne ses bords (segments), il est à l'intérieur du bouton, blanc sur le bouton choisi.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -536,7 +541,7 @@
       "Do poser chaque contenu sur une carte papier (14px, ombre chaude) au-dessus du fond crème.",
       "Do écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.",
       "Do libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.",
-      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus de 3px contrasté (3:1) sur chaque fond, titres réels, fenêtres vraiment modales.",
+      "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus de 3px en bleu canard nuit sur fond clair et en ambre sur fond sombre (3:1 au moins sur chaque fond), titres réels, fenêtres vraiment modales (fond inerte, Tab qui boucle).",
       "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères."
     ],
     "donts": [

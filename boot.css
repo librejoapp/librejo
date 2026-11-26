@@ -12,13 +12,14 @@
 #lj-boot .lj-btn:hover{filter:brightness(.94)}
 #lj-boot .lj-btn.lj-sec{background:#fff;color:#174f4c;border:1px solid #d2cbbb;font-size:.875rem}
 #lj-boot .lj-btn.lj-sec:hover{filter:none;background:#f0ece2}
-#lj-boot .lj-btn:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}
+/* focus clavier : bleu canard nuit (8:1 sur la crème de la charte, 9:1 sur le blanc) ; l’ambre seul n’y fait que 2:1 */
+#lj-boot .lj-btn:focus-visible{outline:3px solid #174f4c;outline-offset:2px}
 .lj-link{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 #lj-boot .lj-sd{margin-top:22px;padding-top:18px;border-top:1px solid #ece5d8}
 #lj-boot .lj-sd .lj-btn{margin-top:0}
 #lj-boot .lj-sd .lj-aide{margin:10px 0 0}
 #lj-boot ul{margin:0 0 12px;padding-left:22px}
 #lj-boot a{color:#1F6F6B;font-weight:600;text-underline-offset:2px}
-#lj-boot a:focus-visible,.lj-link:focus-visible{outline:3px solid #E9A23B;outline-offset:2px;border-radius:4px}
+#lj-boot a:focus-visible,.lj-link:focus-visible{outline:3px solid #174f4c;outline-offset:2px;border-radius:4px}
 /* zoom fort : moins de marges, les boutons passent à la ligne au lieu de déborder */
 @media (max-width:520px){ #lj-boot{padding:8px} #lj-boot .lj-card{padding:16px 14px;border-radius:14px} #lj-boot img{height:40px;margin-bottom:10px} #lj-boot .lj-btn{white-space:normal;text-align:left;max-width:100%} }

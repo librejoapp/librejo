@@ -147,10 +147,10 @@ Une palette de bureau chaleureux : bleu canard profond pour la structure, crème
 
 ### Primary
 - **Bleu canard** (`canard`) : la couleur de la charte. Liens, titres secondaires, accents de cartes (`border-top` des cartes bleues), anneau de focus des champs.
-- **Bleu canard nuit** (`canard-nuit`) : les titres de section, le texte et l'anneau de focus du menu clair, le fond du menu en style sombre, le bouton principal alternatif. C'est la couleur du « meuble » : elle encadre, elle ne crie pas.
+- **Bleu canard nuit** (`canard-nuit`) : les titres de section, le texte du menu clair, le contour de focus clavier sur tous les fonds clairs, le fond du menu en style sombre, le bouton principal alternatif. C'est la couleur du « meuble » : elle encadre, elle ne crie pas.
 
 ### Secondary
-- **Ambre** (`ambre`) : l'action principale (bouton « Créer », « Entrer »), le contour de focus clavier (3 px) et les signaux de mode (mode admin). Texte posé dessus : **encre d'ambre** (`ambre-encre`), jamais du blanc.
+- **Ambre** (`ambre`) : l'action principale (bouton « Créer », « Entrer ») et les signaux de mode (mode admin). Le contour de focus n'est ambre que sur les fonds sombres (ambre sur nuit). Texte posé dessus : **encre d'ambre** (`ambre-encre`), jamais du blanc.
 - **Ambre doux** (`ambre-doux`) et **texte ambre** (`ambre-texte`) : fonds et textes des badges « Formulaire », rappels et bandeaux d'attention douce.
 - **Ambre sur nuit** (`ambre-sur-nuit`) : l'ambre lisible sur le menu sombre.
 
@@ -223,7 +223,7 @@ Arrondis généreux et réguliers : 8px pour les boutons et petits contrôles, 1
 - **Principal alternatif :** fond bleu canard nuit, texte blanc (« Entrer », actions d'admin).
 - **Secondaire :** fond papier, bordure filet fort, texte encre.
 - **Danger :** fond orange brûlé foncé, texte blanc, toujours précédé d'une confirmation.
-- **Focus :** contour de 3px décalé de 2px sur tous les éléments interactifs. Sur fond clair, l'ambre seul ne contraste pas assez (environ 2:1) : il doit être doublé d'un liseré bleu canard nuit, ou remplacé par le bleu canard nuit ; l'ambre seul est réservé au fond sombre (WCAG 1.4.11).
+- **Focus :** contour de 3px décalé de 2px sur tous les éléments interactifs, en bleu canard nuit (jeton `--focus`) : de 7,8:1 à 9,3:1 sur la crème, le blanc, le papier 2, le menu clair et les fonds de saison (l'ambre n'y faisait que 2:1). Sur fond sombre (menu sombre, pastilles foncées), `--focus` passe à l'ambre sur nuit (4,7:1 sur le menu). Dans un groupe qui rogne ses bords (segments, bascule d'affichage), le contour est à l'intérieur du bouton, blanc sur le bouton choisi (WCAG 1.4.11).
 - **Désactivé :** opacité 45 %, curseur normal.
 
 ### Chips

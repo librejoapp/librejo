@@ -31,6 +31,9 @@
   --accent-soft:#fcf1dc;     /* fond ambré léger */
   --accent-text:#8a5a0b;     /* texte ambré lisible sur fond clair */
   --accent-on-dark:#f2c26b;  /* ambre lisible sur le canard foncé */
+  /* Contour de focus clavier : bleu canard nuit sur les fonds clairs (≥ 7:1 sur le blanc, ≥ 6:1 sur la crème) ;
+     l'ambre seul n'y fait que 2:1. Sur les fonds sombres (menu sombre, pastilles foncées), --focus passe à l'ambre lisible. */
+  --focus:var(--navy);
 
   /* Texte */
   --text:#17302F;
@@ -91,7 +94,13 @@ img{max-width:100%}
 a{color:var(--blue)}
 button{font:inherit;color:inherit;cursor:pointer}
 button:disabled{opacity:.45;cursor:default}
-:is(button,input,select,textarea,a,summary,label.secondary):focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+:is(button,input,select,textarea,a,summary,label.secondary):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* fonds sombres : l'ambre reste (≥ 4,6:1 sur la couleur du menu, recalculé avec les couleurs de la structure) */
+html:not(.menu-clair) .sidebar,.rchip,.toast{--focus:var(--accent-on-dark)}
+/* boutons dans un groupe qui rogne ses bords (overflow:hidden) : contour à l'intérieur, blanc sur le bouton choisi */
+:is(.seg,.viewtoggle) button:focus-visible{outline-offset:-4px}
+:is(.seg,.viewtoggle) button[aria-pressed="true"]:focus-visible{outline-color:#fff}
+.seg.metha button[aria-pressed="true"]:focus-visible{outline-color:var(--accent-ink)}
 mark{background:var(--highlight);color:inherit;padding:0 1px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
@@ -336,7 +345,7 @@ table.docs{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
 table.docs th{background:var(--surface-3);color:var(--text-3);text-align:left;font-size:var(--fs-1);font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px var(--sp-4);white-space:nowrap;border-bottom:1px solid var(--line)}
 table.docs th.right{text-align:right}
 table.docs th button{all:unset;cursor:pointer}
-table.docs th button:focus-visible{outline:3px solid var(--accent)}
+table.docs th button:focus-visible{outline:3px solid var(--focus)}
 .col-icon{width:46px} .col-actions{width:56px} .col-qty{width:190px}
 table.docs td{padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line-soft);vertical-align:middle}
 table.docs tr:last-child td{border-bottom:0}
@@ -821,7 +830,7 @@ html.wiz-on body{overflow:hidden}
 html.reg-dirty{scroll-padding-bottom:96px}
 /* Lien d'évitement, titres cliquables, compteurs, focus des onglets, choix cochés */
 .skip{position:fixed;left:12px;top:-60px;z-index:300;background:var(--navy);color:#fff;font-weight:700;padding:10px 16px;border-radius:var(--r-sm,8px);text-decoration:none;transition:top .15s}
-.skip:focus{top:12px;outline:3px solid var(--accent);outline-offset:2px}
+.skip:focus{top:12px;outline:3px solid var(--focus);outline-offset:2px}
 main:focus{outline:none}
 h1.hello,h2.lab{line-height:inherit}
 a.gtitle{color:inherit;text-decoration:none}
@@ -1123,7 +1132,7 @@ table.docs img.thumb.land:hover{transform:scale(5.5)}
 .lvig-desc{font-size:var(--fs-micro);color:var(--text-3);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical}
 .lvig-foot{margin-top:auto;font-size:var(--fs-micro);color:var(--text-muted)}
 .lt-zone{border:2px dashed var(--line-dashed);border-radius:var(--r-md);min-height:160px;display:grid;place-items:center;padding:10px;margin:10px 0}
-.lt-zone:focus{outline:3px solid var(--accent);outline-offset:2px}
+.lt-zone:focus{outline:3px solid var(--focus);outline-offset:2px}
 .lt-zone img{max-height:260px;max-width:100%}
 
 /* Fenêtre « document prêt » unifiée */
@@ -1243,7 +1252,7 @@ footer .reassure svg{width:14px;height:14px;color:var(--ok-text)}
 table.docs .act{gap:4px}
 .lbtn.more{padding:0 10px 0 8px}
 .lbtn:hover{border-color:var(--blue);background:var(--surface-3)}
-.lbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.lbtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .gact{flex-wrap:nowrap;gap:6px}
 .grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 .cards.narrow{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
@@ -1264,7 +1273,7 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
 .qforms{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:var(--sp-5)}
 .qform{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card);font:inherit;color:var(--text);cursor:pointer;min-height:64px}
 .qform:hover{border-color:var(--blue)}
-.qform:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.qform:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .qform .qe{font-size:22px;flex:none;width:38px;height:38px;display:grid;place-items:center;border-radius:var(--r-sm);background:var(--surface-3)}
 .qform .qt{display:grid;gap:2px;flex:1;min-width:0}
 .qform .qt b{color:var(--navy);font-size:var(--fs-3);line-height:1.3}
@@ -1277,9 +1286,9 @@ html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.me
 .todayrow{align-items:center}
 .todayrow .fete{align-self:flex-end;margin-bottom:2px}
 /* Focus bien visible sur l'onglet choisi (le contour fin de la sélection ne suffit pas) */
-html.menu-clair .sidebar nav.top button:focus-visible,html.menu-clair .catbtn:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+html.menu-clair .sidebar nav.top button:focus-visible,html.menu-clair .catbtn:focus-visible{outline:3px solid var(--menu-ink,var(--navy));outline-offset:2px}
 html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair) .catbtn:focus-visible{outline:3px solid var(--accent-on-dark);outline-offset:2px}
-.rsec-b:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+.rsec-b:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 /* Formulaires seulement (sans dossier) : bandeau discret et permanent, rappel de ce qui manque */
 #sdbar{display:flex;align-items:center;gap:var(--sp-3);background:var(--accent-soft);border:1px solid var(--warn-line);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin:-10px 0 var(--sp-4);font-size:var(--fs-3);color:var(--text)}
 #sdbar>svg{width:18px;height:18px;flex:none;color:var(--accent-text)}
@@ -1336,13 +1345,13 @@ body.has-aide #adminflag{right:72px}
 #aidebtn svg{width:22px;height:22px;stroke-width:2.4}
 #aidebtn:hover{background:var(--surface-3);border-color:var(--navy)}
 #aidebtn[aria-expanded="true"]{background:var(--navy);border-color:var(--navy);color:var(--surface)}
-#aidebtn:focus-visible,#aide :focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+#aidebtn:focus-visible,#aide :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 #aide{position:fixed;z-index:70;top:68px;right:var(--aide-gap);bottom:var(--aide-gap);width:min(var(--aide-w),calc(100vw - 2 * var(--aide-gap)));display:flex;flex-direction:column;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-raised);overflow:hidden;animation:aide-in .22s cubic-bezier(.16,1,.3,1)}
 @keyframes aide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
 .aide-h{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-3);border-bottom:1px solid var(--line-soft)}
 .aide-h h2{margin:0;font-size:var(--fs-6);line-height:1.2;font-weight:700;color:var(--navy);letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
 .aide-h h2:focus{outline:none}
-.aide-h h2:focus-visible{outline:3px solid var(--navy);outline-offset:4px;border-radius:4px}
+.aide-h h2:focus-visible{outline:3px solid var(--focus);outline-offset:4px;border-radius:4px}
 .aide-sous{margin:4px 0 0;font-size:var(--fs-3);color:var(--text-3)}
 .aide-h .secondary{flex:0 0 auto;min-height:40px}
 .aide-b{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-2) var(--sp-4) var(--sp-4);font-size:var(--fs-4);line-height:1.5}
