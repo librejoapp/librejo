@@ -9318,6 +9318,10 @@ function aideCtx(){
     if(box.classList.contains('deliver')){ const t=box.querySelector('#modal-title'); return aideR('pret',{titre:(t&&t.textContent.trim())||'Document prêt',fenetre:true}); }
     if(box.querySelector('#ck-box')) return SANS?aideR('sans',{k:'sans-pourquoi',fenetre:true}):aideR('checks',{fenetre:true});
   }
+  return aidePage();
+}
+/* L'écran affiché, sans les fenêtres : sert à l'aide et au titre du document */
+function aidePage(){
   if(tab==='docs'){
     if(String(query||'').trim()) return aideR('recherche',{saisie:true});
     if(filter==='recent') return aideR('accueil',{saisie:true});
@@ -9381,7 +9385,23 @@ function aideHide(){
 }
 function aideToggle(viaKey){ if(aideOn){ aideHide(); return; } aideShow(); if(!viaKey) aideOpener=aideBtn; }
 /* Changement d'écran (onglet, formulaire, section des réglages, étape de l'assistant…) : l'aide se met à jour */
+/* Titre de l'onglet du navigateur : l'écran affiché (« Bon d'orientation CCAS – Librejo »,
+   « Réglages › Apparence – Librejo »), pour le lecteur d'écran, l'historique et la barre des tâches (WCAG 2.4.2) */
+function titleSync(){
+  let t;
+  const wz=document.getElementById('wiz');
+  if(wz&&!wz.hidden) t='Assistant de démarrage';
+  else { const c=aidePage(); t=String(c.titre||'').trim()||'Accueil';
+    if(/^Réglages\s*:/.test(t)) t=t.replace(/^Réglages\s*:\s*/,'Réglages › ');
+    else if(tab==='admin') t='Administration › '+t;
+    else if(c.k==='recherche') t='Recherche « '+String(query||'').trim()+' »';
+    else if(String(c.k).startsWith('cat:')) t='Documents › '+t;
+    if(SANS&&c.k!=='sans') t+=' (formulaires seulement)'; }
+  t+=' – Librejo';
+  if(document.title!==t) document.title=t;
+}
 function aideRefresh(){
+  titleSync();
   aideHost();
   if(!aideOn) return;
   const c=aideCtx(), k=c.k+(isAdmin?'|admin':''); if(k===aideKey) return;
@@ -9433,6 +9453,7 @@ renderDocs();
 renderDeliv();
 updateConn();
 aideInit();
+titleSync();
 if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().catch(e=>console.warn('vérifications',e)),700);
 else setTimeout(()=>cfStartup().catch(e=>console.warn('modifications simultanées',e)),900);
 })();

@@ -68,7 +68,9 @@ function done(){ ui.hidden = true; cover(false); cacheSuite(); }
 function cacheSuite(){ if (!('serviceWorker' in navigator)) return;
   setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (r.active) r.active.postMessage('librejo-cache-suite'); }).catch(function(){}); }, 4000); }
 function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
-  var h=ui.querySelector('.lj-in h1'); if (h) h.id='lj-t'; }
+  var h=ui.querySelector('.lj-in h1'); if (h) { h.id='lj-t';
+    /* titre de l'onglet : l'écran affiché (« Accès au dossier refusé – Librejo ») ; l'application prend ensuite le relais */
+    var t=h.textContent.trim(); document.title = /Librejo/.test(t) ? t : t+' – Librejo'; } }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 /* Entrée « Remplir un formulaire sans dossier », sous le choix du dossier (raison : refus, introuvable, choix) */
 function sdOffer(raison){
