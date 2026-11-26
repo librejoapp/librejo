@@ -1373,6 +1373,8 @@ body.has-aide #adminflag{right:72px}
 .aide-adm h3{margin-top:0;color:var(--accent-text)}
 .aide-adm p{margin:0 0 var(--sp-2);color:var(--text-2)}
 .aide-adm ul{margin:0;padding-left:20px;display:grid;gap:var(--sp-2)}
+.aide-pref{display:flex;align-items:flex-start;gap:var(--sp-2);font-size:var(--fs-3)}
+.aide-pref input{flex:none;width:18px;height:18px;margin:2px 0 0;accent-color:var(--navy)}
 .aide-f{display:grid;gap:4px;padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line-soft);background:var(--surface-3)}
 .aide-f .linkbtn{justify-self:start;min-height:32px}
 .aide-f small{color:var(--text-muted);font-size:var(--fs-2)}
@@ -1558,10 +1560,15 @@ function closeModal(){
 }
 $('#modal').addEventListener('click',e=>{ if(e.target.id==='modal'||e.target.closest('[data-close]')) closeAsked(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#mguard')){ $('#mguard').remove(); return; } closeAsked(); } });
-/* « / » ou Ctrl+K : aller à la recherche, depuis n'importe où (sauf en écrivant) */
+/* « / » (hors champ de saisie) ou Ctrl+K : aller à la recherche de la page, l'annuaire ayant la sienne.
+   Le caractère n'est jamais écrit dans la recherche : la touche sert seulement de raccourci. */
 document.addEventListener('keydown',e=>{ const t=e.target, typing=t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-  if((e.key==='/'&&!typing)||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){ if(!$('#modal').hidden) return; const q=$('#q'); if(!q){ if(typeof setTab==='function'){ setTab('docs'); } }
-    const q2=$('#q'); if(q2){ e.preventDefault(); q2.focus(); q2.select(); } } });
+  const slash=e.key==='/'&&!typing&&!e.ctrlKey&&!e.metaKey&&!e.altKey, ck=(e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&e.key.toLowerCase()==='k';
+  if(!slash&&!ck) return; if(layerTop()||document.getElementById('menu')) return;
+  e.preventDefault();
+  let q=tab==='annu'?$('#an-q'):$('#q');
+  if(!q||!q.getClientRects().length){ setTab('docs'); q=$('#q'); }
+  if(q){ q.focus(); q.select(); } });
 function askConfirm(title,text,yes,fn,danger=true){
   openModal(`<h3 id="modal-title">${esc(title)}</h3><p>${text}</p>
     <div class="btns"><button class="primary ${danger?'danger':'alt'}" id="cf-yes">${esc(yes)}</button><button class="secondary" data-close data-autofocus>Annuler</button></div>`);
@@ -4968,13 +4975,18 @@ function drawSyn(){
     if(!await run(saveData,'Synonymes enregistrés')) DATA.synonymes=before; renderDocs(); };
   $('#syn-def').onclick=()=>{ $('#syn-t').value=DEFAULT_SYN.map(g=>g.join(', ')).join('\n'); };
 }
-/* Taper au clavier n'importe où (hors champ de saisie) lance la recherche */
+/* Saisie libre : sur l'accueil, quand rien n'a le focus (ni bouton, ni lien, ni champ), taper une lettre
+   l'écrit dans la recherche. Jamais depuis un bouton ou un lien : la lettre ne doit pas partir ailleurs que
+   là où l'on tape (WCAG 2.1.4). Elle se coupe sur ce poste dans l'aide « ? » de l'accueil. */
+const SAISIE_KEY='librejo-saisie-libre';
+let saisieLibre=true; try{ saisieLibre=localStorage.getItem(SAISIE_KEY)!=='0'; }catch(e){}
+function saisieSet(on){ saisieLibre=!!on; try{ localStorage.setItem(SAISIE_KEY,on?'1':'0'); }catch(e){} }
 document.addEventListener('keydown',e=>{
-  if(e.ctrlKey||e.metaKey||e.altKey||e.key.length!==1||e.key===' ') return;
-  const a=document.activeElement; if(a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable)) return;
-  if(!$('#modal').hidden||document.getElementById('menu')) return;
-  if(tab==='docs'){ e.preventDefault(); query+=e.key; renderDocs(); const q=$('#q'); q.focus(); try{ q.setSelectionRange(q.value.length,q.value.length); }catch(_){} }
-  else if(tab==='annu'){ e.preventDefault(); aq+=e.key; renderAnnu(); const q=$('#an-q'); q.focus(); try{ q.setSelectionRange(q.value.length,q.value.length); }catch(_){} }
+  if(!saisieLibre||tab!=='docs'||e.defaultPrevented) return;
+  if(e.ctrlKey||e.metaKey||e.altKey||e.key.length!==1||e.key===' '||e.key==='/') return;
+  const a=document.activeElement; if(a&&a!==document.body&&a!==$('#contenu')) return;
+  if(layerTop()||document.getElementById('menu')||aideOn) return;
+  e.preventDefault(); query+=e.key; renderDocs(); const q=$('#q'); if(!q) return; q.focus(); try{ q.setSelectionRange(q.value.length,q.value.length); }catch(_){}
 });
 bindSemaine();
 
@@ -8946,7 +8958,7 @@ const AIDE_FIN='Dans la fenêtre qui s’ouvre : <b>Imprimer</b>, <b>Envoyer p
 const AIDE={
   accueil:{titre:'Accueil',
     but:'La page de départ : la recherche, les formulaires et les documents les plus utilisés, puis tout le reste rangé par rubrique.',
-    etapes:['Tapez ce que vous cherchez, même sans cliquer dans la barre de recherche (ou appuyez sur <kbd>/</kbd>).',
+    etapes:['Tapez ce que vous cherchez dans la barre de recherche. <kbd>/</kbd> ou <kbd>Ctrl</kbd>+<kbd>K</kbd> y mène depuis n’importe quelle page ; ici, quand rien n’est sélectionné, il suffit de taper.',
       'Pour un formulaire, cliquez sur son nom ou sur <b>Remplir</b>.',
       'Pour un document, cliquez sur son titre pour l’ouvrir, ou sur <b>Imprimer</b> ou <b>Envoyer</b>.',
       'Dépliez <b>Tous les formulaires</b> ou <b>Documents</b> pour voir le reste, rubrique par rubrique.',
@@ -9270,8 +9282,8 @@ function aideCtx(){
     if(box.querySelector('#ck-box')) return SANS?aideR('sans',{k:'sans-pourquoi',fenetre:true}):aideR('checks',{fenetre:true});
   }
   if(tab==='docs'){
-    if(String(query||'').trim()) return aideR('recherche');
-    if(filter==='recent') return aideR('accueil');
+    if(String(query||'').trim()) return aideR('recherche',{saisie:true});
+    if(filter==='recent') return aideR('accueil',{saisie:true});
     if(filter==='kits') return aideR('kits');
     const [fc,fs]=splitDest(filter); return aideR('categorie',{k:'cat:'+filter,titre:(catName(fc)||'Catégorie')+(fs?' › '+fs:'')});
   }
@@ -9302,6 +9314,7 @@ function aideHTML(c){
     <div class="aide-b" tabindex="0" role="region" aria-label="Explications de l’aide">
       <h3>À quoi sert cette page</h3><p>${c.but}</p>
       <h3>Comment faire</h3><ol class="aide-steps">${(c.etapes||[]).map(x=>`<li><span>${x}</span></li>`).join('')}</ol>
+      ${c.saisie?`<h3>Sur ce poste</h3><label class="check plain aide-pref"><input type="checkbox" id="aide-saisie"${saisieLibre?' checked':''}> <span>Taper une lettre sur l’accueil, sans avoir cliqué nulle part, l’écrit dans la recherche</span></label>`:''}
       ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
     </div>
     <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer l’aide, puis la fenêtre</small></div>`;
@@ -9350,6 +9363,7 @@ function aideInit(){
     if(e.target.closest('#aide-x')){ aideHide(); return; }
     if(e.target.closest('#aide-guide')){ aideOpener=null; aideHide(); openGuide(0); }
   });
+  aidePan.addEventListener('change',e=>{ if(e.target.id==='aide-saisie'){ saisieSet(e.target.checked); toast(e.target.checked?'Saisie libre activée sur ce poste':'Saisie libre coupée sur ce poste : cliquez dans la recherche, ou appuyez sur /'); } });
   /* taper une lettre dans le panneau ne doit pas lancer la recherche de la page */
   aidePan.addEventListener('keydown',e=>{ if(e.key.length===1&&e.key!=='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey) e.stopPropagation(); });
   /* F1 (au lieu de l'aide du navigateur) et Échap : avant les autres raccourcis */
