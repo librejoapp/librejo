@@ -281,7 +281,8 @@ label.secondary{cursor:pointer}
 input.in,select.in,textarea.in{width:100%;min-width:0;height:var(--h-input);border:1px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--text);font:inherit;font-size:var(--fs-4);padding:0 var(--sp-3)}
 textarea.in{height:auto;min-height:70px;padding:10px var(--sp-3);line-height:1.4}
 select.in{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--text) 50%),linear-gradient(135deg,var(--text) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:32px}
-input.in:focus,select.in:focus,textarea.in:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 30%,transparent)}
+/* focus d'un champ : contour plein de 2 px en bleu canard nuit (≥ 7:1 sur le blanc et la crème), à la souris comme au clavier */
+input.in:focus,select.in:focus,textarea.in:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
 input.in.bad,select.in.bad,textarea.in.bad{border-color:var(--warn);background:var(--warn-bg)}
 input.num{font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
 input.in.w-num{width:84px}
@@ -293,7 +294,7 @@ input.in.w-num{width:84px}
 .bigsearch{position:relative;margin:0 0 var(--sp-5)}
 .bigsearch svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:24px;height:24px;color:var(--text-3)}
 .bigsearch input{height:54px;padding-left:52px;font-size:var(--fs-5);font-weight:500;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card)}
-.bigsearch input:focus{border-color:var(--blue)}
+.bigsearch input:focus{border-color:var(--focus)}
 
 /* Cartes
    .card        bloc de formulaire ou de réglages ; .card.top : liseré coloré en haut (.blue)
@@ -408,7 +409,10 @@ table.docs .t .badge:not(.accent){margin:var(--sp-1) var(--sp-1) 0 0}
 .dialog .btns{display:grid;gap:10px}
 .menu{position:absolute;z-index:25;display:grid;min-width:280px;padding:var(--sp-1);background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-pop)}
 .menu button{display:flex;gap:10px;align-items:center;border:0;background:transparent;text-align:left;padding:10px var(--sp-3);border-radius:var(--r-sm);font-size:var(--fs-3);font-weight:600;color:var(--text)}
-.menu button:hover,.menu button:focus{background:var(--warn-bg);outline:none}
+.menu button:hover{background:var(--warn-bg)}
+/* élément du menu atteint au clavier : contour de 3 px à l'intérieur (le menu rogne ses bords), le fond reste celui du survol */
+.menu button:focus{outline:none}
+.menu button:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
 .menu svg{width:18px;height:18px;flex:0 0 auto}
 #emltip{position:fixed;right:20px;bottom:20px;z-index:30;max-width:420px;display:grid;gap:var(--sp-2);background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--r-md);padding:14px var(--sp-4);box-shadow:var(--shadow-pop);font-size:var(--fs-3)}
 #emltip b:first-child{color:var(--navy);font-size:var(--fs-4)}
@@ -1174,7 +1178,7 @@ table.docs img.thumb.land:hover{transform:scale(5.5)}
 .dv-mode label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:calc(var(--r-md) - 2px);cursor:pointer;font-size:var(--fs-3);font-weight:600;color:var(--navy)}
 .dv-mode input{position:absolute;opacity:0}
 .dv-mode label:has(input:checked){background:var(--surface);box-shadow:var(--shadow-soft)}
-.dv-mode label:has(input:focus-visible){outline:2px solid var(--blue)}
+.dv-mode label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
 .dv-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 .dv-foot .primary{margin:0}
 
@@ -1356,8 +1360,8 @@ body.has-aide #adminflag{right:72px}
 @keyframes aide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
 .aide-h{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-3);border-bottom:1px solid var(--line-soft)}
 .aide-h h2{margin:0;font-size:var(--fs-6);line-height:1.2;font-weight:700;color:var(--navy);letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
-.aide-h h2:focus{outline:none}
-.aide-h h2:focus-visible{outline:3px solid var(--focus);outline-offset:4px;border-radius:4px}
+/* le titre reçoit le focus à l'ouverture de l'aide (même au clic sur « ? ») : il le montre toujours */
+.aide-h h2:focus{outline:3px solid var(--focus);outline-offset:4px;border-radius:4px}
 .aide-sous{margin:4px 0 0;font-size:var(--fs-3);color:var(--text-3)}
 .aide-h .secondary{flex:0 0 auto;min-height:40px}
 .aide-b{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-2) var(--sp-4) var(--sp-4);font-size:var(--fs-4);line-height:1.5}
@@ -1396,6 +1400,15 @@ body.has-aide #adminflag{right:72px}
 /* l'aperçu en direct d'un formulaire est à la même place : il revient à la fermeture de l'aide */
 body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
 @media print{ #aidebtn,#aide{display:none!important} }
+/* Couleurs forcées (contraste élevé de Windows) : les fonds et les ombres disparaissent ; chaque élément
+   qui reçoit le focus garde un contour en couleur système, y compris ceux qui n'en ont pas d'ordinaire. */
+@media (forced-colors:active){
+  :is(button,input,select,textarea,a,summary,label.secondary,[tabindex]):focus-visible,
+  input.in:focus,select.in:focus,textarea.in:focus,.menu button:focus-visible,.aide-h h2:focus,
+  :is(.seg,.viewtoggle) button:focus-visible,.dv-mode label:has(input:focus-visible){outline:2px solid Highlight;outline-offset:2px}
+  .menu button:focus-visible,:is(.seg,.viewtoggle) button:focus-visible{outline-offset:-3px}
+  .menu button:hover{outline:1px solid Highlight;outline-offset:-1px}
+}
 </style>
 </head>
 <body>
