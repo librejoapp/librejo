@@ -196,7 +196,7 @@ Une palette de bureau chaleureux : bleu canard profond pour la structure, crème
 - Grille de cartes en `auto-fill` (minimum 260px, 220px en version étroite), gouttière de 16px.
 - Rythme d'espacement par pas de 4 (4, 8, 12, 16, 24, 32, 40px) ; 24 à 32px entre sections, 12 à 16px dans une carte.
 - Champs sur deux colonnes dans les formulaires (pleine largeur pour les champs longs) ; aperçu en direct du PDF à droite, agrandissable.
-- Cibles : contrôles de 40px, champs de 48px. Pensé pour 1366×768 et 1920×1080, et confortable à 125 % de zoom. Au zoom fort (200 % et plus), les surcouches fixes (aperçu en direct, écran de démarrage) doivent se replier ou défiler : le contenu reste atteignable (WCAG 1.4.4 et 1.4.10). Sous 900px environ, le menu passe au-dessus du contenu, sans plus d'adaptation : Librejo n'est pas fait pour le téléphone.
+- Cibles : contrôles de 40px, champs de 48px. Pensé pour 1366×768 et 1920×1080, et confortable à 125 % de zoom. Au zoom fort (200 % et plus), les surcouches fixes se replient ou défilent : le contenu reste atteignable (WCAG 1.4.4 et 1.4.10). Sous 1000px de large, l'aperçu en direct est replié derrière son bouton « Afficher l'aperçu », placé sous le titre du formulaire, et le formulaire garde toute la largeur ; l'écran de démarrage défile. Sous 900px environ, le menu passe au-dessus du contenu, sans plus d'adaptation : Librejo n'est pas fait pour le téléphone.
 
 ## Elevation & Depth
 
@@ -249,7 +249,7 @@ Arrondis généreux et réguliers : 8px pour les boutons et petits contrôles, 1
 - Étiquettes de groupe en petites capitales espacées. Lien « Aller au contenu » en premier, onglets parcourables aux flèches.
 
 ### Écran de démarrage
-Écran autonome (`boot.css`), affiché avant le choix du dossier : fond crème de la charte, une carte centrée, bouton « Choisir le dossier ». Il utilise aujourd'hui la police système et un bouton bleu canard ; il devrait reprendre Asap et la règle du bouton principal ambre, et défiler quand il dépasse la fenêtre.
+Écran autonome (`boot.css`), affiché avant le choix du dossier : fond crème de la charte, une carte centrée, bouton principal « Choisir le dossier » en ambre avec texte encre d'ambre, en Asap (la police est chargée par la page avant cet écran). Il défile quand il dépasse la fenêtre (la carte est centrée par `margin:auto`, jamais coupée) et, tant qu'il est affiché, l'application cachée dessous est inerte.
 
 ### Signature Component : « Document prêt »
 La fenêtre de fin de formulaire : coche verte, « Imprimer » mis en avant, puis « Envoyer » et « Télécharger », et un encadré orange qui rappelle de supprimer le fichier de Téléchargements avec son nom exact. C'est le moment où le bureau d'accueil tend le papier : clair, rassurant, honnête.

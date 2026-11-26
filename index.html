@@ -230,7 +230,7 @@ label.secondary{cursor:pointer}
 .linkbtn:hover{text-decoration:underline}
 
 /* Pastilles de choix (destinataire, molécule…) : aria-pressed="true" = choisie */
-.chip{flex:0 0 auto;min-height:36px;border:1px solid var(--line-strong);border-radius:var(--r-full);background:var(--surface);color:var(--text);padding:0 var(--sp-3);font-weight:700;font-size:var(--fs-3)}
+.chip{flex:0 1 auto;max-width:100%;min-height:36px;border:1px solid var(--line-strong);border-radius:var(--r-full);background:var(--surface);color:var(--text);padding:var(--sp-1) var(--sp-3);font-weight:700;font-size:var(--fs-3);overflow-wrap:anywhere}
 .chip:hover{border-color:var(--navy)}
 .chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
 .chip.other{border-style:dashed}
@@ -485,6 +485,12 @@ body.dragging #dropveil{display:grid;position:fixed;inset:0;z-index:15;pointer-e
 #livepv-tab svg{width:16px;height:16px}
 /* fenêtre étroite : la miniature se range en bas à droite, plus petite */
 @media (max-width:1460px){ #livepv{width:250px} #livepv .lp-note{display:none} html.live-on .content{padding-right:290px} }
+/* fenêtre étroite ou zoom fort : l'aperçu ouvert à la demande passe par-dessus le formulaire et défile */
+@media (max-width:1000px){
+  #livepv,#livepv.big{top:auto;bottom:12px;right:12px;width:min(300px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;z-index:7}
+  #livepv-tab{right:12px;bottom:12px}
+  #livepv-tab.inflow{position:static;justify-self:start;box-shadow:none}
+}
 /* Aperçu agrandi : lisible à 1366 px, par-dessus le formulaire ; « Réduire » le range */
 #livepv .lp-big{border:1px solid var(--line-strong,#cfd6df);background:var(--surface,#fff);color:var(--navy);font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px;cursor:pointer}
 #livepv .lp-big:hover{border-color:var(--accent)}
@@ -6788,7 +6794,12 @@ elBind();
    enregistré, rien n'est envoyé. Le document est fabriqué par la même
    fonction que le bouton « Créer », sans la vérification des champs.
    ====================================================================== */
-const LIVE={timer:0,seq:0,tp:undefined,url:null,off:false};
+const LIVE={timer:0,seq:0,tp:undefined,url:null,off:false,peek:false};
+/* Fenêtre étroite (moins de 1000 px de large, ou zoom fort : 200 % sur 1366 px) : l'aperçu est replié derrière
+   son bouton et le formulaire garde toute la largeur ; ouvert à la demande, il passe par-dessus et se referme
+   sans changer le choix enregistré sur ce poste. */
+const LIVE_NARROW=matchMedia('(max-width:1000px)');
+LIVE_NARROW.addEventListener('change',()=>{ LIVE.peek=false; liveSoon(0); });
 try{ LIVE.off=localStorage.getItem('librejo-miniature')==='0'; }catch(e){}
 const LIVE_FN={__el:()=>elPdf(),__ccas:()=>ccPdf(),__cp:()=>cpPdf(),__urg:()=>urPdf(),__ordo:()=>ordoPdf(),__cl:()=>clPdf(),__att:()=>attPdf(),__mt:()=>mtPdf(),__relais:()=>relaisPdf()};
 const LIVE_TAB={__el:'el',__ccas:'ccas',__cp:'cp',__urg:'urg',__ordo:'ordo',__cl:'cl',__att:'att',__mt:'mt',__relais:'relais'};
@@ -6817,7 +6828,7 @@ function liveBox(){
   try{ if(localStorage.getItem('librejo-apercu-grand')==='1'){ b.classList.add('big'); b.querySelector('[data-lpbig]').setAttribute('aria-pressed','true'); b.querySelector('[data-lpbig]').textContent='Réduire'; } }catch(e){}
   document.body.appendChild(b);
   b.addEventListener('click',e=>{
-    if(e.target.closest('[data-lpoff]')){ liveSet(true); return; }
+    if(e.target.closest('[data-lpoff]')){ if(LIVE_NARROW.matches){ LIVE.peek=false; liveSoon(0); setTimeout(()=>{ const t=document.getElementById('livepv-tab'); t&&!t.hidden&&t.focus(); },20); } else liveSet(true); return; }
     const bg=e.target.closest('[data-lpbig]'); if(bg){ const on=b.classList.toggle('big'); bg.setAttribute('aria-pressed',String(on)); bg.textContent=on?'Réduire':'Agrandir'; try{ localStorage.setItem('librejo-apercu-grand',on?'1':'0'); }catch(err){} return; }
     if(e.target.closest('[data-lpzoom]')){ const file=liveBuild(); if(!file) return; if(LIVE.url) URL.revokeObjectURL(LIVE.url); LIVE.url=URL.createObjectURL(file); previewUrl(LIVE.url,'Aperçu (document non terminé)'); }
   });
@@ -6825,16 +6836,22 @@ function liveBox(){
 }
 function liveTab(){
   let t=document.getElementById('livepv-tab'); if(t) return t;
-  t=document.createElement('button'); t.id='livepv-tab'; t.type='button'; t.innerHTML=`${ICON.file}Afficher l’aperçu`; t.onclick=()=>liveSet(false);
+  t=document.createElement('button'); t.id='livepv-tab'; t.type='button'; t.innerHTML=`${ICON.file}Afficher l’aperçu`; t.onclick=()=>{ if(LIVE_NARROW.matches){ LIVE.peek=true; liveSoon(0); setTimeout(()=>{ const x=document.querySelector('#livepv [data-lpoff]'); x&&x.focus(); },20); } else liveSet(false); };
   document.body.appendChild(t); return t;
 }
 function liveSet(off){ LIVE.off=off; try{ localStorage.setItem('librejo-miniature',off?'0':'1'); }catch(e){} liveSoon(0); }
 function liveSoon(ms){ clearTimeout(LIVE.timer); LIVE.timer=setTimeout(liveRefresh,ms==null?350:ms); }
 async function liveRefresh(){
   const on=liveActive(), box=document.getElementById('livepv'), tb=document.getElementById('livepv-tab');
-  document.documentElement.classList.toggle('live-on',on&&!LIVE.off);
+  const narrow=LIVE_NARROW.matches, off=narrow?!LIVE.peek:LIVE.off;
+  document.documentElement.classList.toggle('live-on',on&&!off&&!narrow);
   if(!on){ if(box) box.hidden=true; if(tb) tb.hidden=true; return; }
-  if(LIVE.off){ if(box) box.hidden=true; liveTab().hidden=false; return; }
+  if(off){ if(box) box.hidden=true; const t=liveTab(); t.hidden=false;
+    /* fenêtre étroite : le bouton prend place dans la page, sous le titre du formulaire, au lieu de flotter sur le bouton « Créer » */
+    const pn=narrow&&document.querySelector('main>section.panel:not([hidden])'), at=pn&&(pn.querySelector(':scope>.privacy')||pn.querySelector(':scope>h2.sec'));
+    if(at){ if(t.previousElementSibling!==at){ const f=document.activeElement===t; at.after(t); f&&t.focus(); } t.classList.add('inflow'); }
+    else { if(t.parentNode!==document.body) document.body.appendChild(t); t.classList.remove('inflow'); }
+    return; }
   if(tb) tb.hidden=true;
   const b=liveBox(); b.hidden=false;
   const seq=++LIVE.seq;

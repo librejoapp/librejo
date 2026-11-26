@@ -1,15 +1,24 @@
-#lj-boot{position:fixed;inset:0;z-index:99999;background:#FBF6EC;display:grid;place-items:center;padding:24px;font:16px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;color:#17302F}
+/* Écran d'ouverture (avant le choix du dossier). Couleurs de la charte écrites en clair : les variables de l'application
+   ne sont pas encore là. Asap vient de app/polices.css, chargée par la page avant cet écran.
+   L'écran défile quand il dépasse la fenêtre (zoom 200 à 400 %) : la carte est centrée par margin:auto, jamais coupée. */
+#lj-boot{position:fixed;inset:0;z-index:99999;background:#FBF6EC;display:flex;overflow:auto;overscroll-behavior:contain;padding:24px;font:16px/1.5 "Asap",system-ui,-apple-system,"Segoe UI",sans-serif;color:#17302F}
 #lj-boot[hidden]{display:none}
-#lj-boot .lj-card{background:#fff;border:1px solid #e3ddcf;border-radius:18px;max-width:560px;width:100%;padding:28px 30px;box-shadow:0 6px 30px rgba(23,48,47,.08)}
+#lj-boot .lj-card{margin:auto;background:#fff;border:1px solid #ece5d8;border-radius:18px;max-width:560px;width:100%;padding:28px 30px;box-shadow:0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07)}
 #lj-boot img{height:52px;display:block;margin-bottom:18px}
-#lj-boot h1{font-size:1.35rem;margin:0 0 10px}
-#lj-boot .lj-aide{color:#5b6b6a;font-size:.93rem}
-#lj-boot .lj-btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 18px;background:#1F6F6B;color:#fff;cursor:pointer;margin-top:8px}
-#lj-boot .lj-btn.lj-sec{background:#fff;color:#1F6F6B;border:2px solid #1F6F6B}
+#lj-boot h1{font-size:1.375rem;line-height:1.2;font-weight:700;color:#174f4c;margin:0 0 10px;text-wrap:balance}
+#lj-boot p{margin:0 0 12px}
+#lj-boot .lj-aide{color:#5b6b6a;font-size:.875rem}
+#lj-boot .lj-btn{font:inherit;font-weight:700;border:0;border-radius:8px;min-height:40px;padding:8px 18px;background:#E9A23B;color:#2b1d05;cursor:pointer;margin-top:8px}
+#lj-boot .lj-btn:hover{filter:brightness(.94)}
+#lj-boot .lj-btn.lj-sec{background:#fff;color:#174f4c;border:1px solid #d2cbbb;font-size:.875rem}
+#lj-boot .lj-btn.lj-sec:hover{filter:none;background:#f0ece2}
 #lj-boot .lj-btn:focus-visible{outline:3px solid #E9A23B;outline-offset:2px}
-.lj-link{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.lj-link{background:none;border:0;padding:0;font:inherit;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 #lj-boot .lj-sd{margin-top:22px;padding-top:18px;border-top:1px solid #ece5d8}
 #lj-boot .lj-sd .lj-btn{margin-top:0}
 #lj-boot .lj-sd .lj-aide{margin:10px 0 0}
+#lj-boot ul{margin:0 0 12px;padding-left:22px}
 #lj-boot a{color:#1F6F6B;font-weight:600;text-underline-offset:2px}
 #lj-boot a:focus-visible,.lj-link:focus-visible{outline:3px solid #E9A23B;outline-offset:2px;border-radius:4px}
+/* zoom fort : moins de marges, les boutons passent à la ligne au lieu de déborder */
+@media (max-width:520px){ #lj-boot{padding:8px} #lj-boot .lj-card{padding:16px 14px;border-radius:14px} #lj-boot img{height:40px;margin-bottom:10px} #lj-boot .lj-btn{white-space:normal;text-align:left;max-width:100%} }
