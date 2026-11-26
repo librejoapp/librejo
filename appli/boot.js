@@ -15,10 +15,20 @@ var MIME = {pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/j
 /* Bibliothèques PDF (jsPDF, pdf-lib, JSZip, police de repli : ~1,3 Mo) : l'application les charge elle-même
    à la première demande (ouverture d'un formulaire, de l'administration…), pas au choix du dossier : l'accueil
    arrive plus vite. Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
-async function startMain(){
-  var src = document.getElementById('docubus-main');
-  var s = document.createElement('script'); s.textContent = src.textContent; document.body.appendChild(s);
-  return true;
+/* Le code de l'application est dans app.js (fichier à part : la politique de sécurité de la page n'autorise
+   que les scripts du site, jamais un script écrit dans la page). */
+var mainP = null;
+function startMain(){
+  if (!mainP) mainP = new Promise(function(res){
+    var s = document.createElement('script'); s.src = 'app.js';
+    s.onload = function(){ res(true); };
+    s.onerror = function(){ mainP = null;
+      if (!ui) { alert('Librejo n’a pas pu se charger : le fichier app.js est introuvable.'); res(false); return; }
+      show('<h1>Librejo n’a pas pu se charger</h1><p>Le code de l’application n’a pas pu être lu. Vérifiez la connexion à Internet, puis rechargez la page.</p><button class="lj-btn" id="lj-reload">Recharger</button>');
+      document.getElementById('lj-reload').onclick = function(){ location.reload(); };
+      res(false); };
+    document.body.appendChild(s); });
+  return mainP;
 }
 /* ---------- Lecteur réseau (NAS) : script de réparation pour Windows ----------
    Le cas le plus fréquent chez une structure qui range ses documents sur un NAS : le lecteur réseau (Z:…) n'est pas
