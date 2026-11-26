@@ -20,6 +20,141 @@ async function startMain(){
   var s = document.createElement('script'); s.textContent = src.textContent; document.body.appendChild(s);
   return true;
 }
+/* ---------- Lecteur réseau (NAS) : script de réparation pour Windows ----------
+   Le cas le plus fréquent chez une structure qui range ses documents sur un NAS : le lecteur réseau (Z:…) n'est pas
+   reconnecté après le démarrage de Windows (identifiant non mémorisé, réseau pas prêt, démarrage rapide…).
+   Une page web ne peut rien lancer sur le poste : Librejo écrit un script .cmd, réglé pour ce poste (lettre et chemin),
+   que la personne télécharge et lance d'un double-clic. Il mémorise l'identifiant du NAS, connecte le lecteur,
+   s'installe dans le dossier de démarrage de Windows (reconnexion avec attente du réseau), et propose de couper
+   le démarrage rapide. Écrit d'après le retour d'expérience Docubus (BPM, novembre 2026) ; pas encore essayé sur un
+   vrai poste Windows : l'écran le dit. Aucun mot de passe n'est écrit dans le script ni gardé par Librejo. */
+var NAS_KEY = 'librejo-nas';
+function nasGet(){ try { return JSON.parse(localStorage.getItem(NAS_KEY)||'null') || {}; } catch(e){ return {}; } }
+function nasSet(o){ try { localStorage.setItem(NAS_KEY, JSON.stringify({lettre:o.lettre, chemin:o.chemin})); } catch(e){} }
+function nasCheck(lettre, chemin){
+  lettre = String(lettre||'').trim().toUpperCase().replace(/[\s:\\]+$/,'');
+  chemin = String(chemin||'').trim().replace(/\//g,'\\').replace(/\\+$/,'');
+  if (!/^[D-Z]$/.test(lettre)) return {err:'Choisissez la lettre du lecteur, de D à Z.', k:'lettre'};
+  if (!/^\\\\/.test(chemin)) return {err:'Le chemin réseau commence par deux barres obliques inverses, par exemple \\\\192.168.1.10\\Partage.', k:'chemin'};
+  var m = chemin.match(/^\\\\([^\\]+)\\[^\\]+/);
+  if (!m) return {err:'Le chemin doit contenir le nom du NAS et celui du partage : \\\\NAS\\Partage.', k:'chemin'};
+  if (/[%!^"&<>|]/.test(chemin)) return {err:'Le chemin contient un caractère que le script ne peut pas utiliser (% ! ^ " & < > |).', k:'chemin'};
+  return {lettre:lettre+':', chemin:chemin, serveur:m[1]};
+}
+function nasScript(o){
+  var d = new Date(), jour = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
+  var L = [
+'@echo off',
+'rem Librejo - lecteur reseau '+o.lettre+' vers '+o.chemin,
+'rem Prepare par Librejo le '+jour+' pour ce poste. Aucun mot de passe n\'est ecrit dans ce fichier.',
+'chcp 65001 >nul',
+'setlocal EnableExtensions DisableDelayedExpansion',
+'set "LETTRE='+o.lettre+'"',
+'set "CHEMIN='+o.chemin+'"',
+'set "SERVEUR='+o.serveur+'"',
+'set "DEMARRAGE=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"',
+'set "COPIE=%DEMARRAGE%\\Librejo - lecteur '+o.lettre.charAt(0)+'.cmd"',
+'set "TRACE=%TEMP%\\librejo-lecteur.txt"',
+'if /i "%~f0"=="%COPIE%" goto demarrage',
+'title Librejo - lecteur reseau %LETTRE%',
+'echo.',
+'echo  Librejo : rendre le lecteur %LETTRE% fiable sur ce poste',
+'echo  Dossier partage : "%CHEMIN%"',
+'echo.',
+'echo  1/4  Identifiant du NAS',
+'echo       Si Windows ne le memorise pas, le lecteur disparait au demarrage.',
+'call :identifiant',
+'echo.',
+'echo  2/4  Connexion du lecteur %LETTRE%',
+'call :connecter 5',
+'if exist "%LETTRE%\\" goto connecte',
+'echo       Echec. Reponse de Windows :',
+'type "%TRACE%"',
+'goto etape3',
+':connecte',
+'echo       OK : %LETTRE% est connecte.',
+':etape3',
+'echo.',
+'echo  3/4  Reconnexion a chaque demarrage de Windows',
+'copy /y "%~f0" "%COPIE%" >nul',
+'if errorlevel 1 goto copieko',
+'echo       OK : installee. A chaque ouverture de session, ce poste attendra le reseau',
+'echo       et reconnectera %LETTRE% tout seul.',
+'goto etape4',
+':copieko',
+'echo       Impossible de copier dans le dossier de demarrage :',
+'echo       "%DEMARRAGE%"',
+':etape4',
+'echo.',
+'echo  4/4  Demarrage rapide de Windows',
+'echo       Avec lui, un arret est en fait une mise en veille : au rallumage,',
+'echo       le lecteur reseau ne revient pas toujours.',
+'net session >nul 2>&1',
+'if errorlevel 1 goto pasadmin',
+'choice /c ON /m "      Le desactiver sur ce poste ? Conseille"',
+'if errorlevel 2 goto fin',
+'reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power" /v HiberbootEnabled /t REG_DWORD /d 0 /f >nul',
+'if errorlevel 1 goto fin',
+'echo       OK : demarrage rapide desactive.',
+'goto fin',
+':pasadmin',
+'echo       Pour le desactiver : relancez ce fichier par clic droit,',
+'echo       "Executer en tant qu\'administrateur". Sinon : Panneau de configuration,',
+'echo       Options d\'alimentation, Choisir l\'action des boutons d\'alimentation.',
+':fin',
+'echo.',
+'echo  Termine. Ouvrez Librejo et cliquez sur "Reessayer" si besoin.',
+'echo  Appuyez sur une touche pour fermer cette fenetre.',
+'pause >nul',
+'exit /b 0',
+'',
+':identifiant',
+'set "UTIL="',
+'echo       Tapez le nom d\'utilisateur du NAS, puis Entree.',
+'echo       Juste Entree s\'il n\'y en a pas, ou s\'il est deja memorise.',
+'set /p "UTIL=      Nom d\'utilisateur : "',
+'if not defined UTIL exit /b 0',
+'echo       Tapez maintenant le mot de passe du NAS : il ne s\'affiche pas. Puis Entree.',
+'cmdkey /add:%SERVEUR% /user:"%UTIL%" /pass',
+'exit /b 0',
+'',
+':connecter',
+'for /l %%i in (1,1,%1) do (',
+'  if exist "%LETTRE%\\" exit /b 0',
+'  net use %LETTRE% /delete /y >nul 2>&1',
+'  net use %LETTRE% "%CHEMIN%" /persistent:yes <nul >"%TRACE%" 2>&1',
+'  if exist "%LETTRE%\\" exit /b 0',
+'  timeout /t 3 /nobreak >nul',
+')',
+'exit /b 1',
+'',
+':demarrage',
+'rem Au demarrage de Windows : attendre le reseau, jusqu\'a 2 minutes. Rien ne s\'affiche si tout va bien.',
+'call :connecter 40',
+'if exist "%LETTRE%\\" exit /b 0',
+'title Librejo - lecteur reseau %LETTRE%',
+'echo.',
+'echo  Librejo : le lecteur %LETTRE% n\'a pas pu etre reconnecte.',
+'echo  Dossier partage : "%CHEMIN%"',
+'echo  Reponse de Windows :',
+'type "%TRACE%"',
+'echo.',
+'echo  Verifiez que le NAS est allume et que ce poste est bien sur le reseau,',
+'echo  puis ouvrez Librejo et cliquez sur "Reessayer".',
+'pause',
+'exit /b 1',
+''];
+  return L.join('\r\n');
+}
+function nasDownload(o){
+  var b = new Blob([nasScript(o)], {type:'application/octet-stream'}), u = URL.createObjectURL(b), a = document.createElement('a');
+  a.href = u; a.download = 'Librejo - lecteur '+o.lettre.charAt(0)+'.cmd'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(u); }, 60000);
+  nasSet(o);
+}
+/* Le même outil, dans l'écran « Le dossier ne répond pas » et dans l'application (Vérifications du poste) */
+window.LJ_NAS = {get:nasGet, check:nasCheck, script:nasScript, download:nasDownload};
+
 if (!WEB) { startMain(); return; }
 
 /* ---------- Démo en ligne : appli/?demo ----------
@@ -137,6 +272,9 @@ async function formsOnly(raison){
 }
 
 async function load(){
+  /* Le dossier connu ne répond plus (lecteur réseau pas reconnecté, NAS éteint, dossier déplacé) : on le dit,
+     au lieu de parler de réglages manquants */
+  if (!DEMO) { try { await dir.getDirectoryHandle('app'); } catch(e){ unreachable(e); return; } }
   var missing = [];
   for (var i=0;i<DATA_FILES.length;i++){
     var f=DATA_FILES[i];
@@ -190,8 +328,43 @@ async function create(){
 /* Accès refusé (navigateur, stratégie de l'informatique, ou réponse « Bloquer ») : on le dit, et les formulaires restent possibles */
 function refused(e){
   var n = e && e.name || '';
+  if ((n==='NotFoundError'||n==='NotReadableError') && dir) return unreachable(e);
   show('<h1>Accès au dossier refusé</h1><p>Le navigateur n’a pas pu ouvrir le dossier'+(n?' ('+esc(n)+')':'')+'. Si le dossier est sur le réseau, vérifiez qu’il est bien connecté. Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement.</p><button class="lj-btn" id="lj-pick">Réessayer</button>');
   document.getElementById('lj-pick').onclick = pick; sdOffer('refus');
+}
+/* Le dossier mémorisé ne répond pas : un message clair, « Réessayer », et l'outil du lecteur réseau */
+function unreachable(e){
+  var n = e && e.name || '';
+  show('<h1>Le dossier ne répond pas</h1><p>Librejo ne trouve pas le dossier <b>'+esc(dir&&dir.name||'')+'</b>'+(n?' ('+esc(n)+')':'')+'.</p>'
+    +'<p>Le plus souvent, le lecteur réseau n’est pas encore reconnecté après le démarrage de l’ordinateur. Ou bien le NAS est éteint, la synchronisation (OneDrive…) n’est pas lancée, ou le dossier a été déplacé.</p>'
+    +'<p class="lj-aide">Ouvrez l’Explorateur de fichiers et cliquez sur le lecteur réseau&nbsp;: Windows le reconnecte souvent. Revenez ensuite ici.</p>'
+    +'<button class="lj-btn" id="lj-retry">Réessayer</button> <button class="lj-btn lj-sec" id="lj-other">Choisir un autre dossier</button>'
+    +'<details class="lj-nas"><summary>Le lecteur réseau disparaît à chaque démarrage ?</summary><div id="lj-nasbox"></div></details>');
+  document.getElementById('lj-retry').onclick = async function(){ this.disabled = true; this.textContent = 'Vérification…';
+    var st = 'prompt'; try { st = await dir.queryPermission({mode:'read'}); } catch(x){}
+    if (st !== 'granted') { try { st = await dir.requestPermission({mode:'read'}); } catch(x){ return unreachable(x); } }
+    if (st !== 'granted') return refused({name:'NotAllowedError'});
+    try { await load(); } catch(x){ unreachable(x); } };
+  document.getElementById('lj-other').onclick = pick;
+  nasForm(document.getElementById('lj-nasbox'));
+  sdOffer('refus');
+}
+/* Formulaire du script de réparation (écran d'ouverture) */
+function nasForm(box){
+  var o = nasGet();
+  box.innerHTML = '<p>Librejo peut préparer pour ce poste un petit programme Windows qui mémorise l’identifiant du NAS, reconnecte le lecteur, le reconnecte ensuite à chaque démarrage (en attendant que le réseau soit prêt) et propose de couper le «&nbsp;démarrage rapide&nbsp;».</p>'
+    +'<p class="lj-row"><label>Lettre du lecteur<br><input id="lj-nl" size="3" maxlength="2" autocomplete="off" value="'+esc((o.lettre||'Z:').charAt(0))+'"></label>'
+    +'<label class="lj-grow">Chemin réseau du dossier partagé<br><input id="lj-nc" autocomplete="off" spellcheck="false" placeholder="\\\\192.168.1.10\\Partage" value="'+esc(o.chemin||'')+'"></label></p>'
+    +'<p class="lj-aide">Le chemin se lit dans l’Explorateur de fichiers : clic droit sur le lecteur › Propriétés, ou dans la barre d’adresse.</p>'
+    +'<p class="lj-err" id="lj-nerr" role="alert" hidden></p>'
+    +'<button class="lj-btn lj-sec" id="lj-ndl">Télécharger le programme de réparation</button>'
+    +'<p class="lj-aide">Ouvrez ensuite le fichier «&nbsp;Librejo - lecteur….cmd&nbsp;» depuis vos téléchargements. Si Windows affiche «&nbsp;Windows a protégé votre ordinateur&nbsp;», cliquez sur «&nbsp;Informations complémentaires&nbsp;» puis «&nbsp;Exécuter quand même&nbsp;». Aucun mot de passe n’est écrit dans le fichier. Pas encore essayé sur un vrai poste Windows : dites-nous si quelque chose ne marche pas.</p>';
+  box.querySelector('#lj-ndl').onclick = function(){
+    var r = nasCheck(box.querySelector('#lj-nl').value, box.querySelector('#lj-nc').value), er = box.querySelector('#lj-nerr');
+    ['#lj-nl','#lj-nc'].forEach(function(q){ box.querySelector(q).removeAttribute('aria-invalid'); });
+    if (r.err) { er.textContent = r.err; er.hidden = false; var f = box.querySelector(r.k==='lettre'?'#lj-nl':'#lj-nc'); f.setAttribute('aria-invalid','true'); f.focus(); return; }
+    er.hidden = true; nasDownload(r);
+  };
 }
 async function reauth(){
   var st = 'prompt';

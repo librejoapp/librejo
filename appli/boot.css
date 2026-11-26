@@ -23,3 +23,16 @@
 #lj-boot a:focus-visible,.lj-link:focus-visible{outline:3px solid #174f4c;outline-offset:2px;border-radius:4px}
 /* zoom fort : moins de marges, les boutons passent à la ligne au lieu de déborder */
 @media (max-width:520px){ #lj-boot{padding:8px} #lj-boot .lj-card{padding:16px 14px;border-radius:14px} #lj-boot img{height:40px;margin-bottom:10px} #lj-boot .lj-btn{white-space:normal;text-align:left;max-width:100%} }
+/* « Le dossier ne répond pas » : outil du lecteur réseau, replié sous les boutons */
+#lj-boot .lj-nas{margin-top:20px;padding-top:14px;border-top:1px solid #ece5d8}
+#lj-boot .lj-nas summary{cursor:pointer;font-weight:700;color:#174f4c;padding:4px 0}
+#lj-boot .lj-nas summary:focus-visible{outline:3px solid #174f4c;outline-offset:2px;border-radius:4px}
+#lj-boot .lj-nas[open] summary{margin-bottom:10px}
+#lj-boot .lj-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+#lj-boot .lj-row label{font-size:.875rem;font-weight:600}
+#lj-boot .lj-grow{flex:1 1 220px}
+#lj-boot .lj-row input{font:inherit;font-weight:400;border:1px solid #b9b0a0;border-radius:8px;padding:7px 10px;min-height:40px;margin-top:4px;width:100%;box-sizing:border-box;background:#fff;color:#17302F}
+#lj-boot .lj-row input#lj-nl{width:4.5em;text-transform:uppercase;text-align:center}
+#lj-boot .lj-row input:focus-visible{outline:3px solid #174f4c;outline-offset:1px}
+#lj-boot .lj-row input[aria-invalid=true]{border-color:#a3341f}
+#lj-boot .lj-err{color:#a3341f;font-weight:600;font-size:.875rem}
