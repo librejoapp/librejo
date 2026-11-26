@@ -1318,6 +1318,57 @@ html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair
 .cf-row small{color:var(--text-muted)}
 .cf-note{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap}
 .sd-modh+.homecol{margin-top:calc(-1 * var(--sp-2))}
+/* Aide de la page : bouton « ? » rond, toujours en haut à droite ; panneau à droite, non modal */
+:root{--aide-w:400px;--aide-gap:16px}
+.content{padding-right:calc(var(--sp-7) + 24px)}
+body.has-aide #adminflag{right:72px}
+#aidebtn{position:fixed;top:12px;right:16px;z-index:70;width:44px;height:44px;padding:0;display:grid;place-items:center;border:1.5px solid var(--line-strong);border-radius:var(--r-full);background:var(--surface);color:var(--navy);box-shadow:var(--shadow-card);transition:background-color .15s,color .15s,border-color .15s}
+#aidebtn svg{width:22px;height:22px;stroke-width:2.4}
+#aidebtn:hover{background:var(--surface-3);border-color:var(--navy)}
+#aidebtn[aria-expanded="true"]{background:var(--navy);border-color:var(--navy);color:var(--surface)}
+#aidebtn:focus-visible,#aide :focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+#aide{position:fixed;z-index:70;top:68px;right:var(--aide-gap);bottom:var(--aide-gap);width:min(var(--aide-w),calc(100vw - 2 * var(--aide-gap)));display:flex;flex-direction:column;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-raised);overflow:hidden;animation:aide-in .22s cubic-bezier(.16,1,.3,1)}
+@keyframes aide-in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.aide-h{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-3);border-bottom:1px solid var(--line-soft)}
+.aide-h h2{margin:0;font-size:var(--fs-6);line-height:1.2;font-weight:700;color:var(--navy);letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
+.aide-h h2:focus{outline:none}
+.aide-h h2:focus-visible{outline:3px solid var(--navy);outline-offset:4px;border-radius:4px}
+.aide-sous{margin:4px 0 0;font-size:var(--fs-3);color:var(--text-3)}
+.aide-h .secondary{flex:0 0 auto;min-height:40px}
+.aide-b{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-2) var(--sp-4) var(--sp-4);font-size:var(--fs-4);line-height:1.5}
+.aide-b h3{margin:var(--sp-4) 0 var(--sp-2);font-size:var(--fs-5);font-weight:700;color:var(--navy)}
+.aide-b>p{margin:0}
+.aide-steps{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-3);counter-reset:aide}
+.aide-steps li{counter-increment:aide;display:grid;grid-template-columns:28px minmax(0,1fr);gap:var(--sp-3);align-items:start}
+.aide-steps li::before{content:counter(aide);display:grid;place-items:center;width:28px;height:28px;border-radius:var(--r-full);background:var(--surface-2);color:var(--navy);font-weight:700;font-size:var(--fs-3)}
+.aide-b b{color:var(--text-2)}
+.aide-b code,.aide-f kbd,.aide-b kbd{font-family:inherit;font-size:.9em;font-weight:600;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:6px;padding:0 5px;color:var(--text)}
+.aide-adm{margin-top:var(--sp-5);padding:var(--sp-3) var(--sp-4) var(--sp-4);background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--r-md)}
+.aide-adm h3{margin-top:0;color:var(--accent-text)}
+.aide-adm p{margin:0 0 var(--sp-2);color:var(--text-2)}
+.aide-adm ul{margin:0;padding-left:20px;display:grid;gap:var(--sp-2)}
+.aide-f{display:grid;gap:4px;padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line-soft);background:var(--surface-3)}
+.aide-f .linkbtn{justify-self:start;min-height:32px}
+.aide-f small{color:var(--text-muted);font-size:var(--fs-2)}
+/* Panneau ouvert sur un grand écran : la page se décale pour rester visible */
+@media (min-width:1100px){
+  body.aide-on .content,html.live-on body.aide-on .content{margin-left:var(--sbw);margin-right:calc(var(--aide-w) + 2 * var(--aide-gap));padding-right:var(--sp-5)}
+  html.wiz-on body.aide-on #wiz,body.aide-on #modal{padding-right:calc(var(--aide-w) + 3 * var(--aide-gap))}
+}
+@media (min-width:1500px){
+  body.aide-on .content{margin-left:calc(var(--sbw) + max(0px,(100vw - var(--sbw) - var(--aide-w) - 2 * var(--aide-gap) - var(--w-content)) / 2))}
+}
+@media (max-width:900px){
+  #aidebtn{position:absolute;top:10px;right:12px}
+  .content{padding-right:var(--sp-4)}
+  #aide{top:64px}
+  body.has-aide #adminflag{right:64px}
+}
+@media (max-height:500px){ .aide-f small{display:none} .aide-h{padding:var(--sp-3) var(--sp-4) var(--sp-2)} }
+/* l'aperçu en direct d'un formulaire est à la même place : il revient à la fermeture de l'aide */
+body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
+@media (prefers-reduced-motion:reduce){ #aide{animation:none} }
+@media print{ #aidebtn,#aide{display:none!important} }
 </style>
 </head>
 <body>
@@ -8690,6 +8741,448 @@ async function cfStartup(){ if(!FSA) return; const h=dirH||await idb.get('dossie
   if(isAdmin&&await permState(h,'readwrite')==='granted'){ if($('#modal').hidden) await cfAdminCheck(true); else { await cfScan(); renderDocs(); } }
   else{ await cfScan(); if(isAdmin) renderDocs(); } }
 
+/* ======================================================================
+   AIDE DE LA PAGE : bouton « ? » en haut à droite (ou touche F1)
+   Un panneau à droite explique l'écran réellement affiché : à quoi il sert,
+   comment faire pas à pas, et en mode admin ce qui s'y règle.
+
+   LES TEXTES sont dans les tables ci-dessous, un objet par écran :
+     titre  : nom de l'écran (sinon pris dans la page)
+     but    : à quoi sert la page, en une ou deux phrases
+     etapes : 3 à 5 gestes, avec les libellés exacts des boutons (<b>…</b>)
+     admin  : ce que l'admin peut régler sur cette page, et où (montré en mode admin seulement)
+   Ton : vouvoiement, phrases courtes ; espace fine insécable (U+202F) avant : ; ? !
+   - Nouveau formulaire intégré : ajoutez une entrée dans AIDE_FORMS, avec l'id
+     de BUILTIN_FORMS (ex. '__ccas'). Ce qui le règle (barre « Mode admin ») est ajouté tout seul.
+   - Formulaires ajoutés par l'admin (bibliothèque ou création) : rien à faire,
+     ils prennent AIDE.modele avec leur titre et leur description.
+   - Écran sans entrée : aide générique AIDE.defaut.
+   ====================================================================== */
+const AIDE_FIN='Dans la fenêtre qui s’ouvre : <b>Imprimer</b>, <b>Envoyer par mail</b> ou <b>Télécharger</b>, puis <b>Terminé : effacer</b>.';
+const AIDE={
+  accueil:{titre:'Accueil',
+    but:'La page de départ : la recherche, les formulaires et les documents les plus utilisés, puis tout le reste rangé par rubrique.',
+    etapes:['Tapez ce que vous cherchez, même sans cliquer dans la barre de recherche (ou appuyez sur <kbd>/</kbd>).',
+      'Pour un formulaire, cliquez sur son nom ou sur <b>Remplir</b>.',
+      'Pour un document, cliquez sur son titre pour l’ouvrir, ou sur <b>Imprimer</b> ou <b>Envoyer</b>.',
+      'Dépliez <b>Tous les formulaires</b> ou <b>Documents</b> pour voir le reste, rubrique par rubrique.',
+      'L’étoile, à côté d’un titre, l’ajoute à <b>Mes favoris</b> (sur ce poste).'],
+    admin:['<b>Ajouter un document</b>, <b>Ajouter un lien</b>, <b>Nouvelle catégorie</b> : en haut de la page. Vous pouvez aussi glisser des fichiers sur la page.',
+      'Le menu <b>Outils</b> : évaluation HAS, tableau de bord, sauvegarde, journal, archives, assistant de démarrage, vérifications du poste.',
+      '<b>Les plus utilisés</b> : épinglez un document (<b>Gérer</b>, sur sa ligne) ou un formulaire (<b>Épingler à l’accueil</b>, en haut du formulaire).',
+      'La liste de démarrage reste affichée ici tant qu’elle n’est pas terminée.']},
+  recherche:{titre:'Résultats de la recherche',
+    but:'Les documents, liens, formulaires et kits qui correspondent à vos mots, les plus proches en premier.',
+    etapes:['Tapez un ou plusieurs mots : tous doivent être trouvés. Les accents ne comptent pas.',
+      'Cochez <b>Chercher aussi dans le texte des documents</b> pour chercher dans leur contenu (plus lent).',
+      'Cliquez sur un titre pour l’ouvrir, ou sur <b>Imprimer</b>, <b>Envoyer</b> ou <b>Remplir</b>.',
+      'Videz la barre de recherche, ou cliquez sur <b>Accueil</b>, pour revenir à l’accueil.'],
+    admin:['Administration › <b>Mots de la recherche</b> : des mots équivalents, pour que « CMU » trouve aussi « C2S ».',
+      'Outils › <b>Recherche dans le texte</b> : préparer la recherche dans le contenu des documents.',
+      'La description et les mots-clés d’un document : <b>Gérer</b>, sur sa ligne.']},
+  categorie:{
+    but:'Les documents rangés dans cette catégorie, et ses formulaires s’il y en a. Ils sont lus dans le dossier de la structure : c’est toujours la version en place.',
+    etapes:['Choisissez l’affichage : <b>Liste</b> ou <b>Vignettes</b>. En liste, cliquez sur un titre de colonne pour trier.',
+      'Cliquez sur le titre d’un document pour l’ouvrir.',
+      '<b>Imprimer</b> l’imprime en un clic ; <b>Envoyer</b> prépare un mail avec le document joint.',
+      '<b>Plus</b> : modifier une copie (l’original reste intact) ou copier l’emplacement du fichier.',
+      'Les sous-dossiers de la catégorie s’affichent dessous, dans le menu à gauche.'],
+    admin:['<b>Ajouter un document</b>, ou glissez le fichier sur la page. Déposé sur la ligne d’un document, un fichier en devient la nouvelle version.',
+      '<b>Gérer</b>, sur chaque ligne : description, mots-clés, version, épinglage, archive.',
+      'Sous le titre : <b>Nouveau sous-dossier</b>, <b>Renommer la catégorie</b>, <b>Changer l’emoji</b>, <b>Supprimer la catégorie</b>.']},
+  kits:{titre:'Kits de documents',
+    but:'Des lots de documents à imprimer ou à envoyer ensemble, en une seule fois.',
+    etapes:['Repérez le kit voulu : la liste de ses documents est affichée.',
+      'L’imprimante imprime tout le kit ; l’enveloppe joint tous ses documents au même mail.',
+      'La flèche vers le bas télécharge tous les documents du kit.'],
+    admin:['<b>+ Nouveau kit</b> : un nom et les documents qui le composent.',
+      'Le crayon, sur un kit, le modifie.']},
+  formulaires:{titre:'Formulaires',
+    but:'Tous les formulaires de la structure, rangés par rubrique. Vous remplissez, Librejo crée le PDF à l’en-tête de la structure, puis prépare le mail.',
+    etapes:['Dépliez une rubrique, puis cliquez sur le formulaire voulu.',
+      'Remplissez les champs. Ceux marqués « (facultatif) » peuvent rester vides.',
+      'Cliquez sur le grand bouton en bas du formulaire (par exemple <b>Créer le PDF</b>).',
+      AIDE_FIN],
+    admin:['<b>Créer un formulaire</b>, en bas de cette page.',
+      'Administration › <b>Formulaires et modèles</b> : ajouter des modèles de la bibliothèque, modifier vos formulaires, masquer ou proposer les formulaires intégrés.',
+      '<b>Vérifier les Cerfa</b> (s’il y en a) : chercher une nouvelle version sur service-public.fr.']},
+  sans:{titre:'Formulaires seulement',
+    but:'Librejo marche ici sans le dossier de la structure : seuls les formulaires sont disponibles. Les documents, l’annuaire, les réglages et l’accès admin ne le sont pas.',
+    etapes:['Si ce n’est pas fait, cliquez sur <b>Saisir l’en-tête</b> : le nom et l’adresse de la structure, gardés sur ce poste.',
+      'Choisissez un formulaire, ou un modèle de la bibliothèque plus bas.',
+      'Remplissez, puis cliquez sur le grand bouton en bas du formulaire.',
+      AIDE_FIN,
+      '<b>Pourquoi ?</b>, dans le bandeau en haut, dit ce qui bloque l’accès au dossier et quoi demander à l’informatique.']},
+  modele:{
+    but:'Un formulaire de la structure : vous remplissez les champs, Librejo en fait un PDF à l’en-tête de la structure, puis prépare le mail.',
+    etapes:['Remplissez les champs. Ceux marqués « (facultatif) » peuvent rester vides.',
+      'Vérifiez <b>Envoyer à</b> (adresses séparées par des virgules) et la <b>Date du document</b>.',
+      'Cliquez sur <b>Créer le PDF et préparer l’envoi</b>.',
+      AIDE_FIN,
+      '<b>Tout effacer</b> vide le formulaire à tout moment.'],
+    admin:['Administration › Formulaires et modèles › <b>Modifier</b> : titre, description, champs à remplir, texte du document, destinataires par défaut.']},
+  cerfa:{
+    but:'Le formulaire officiel (Cerfa), ouvert avec les informations de la structure déjà remplies. La partie de la personne se complète dans le document.',
+    etapes:['Regardez les <b>Pièces à joindre</b> et <b>Où l’envoyer</b>, s’ils sont indiqués.',
+      'Cliquez sur <b>Ouvrir le Cerfa pré-rempli</b>.',
+      'Complétez les cases de la personne dans le document, puis imprimez.',
+      'Une case de la structure reste vide ? Remplissez-la à la main, ou signalez-le à un admin.'],
+    admin:['<b>Modifier le pré-remplissage</b> : quelle case reçoit quelle information.',
+      'Réglages › <b>Structure</b> : les informations reprises dans les Cerfa.',
+      '<b>Vérifier les Cerfa</b> : chercher une nouvelle version sur service-public.fr.']},
+  pret:{
+    but:'Le document est prêt, créé sur ce poste. Il reste à l’imprimer, l’envoyer ou le télécharger, puis à effacer le formulaire.',
+    etapes:['<b>Aperçu</b>, à côté du nom du fichier, pour le relire.',
+      '<b>Imprimer</b> ouvre la fenêtre d’impression.',
+      '<b>Envoyer par mail</b> prépare le mail avec le document joint : vous le relisez et l’envoyez vous-même.',
+      '<b>Télécharger</b> l’enregistre dans Téléchargements : supprimez-le après usage.',
+      '<b>Terminé : effacer</b> vide le formulaire ; <b>Revenir sans effacer</b> pour corriger.']},
+  semaine:{titre:'Impression rapide',
+    but:'Les documents que l’on imprime souvent, choisis par l’admin. Vous indiquez le nombre d’exemplaires, et tout part en une seule impression.',
+    etapes:['Pour chaque document, réglez le nombre d’exemplaires avec <b>−</b> et <b>+</b>, ou tapez-le.',
+      'Le total s’affiche en bas de la liste.',
+      'Cliquez sur <b>Imprimer</b> : une seule fenêtre d’impression pour tout.',
+      '<b>Tout remettre à 0</b> pour recommencer. Les quantités ne sont pas gardées.'],
+    admin:['<b>Choisir les documents</b>, en haut à droite : les documents proposés ici.',
+      'Préférez des PDF : un document Word s’imprime depuis son logiciel.']},
+  annuaire:{titre:'Annuaire',
+    but:'Les structures partenaires et leurs contacts. Ils servent à préparer les mails et à remplir les courriers.',
+    etapes:['Cherchez par nom, contact, ville, mail ou téléphone.',
+      'Filtrez par type (<b>Tous les types</b>) ou cochez <b>Avec un mail</b>.',
+      'Cliquez sur une adresse pour préparer un mail ; l’icône à côté la copie.',
+      'Après une recherche ou un filtre : <b>Écrire à tous</b> ou <b>Copier les adresses</b>.',
+      '<b>Exporter</b> : en tableur, en carnet d’adresses ou en vCard.'],
+    admin:['<b>Ajouter</b> une fiche, ou <b>Importer</b> des contacts (Outlook, Gmail, tableur).',
+      'Le crayon, au bout de chaque ligne, modifie ou supprime la fiche.',
+      '<b>Doublons</b> (s’il y en a) : réunir les fiches en double.',
+      'Après un filtre par type : <b>Renommer ce type</b>.']},
+  adminForms:{titre:'Formulaires et modèles',
+    but:'L’admin choisit ici les formulaires proposés à l’équipe : modèles prêts à l’emploi, formulaires intégrés et formulaires de la structure.',
+    etapes:['<b>Bibliothèque de modèles</b> : <b>Ajouter</b> en fait une copie, que vous pouvez modifier. Faites relire le texte avant usage.',
+      '<b>Formulaires intégrés</b> : <b>Masquer</b> les retire de la liste de l’équipe, <b>Proposer</b> les remet. Les boutons à côté mènent à leurs réglages.',
+      '<b>Formulaires</b> : <b>Modifier</b>, <b>Dupliquer</b> ou supprimer ceux de la structure.',
+      '<b>Créer un formulaire</b> : des champs à remplir et un texte modèle.'],
+    admin:['Ce qui est enregistré ici vaut pour tous les postes.',
+      'Les autres onglets de l’administration : <b>Mots de la recherche</b> et <b>Réglages</b>.']},
+  editeur:{titre:'Créer ou modifier un formulaire',
+    but:'Un formulaire, ce sont des champs que l’équipe remplit et un texte modèle où ces champs viennent se placer. Librejo en fait un PDF à l’en-tête de la structure.',
+    etapes:['Donnez un <b>Titre</b> (imprimé en haut du PDF), une <b>Description</b> et la <b>Rubrique des formulaires</b>.',
+      '<b>Champs à remplir</b> : un nom et un type pour chacun (texte, date, nombre, choix, professionnel de l’équipe). Ne demandez que le nécessaire.',
+      '<b>Texte du document</b> : écrivez le texte et placez les champs entre accolades, par exemple <code>{Initiales}</code>.',
+      'Vérifiez l’aperçu à droite : <b>Ce que remplit l’équipe</b> ou <b>Le PDF</b>.',
+      'Cliquez sur <b>Enregistrer le formulaire</b>.'],
+    admin:['Le formulaire enregistré apparaît dans la page <b>Formulaires</b>, pour tous les postes.']},
+  syn:{titre:'Mots de la recherche',
+    but:'Des groupes de mots équivalents : chercher l’un des mots trouve aussi les autres.',
+    etapes:['Écrivez un groupe par ligne, mots séparés par des virgules (par exemple <code>CMU, C2S, complémentaire santé</code>).',
+      'Cliquez sur <b>Enregistrer</b>.',
+      '<b>Remettre la liste de départ</b> si vous voulez repartir de zéro.'],
+    admin:['La liste vaut pour la recherche de tous les postes.']},
+  ordoListes:{titre:'Listes de l’ordonnance',
+    but:'Les lignes proposées dans le formulaire Ordonnance : médicaments et posologies, examens, imagerie…',
+    etapes:['Choisissez en haut la liste à modifier.',
+      'Pour chaque ligne : son intitulé, sa rubrique, et ses posologies ou options.',
+      'Cliquez sur <b>Enregistrer la liste</b>.',
+      '<b>Remettre la liste de départ</b> ou <b>Annuler les changements</b> si besoin.'],
+    admin:['La liste vaut pour tous les postes.']},
+  checks:{titre:'Vérifications du poste',
+    but:'Librejo vérifie le navigateur, l’autorisation d’accès au dossier et le type de dossier, puis dit quoi faire.',
+    etapes:['Lisez chaque ligne : coche verte, tout va bien ; orange ou rouge, un point à régler.',
+      'Sous chaque point, la marche à suivre.',
+      '<b>Copier pour l’informatique</b> : le résultat, à coller dans un mail. Il ne contient aucune donnée de personne.',
+      '<b>Relancer</b> après une correction, puis <b>Fermer</b>.']},
+  defaut:{
+    but:'Une page de Librejo. Les boutons disent ce qu’ils font, et rien n’est enregistré sur les personnes accompagnées.',
+    etapes:['Le menu à gauche mène aux grandes parties : <b>Accueil</b>, <b>Formulaires</b>, <b>Impression rapide</b>, <b>Annuaire</b>.',
+      'Les champs marqués « (facultatif) » peuvent rester vides.',
+      'Perdu ? Cliquez sur <b>Accueil</b>.',
+      'Le <b>Mode d’emploi</b>, en bas du menu, présente Librejo en trois écrans.']}
+};
+/* Formulaires intégrés : un objet par formulaire (clé = id de BUILTIN_FORMS) */
+const AIDE_FORMS={
+  __ccas:{
+    but:'Un bon remis à la personne (ou envoyé) pour son accueil au CCAS : qui elle est, pourquoi on l’oriente, qui contacter dans la structure.',
+    etapes:['<b>Destinataire</b> : choisissez le CCAS dans l’annuaire, ou écrivez son nom.',
+      '<b>Personne orientée</b> : civilité, nom, prénom. Le reste seulement si c’est utile à la démarche.',
+      '<b>Motif de l’orientation</b> : cliquez sur un ou plusieurs motifs, ajoutez des précisions si besoin.',
+      '<b>Contact et signature</b> : la personne à joindre dans la structure, et qui signe.',
+      'Cliquez sur <b>Créer le bon (PDF)</b>, puis <b>Imprimer</b> pour le remettre à la personne, ou <b>Envoyer par mail</b>.'],
+    admin:['Les CCAS proposés sont les fiches de l’annuaire dont le nom ou le type contient « CCAS » ou « action sociale ».']},
+  __urg:{
+    but:'Un courrier pour l’équipe des urgences, remis à la personne ou envoyé : motif, traitements, éléments utiles et contact dans la structure.',
+    etapes:['<b>Hôpital</b> : l’hôpital, le service, la date et l’heure.',
+      '<b>Personne orientée</b> : civilité, nom, prénom.',
+      '<b>Motif de l’orientation</b> : à remplir. Le reste (constantes, antécédents, traitements, allergies, consommations) si vous l’avez.',
+      '<b>Contact et signature</b> : qui joindre dans la structure, et qui signe.',
+      'Cliquez sur <b>Créer le courrier (PDF)</b>, puis <b>Imprimer</b> ou <b>Envoyer par mail</b>.']},
+  __el:{
+    but:'Une page blanche à l’en-tête de la structure : vous écrivez ce que vous voulez. Seule la date est ajoutée d’office.',
+    etapes:['Vérifiez la <b>Date</b>.',
+      'Remplissez ce qui sert : <b>Titre en haut à droite</b>, <b>Destinataire</b>, <b>Objet</b>, <b>Texte</b>, <b>Signature</b>. Laissez vide le reste.',
+      'Il faut au moins un titre ou un texte.',
+      'Cliquez sur <b>Créer le document (PDF)</b>.',
+      AIDE_FIN]},
+  __cp:{
+    but:'Une lettre à l’en-tête de la structure pour un partenaire, un service ou une administration. Pour un médecin, au sujet d’un patient : « Courrier au médecin traitant ».',
+    etapes:['<b>Destinataire</b> : choisissez-le dans l’annuaire, ou écrivez son nom et son adresse.',
+      '<b>Objet</b> et <b>Formule d’appel</b>, puis le <b>Texte du courrier</b>. La formule de politesse est ajoutée à la fin.',
+      '<b>Signature</b> : le signataire, son nom et sa fonction.',
+      'Cliquez sur <b>Créer le courrier (PDF)</b>.',
+      AIDE_FIN]},
+  __att:{
+    but:'Atteste qu’une personne est suivie, pour le SPIP, le juge, un employeur ou un hébergement. Elle n’atteste que la présence et la régularité du suivi : aucune information médicale.',
+    etapes:['<b>Signataire</b> : un médecin, ou le nom et la fonction du professionnel qui signe.',
+      '<b>Personne suivie</b> : civilité, nom, prénom, date de naissance.',
+      '<b>Suivi</b> : le cadre et la date de début ; les rendez-vous honorés et leur rythme si c’est utile.',
+      'Cliquez sur <b>Créer l’attestation (PDF)</b>.',
+      AIDE_FIN]},
+  __mt:{
+    but:'Un courrier médical au médecin traitant, avec l’accord du patient : information de suivi, compte rendu, demande d’avis ou fin de suivi.',
+    etapes:['<b>Destinataire</b> : le médecin, son adresse, la date et l’<b>Objet</b>.',
+      '<b>Patient</b> : civilité, nom, prénom, date de naissance.',
+      '<b>Courrier</b> : le <b>Texte du courrier</b>, les traitements, et la <b>Demande ou conclusion</b>.',
+      'Cliquez sur <b>Créer le courrier (PDF)</b>.',
+      'Imprimez-le et signez-le pour un envoi postal, ou envoyez-le. Pour des données de santé, préférez une messagerie MSSanté.']},
+  __cl:{
+    but:'Un certificat « Je soussigné(e), Dr X, certifie que… » : vous choisissez le médecin et la date, et vous écrivez la suite.',
+    etapes:['<b>Médecin et date</b> : choisissez le médecin qui signe.',
+      '<b>Patient</b> : facultatif, sauf si vous cochez « certifie avoir examiné ce jour ».',
+      '<b>Texte</b> : écrivez la <b>Suite du texte</b>. Le début de la phrase est affiché au-dessus.',
+      'Cliquez sur <b>Créer le certificat (PDF)</b>, imprimez-le et signez-le.']},
+  __cmi:{
+    but:'Le certificat médical initial d’une personne majeure victime de violences, inspiré du modèle de l’Ordre des médecins : décrire sans interpréter.',
+    etapes:['<b>Examen</b> : date, heure et lieu.',
+      '<b>Personne examinée</b> : identité, et l’interprète s’il y en a un.',
+      'Les parties <b>A</b> à <b>E</b> : dires de la personne, doléances, examen clinique, état antérieur, ITT en jours.',
+      '<b>Photographies</b> : ajoutez les photos ; elles vont en annexe du PDF.',
+      '<b>Remise</b> : à qui le certificat est remis. Puis <b>Créer le certificat (PDF)</b>.']},
+  __relais:{
+    but:'Adresser un patient à un autre CSAPA, ou à un médecin qui prendra le relais de la prescription du traitement de substitution (TSO).',
+    etapes:['<b>Destinataire</b> : le CSAPA ou le médecin qui prend le relais.',
+      '<b>Patient</b> : identité et <b>Motif du relais</b>.',
+      '<b>Traitement de substitution</b> : molécule, posologie, dernière délivrance, pharmacie, dernier ECG.',
+      '<b>Éléments médicaux</b> : antécédents, allergies, autres traitements, consommations.',
+      'Cliquez sur <b>Créer le PDF et préparer l’envoi</b>.']},
+  __deliv:{
+    but:'L’attestation envoyée au CSAPA de suivi quand un patient est venu chercher son traitement (méthadone, buprénorphine) chez vous. Seulement ce qui est utile au CSAPA : pas de nom.',
+    etapes:['<b>Pour qui ?</b> : choisissez le CSAPA de suivi, ou <b>Autre…</b>.',
+      'Pour chaque patient : civilité, initiales, date de naissance, traitement, dose par jour et dates de délivrance.',
+      '<b>Ajouter un patient</b> si plusieurs patients sont suivis par le même CSAPA.',
+      'Cliquez sur <b>Préparer l’envoi</b> : un PDF par patient, joints au même mail.']},
+  __ordo:{
+    but:'Une ordonnance à l’en-tête de la structure : traitement, bilan, imagerie, vaccins… Elle s’imprime sans signature ni tampon, à signer et tamponner à la main.',
+    etapes:['Choisissez le <b>Type d’ordonnance</b>.',
+      '<b>Patient</b> : civilité, nom, prénom, date de naissance, et le poids si utile.',
+      'Cochez ou ajoutez les lignes. Les posologies proposées se modifient.',
+      'Réglez la durée : <b>QSP</b> et <b>Renouvellement</b>.',
+      'Cliquez sur <b>Créer l’ordonnance (PDF)</b>, imprimez, signez et tamponnez.']}
+};
+/* Réglages : une entrée par section (clé = section des réglages) */
+const AIDE_REGLAGES={
+  structure:{titre:'Réglages : Structure',
+    but:'Les informations administratives de la structure (adresse, SIRET, agrément, responsable…). Elles servent à pré-remplir les Cerfa, et à rien d’autre.',
+    etapes:['Remplissez ce que vous avez. Une case laissée vide restera vide sur le Cerfa.',
+      'En gris : ce que Librejo a déjà trouvé, à confirmer.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.']},
+  courriers:{titre:'Réglages : Mes courriers',
+    but:'L’allure de tous les PDF produits : papier à en-tête, signature, tampon.',
+    etapes:['<b>Texte sous le logo</b> et <b>Bas de page</b> : une ligne par ligne.',
+      'Choisissez la place du logo, sa taille, l’alignement, la police et les couleurs : l’aperçu se met à jour.',
+      '<b>Ouvrir en grand</b> pour vérifier une page entière.',
+      '<b>Tampon de la structure</b> : une image PNG, imprimée sous la signature.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.']},
+  fichiers:{titre:'Réglages : Mes fichiers',
+    but:'La règle que Librejo suit pour nommer les fichiers qu’il range et les dossiers de catégorie. Les fichiers déjà rangés gardent leur nom.',
+    etapes:['Choisissez le <b>Modèle de nom de fichier</b> et le séparateur <b>Entre les mots du titre</b>.',
+      'Choisissez le <b>Nom des nouveaux dossiers de catégorie</b>, et vérifiez l’exemple.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.',
+      'Ensuite seulement, <b>Renommer les fichiers déjà rangés…</b> applique la règle aux fichiers existants. Ils restent à leur place.']},
+  apparence:{titre:'Réglages : Apparence',
+    but:'Les couleurs et le logo de l’application, pour tous les postes.',
+    etapes:['Choisissez le <b>Style du menu</b>, la <b>Couleur du menu et des titres</b> et la <b>Couleur des boutons et des repères</b>. L’aperçu est immédiat, sur ce poste.',
+      'Une couleur trop pâle est corrigée pour rester lisible ; Librejo affiche celle qui est appliquée.',
+      '<b>Logo de la structure</b> : PNG ou JPEG, 2 Mo au plus ; choisissez ce qui s’affiche <b>Dans le menu</b>.',
+      'Cliquez sur <b>Enregistrer les réglages</b> : les couleurs passent alors sur tous les postes.']},
+  mail:{titre:'Réglages : Mail',
+    but:'La façon dont Librejo prépare les mails, et les adresses qu’il propose.',
+    etapes:['<b>Envoi des mails</b> : l’application Outlook du poste, ou Outlook dans le navigateur.',
+      '<b>Adresses proposées pour les documents</b> : une par ligne.',
+      '<b>Destinataires de la délivrance</b> (si ce formulaire est proposé) : les CSAPA et leurs adresses.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.']},
+  equipe:{titre:'Réglages : Équipe',
+    but:'Les professionnels proposés dans les formulaires, et les médecins qui signent.',
+    etapes:['<b>Professionnels de l’équipe</b> : nom, fonction et coordonnées professionnelles. L’équipe les choisit dans les formulaires.',
+      '<b>Médecins (signature et RPPS)</b> : le nom et le RPPS de chaque médecin. À mettre à jour à chaque arrivée ou départ.',
+      '<b>Lignes imprimées sous le nom et le RPPS</b> : par exemple le nom de la structure.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.']},
+  securite:{titre:'Réglages : Accès',
+    but:'Le mot de passe du mode admin, et l’assistant de démarrage.',
+    etapes:['<b>Mot de passe admin</b> : un verrou contre les erreurs de manipulation, pas un coffre-fort. La vraie protection, ce sont les droits sur le dossier.',
+      '<b>Relancer l’assistant</b> pour revoir d’un coup la structure, l’équipe, les catégories, les modèles et le mail.',
+      'Cliquez sur <b>Enregistrer les réglages</b>.']}
+};
+const AIDE_REG_ADMIN=['Les réglages valent pour tous les postes une fois enregistrés.',
+  'Vous changez de section ou de page sans enregistrer ? Librejo vous le demande. <b>Annuler les modifications</b> revient en arrière.'];
+/* Assistant de démarrage : une entrée par étape (dans l'ordre de WZ_STEPS) */
+const AIDE_WIZ=[
+  {but:'L’assistant prépare Librejo pour votre structure en quelques minutes : en-tête des documents, équipe, catégories, modèles, mail, mot de passe.',
+    etapes:['Lisez les <b>Vérifications</b> : elles disent si ce poste est prêt.',
+      'Cliquez sur <b>Commencer</b>.',
+      'À tout moment, <b>Continuer plus tard</b> : l’assistant reprendra là où vous en étiez.']},
+  {but:'Ces informations forment l’en-tête et le bas de page de tous vos documents.',
+    etapes:['Indiquez le <b>Nom de la structure</b> et le <b>Type de structure</b> : ils sont demandés.',
+      'Ajoutez l’adresse, le téléphone et le mail. SIRET et FINESS sont facultatifs.',
+      '<b>Logo</b> : une image PNG ou JPEG, si vous l’avez.',
+      'Regardez l’aperçu du courrier, puis cliquez sur <b>Suivant</b>.']},
+  {but:'La signature habituelle des courriers, et les médecins qui signent certificats et en-têtes d’ordonnance.',
+    etapes:['Écrivez la <b>Signature habituelle des courriers</b>.',
+      'Répondez : des médecins prescrivent-ils dans votre structure ?',
+      'Si oui : le nom et le RPPS (11 chiffres) de chacun, avec <b>Ajouter un médecin</b>.',
+      'Si non, les formulaires médicaux ne seront pas proposés. Vous pourrez les activer plus tard.']},
+  {but:'Les catégories où ranger vos documents, et la façon de nommer les fichiers.',
+    etapes:['Renommez, retirez (×) ou ajoutez des catégories avec <b>Ajouter une catégorie</b>.',
+      'Choisissez le <b>Nom des fichiers</b>, le séparateur et le <b>Nom des dossiers</b> : l’exemple se met à jour.',
+      'Cliquez sur <b>Suivant</b>. Les dossiers seront créés tout seuls.']},
+  {but:'Des formulaires et des liens prêts à l’emploi, cochés selon votre type de structure.',
+    etapes:['Cochez ou décochez les rubriques de modèles.',
+      'Chaque modèle reste modifiable ensuite.',
+      'Faites relire les modèles par votre direction avant de les utiliser.']},
+  {but:'La façon dont Librejo prépare vos mails. Librejo n’envoie jamais rien lui-même.',
+    etapes:['Choisissez : Outlook installé sur les postes, une messagerie web, ou pas de mail.',
+      'Indiquez les <b>Adresse(s) d’envoi de l’équipe</b>, une par ligne.',
+      '<b>Tester</b> prépare un mail d’essai, sans rien envoyer.']},
+  {but:'Le mot de passe du mode admin, qui permet d’ajouter et de modifier les documents.',
+    etapes:['Choisissez un mot de passe de 6 caractères au moins, sans rapport avec le nom de la structure.',
+      'Saisissez-le une deuxième fois dans <b>À nouveau</b>.',
+      'C’est un verrou contre les erreurs, pas un coffre-fort : il est écrit en clair dans les réglages.']},
+  {but:'Le récapitulatif, avant que Librejo écrive les réglages dans le dossier de la structure.',
+    etapes:['Relisez chaque ligne. Cliquez sur une étape, à gauche, pour y revenir.',
+      'Cliquez sur <b>C’est parti</b>.',
+      'Ensuite, suivez la liste de démarrage sur l’accueil.']}
+];
+/* ---------- Aide : quel écran est affiché ? ---------- */
+const aideR=(k,extra)=>({k,...AIDE[k],...(extra||{})});
+function aideForm(bf){
+  const t=AIDE_FORMS[bf.id]||AIDE.modele;
+  const admin=[`La barre <b>Mode admin</b>, en haut du formulaire, mène à ce qui le règle : ${bf.sets.map(k=>'<b>'+esc(SETTINGS[k].l)+'</b>').join(', ')}.`,
+    '<b>Épingler à l’accueil</b>, dans la même barre, le met dans « Les plus utilisés ».',
+    'Administration › Formulaires et modèles › <b>Masquer</b> le retire de la liste de l’équipe.',...(t.admin||[])];
+  return {k:'form:'+bf.id,titre:bf.titre,but:t.but,etapes:t.etapes,admin};
+}
+function aideModele(f){
+  const lib=!!f.modele_src, d=String(f.description||'').trim();
+  return {k:'modele:'+f.id,titre:f.titre||'Formulaire',
+    but:(d?esc(d):AIDE.modele.but)+(lib?' Ce formulaire vient de la bibliothèque de modèles de Librejo : relisez le document avant de le remettre.':''),
+    etapes:AIDE.modele.etapes,
+    admin:[...AIDE.modele.admin,...(lib?['C’est une trame de la bibliothèque : faites relire son texte (direction, juriste ou médecin) avant usage.']:[])]};
+}
+function aideCtx(){
+  const wz=document.getElementById('wiz');
+  if(wz&&!wz.hidden&&WZ){ const s=Math.min(Math.max(+WZ.step||0,0),WZ_STEPS.length-1);
+    return {k:'wiz:'+s,titre:'Assistant de démarrage : '+WZ_STEPS[s],sous:`Étape ${s+1} sur ${WZ_STEPS.length}`,...AIDE_WIZ[s],fenetre:true}; }
+  const md=$('#modal'), box=$('#modal-box');
+  if(!md.hidden&&box){
+    if(box.classList.contains('deliver')){ const t=box.querySelector('#modal-title'); return aideR('pret',{titre:(t&&t.textContent.trim())||'Document prêt',fenetre:true}); }
+    if(box.querySelector('#ck-box')) return SANS?aideR('sans',{k:'sans-pourquoi',fenetre:true}):aideR('checks',{fenetre:true});
+  }
+  if(tab==='docs'){
+    if(String(query||'').trim()) return aideR('recherche');
+    if(filter==='recent') return aideR('accueil');
+    if(filter==='kits') return aideR('kits');
+    const [fc,fs]=splitDest(filter); return aideR('categorie',{k:'cat:'+filter,titre:(catName(fc)||'Catégorie')+(fs?' › '+fs:'')});
+  }
+  if(tab==='forms'){
+    if(formView&&String(formView).startsWith('cerfa:')){ const d=DATA.documents.find(x=>'cerfa:'+x.id===formView); return aideR('cerfa',{k:'cerfa:'+formView,titre:(d&&d.titre)||'Cerfa pré-rempli'}); }
+    const f=formView&&DATA.formulaires.find(x=>x.id===formView); if(f) return aideModele(f);
+    return aideR(SANS?'sans':'formulaires');
+  }
+  const bf=BUILTIN_FORMS.find(x=>x.tab===tab); if(bf) return aideForm(bf);
+  if(tab==='semaine') return aideR('semaine');
+  if(tab==='annu') return aideR('annuaire');
+  if(tab==='admin'){
+    if(asub==='forms') return aideR(fdraft?'editeur':'adminForms');
+    if(asub==='syn') return aideR('syn');
+    if(asub==='ordo') return aideR('ordoListes');
+    const r=AIDE_REGLAGES[rsec]; if(r) return {k:'reg:'+rsec,...r,admin:AIDE_REG_ADMIN};
+  }
+  const h=document.querySelector('main>section.panel:not([hidden]) h2.sec');
+  return aideR('defaut',{k:'defaut:'+tab,titre:(h&&h.textContent.trim())||($('#pagetitle')||{}).textContent||'Librejo'});
+}
+/* ---------- Aide : bouton, panneau, clavier ---------- */
+const AIDE_ICO=svg('<path d="M9 9.2a3 3 0 0 1 5.8 1c0 2-3 2.6-3 4.6"/><path d="M12 18.4h.01"/>');
+let aideBtn=null, aidePan=null, aideOn=false, aideKey='', aideOpener=null, aideT=0, aideEscOverlay=false;
+function aideHTML(c){
+  const adm=isAdmin&&!SANS&&c.admin&&c.admin.length, guide=!c.fenetre&&$('#modal').hidden;
+  return `<div class="aide-h"><div><h2 id="aide-t" tabindex="-1">${esc(c.titre||'Librejo')}</h2>${c.sous?`<p class="aide-sous">${esc(c.sous)}</p>`:''}</div>
+      <button type="button" class="secondary sm" id="aide-x">Fermer</button></div>
+    <div class="aide-b">
+      <h3>À quoi sert cette page</h3><p>${c.but}</p>
+      <h3>Comment faire</h3><ol class="aide-steps">${(c.etapes||[]).map(x=>`<li><span>${x}</span></li>`).join('')}</ol>
+      ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
+    </div>
+    <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer</small></div>`;
+}
+/* L'aide suit la fenêtre ouverte (assistant, fenêtre de dialogue) : elle y est rattachée pour rester atteignable au clavier */
+function aideHost(){
+  if(!aideBtn) return;
+  const wz=document.getElementById('wiz'), md=$('#modal');
+  const host=wz&&!wz.hidden?wz:!md.hidden?md:document.body;
+  if(aideBtn.parentNode===host&&aidePan.parentNode===host) return;
+  const a=document.activeElement, onBtn=a===aideBtn, inPan=aidePan.contains(a);
+  host.appendChild(aideBtn); host.appendChild(aidePan);
+  if(onBtn) aideBtn.focus(); else if(inPan){ const t=$('#aide-t'); t&&t.focus(); }
+}
+function aideDraw(c){ aideKey=c.k+(isAdmin?'|admin':''); aidePan.innerHTML=aideHTML(c); }
+function aideShow(){
+  aideOpener=document.activeElement; aideOn=true; aideDraw(aideCtx());
+  aidePan.hidden=false; aideBtn.setAttribute('aria-expanded','true'); document.body.classList.add('aide-on');
+  aideHost(); const t=$('#aide-t'); t&&t.focus();
+}
+function aideHide(){
+  if(!aideOn) return;
+  aideOn=false; aidePan.hidden=true; aidePan.innerHTML=''; aideBtn.setAttribute('aria-expanded','false'); document.body.classList.remove('aide-on');
+  /* le focus revient au bouton « ? » ; ouverte par F1 depuis un champ, l'aide rend la main à ce champ */
+  const o=aideOpener; aideOpener=null;
+  (o&&o!==document.body&&o.isConnected&&!aidePan.contains(o)&&o.offsetParent!==null?o:aideBtn).focus();
+}
+function aideToggle(viaKey){ if(aideOn){ aideHide(); return; } aideShow(); if(!viaKey) aideOpener=aideBtn; }
+/* Changement d'écran (onglet, formulaire, section des réglages, étape de l'assistant…) : l'aide se met à jour */
+function aideRefresh(){
+  aideHost();
+  if(!aideOn) return;
+  const c=aideCtx(), k=c.k+(isAdmin?'|admin':''); if(k===aideKey) return;
+  const inPan=aidePan.contains(document.activeElement);
+  aideDraw(c); if(inPan){ const t=$('#aide-t'); t&&t.focus(); }
+}
+function aideInit(){
+  aideBtn=document.createElement('button'); aideBtn.type='button'; aideBtn.id='aidebtn';
+  aideBtn.setAttribute('aria-label','Aide sur cette page'); aideBtn.title='Aide sur cette page (F1)';
+  aideBtn.setAttribute('aria-keyshortcuts','F1'); aideBtn.setAttribute('aria-expanded','false'); aideBtn.setAttribute('aria-controls','aide');
+  aideBtn.innerHTML=AIDE_ICO;
+  aidePan=document.createElement('aside'); aidePan.id='aide'; aidePan.hidden=true; aidePan.setAttribute('aria-label','Aide sur cette page');
+  document.body.append(aideBtn,aidePan); document.body.classList.add('has-aide');
+  aideBtn.addEventListener('click',()=>aideToggle(false));
+  aidePan.addEventListener('click',e=>{
+    if(e.target.closest('#aide-x')){ aideHide(); return; }
+    if(e.target.closest('#aide-guide')){ aideOpener=null; aideHide(); openGuide(0); }
+  });
+  /* taper une lettre dans le panneau ne doit pas lancer la recherche de la page */
+  aidePan.addEventListener('keydown',e=>{ if(e.key.length===1&&e.key!=='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey) e.stopPropagation(); });
+  /* F1 (au lieu de l'aide du navigateur) et Échap : avant les autres raccourcis */
+  document.addEventListener('keydown',e=>{
+    if(e.key==='F1'){ e.preventDefault(); e.stopImmediatePropagation(); if(document.getElementById('pdfprev')||document.getElementById('cfdlg')) return; aideToggle(true); return; }
+    if(e.key!=='Escape'||!aideOn) return;
+    if(aidePan.contains(e.target)||e.target===aideBtn){ e.preventDefault(); e.stopImmediatePropagation(); aideHide(); return; }
+    aideEscOverlay=!$('#modal').hidden||!!document.getElementById('menu')||!!document.getElementById('pdfprev')||!!document.getElementById('cfdlg')||!!document.getElementById('mguard')||!!(e.target.closest&&e.target.closest('details[open]'));
+  },true);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&aideOn&&!aideEscOverlay&&!e.defaultPrevented) aideHide(); aideEscOverlay=false; });
+  new MutationObserver(ms=>{
+    if(ms.every(m=>aidePan.contains(m.target)||m.target===aideBtn)) return;
+    aideHost(); // une fenêtre s'ouvre ou se ferme : l'aide la suit tout de suite (avant que le focus y revienne)
+    clearTimeout(aideT); aideT=setTimeout(aideRefresh,60);
+  }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden','aria-selected','aria-pressed','aria-current']});
+}
+
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
@@ -8700,6 +9193,7 @@ setTab(tab);
 renderDocs();
 renderDeliv();
 updateConn();
+aideInit();
 if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().catch(e=>console.warn('vérifications',e)),700);
 else setTimeout(()=>cfStartup().catch(e=>console.warn('modifications simultanées',e)),900);
 })();
