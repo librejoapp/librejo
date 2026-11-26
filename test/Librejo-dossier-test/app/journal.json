@@ -1,0 +1,50 @@
+[
+ {
+  "quand": "2026-09-15T15:40:00.000Z",
+  "qui": "Camille",
+  "poste": "",
+  "action": "Nouvelle version",
+  "objet": "Règlement de fonctionnement",
+  "detail": "v1 → v2"
+ },
+ {
+  "quand": "2026-10-12T10:00:00.000Z",
+  "qui": "Sacha",
+  "poste": "",
+  "action": "Nouvelle version",
+  "objet": "Horaires et permanences",
+  "detail": "v2 → v3"
+ },
+ {
+  "quand": "2026-11-03T11:20:00.000Z",
+  "qui": "Camille",
+  "poste": "",
+  "action": "Relecture",
+  "objet": "Livret d’accueil",
+  "detail": "relu, prochaine relecture dans 12 mois"
+ },
+ {
+  "quand": "2026-11-18T14:05:00.000Z",
+  "qui": "Sacha",
+  "poste": "",
+  "action": "Ajout",
+  "objet": "Plaintes et réclamations : procédure",
+  "detail": "à valider"
+ },
+ {
+  "quand": "2026-11-20T09:30:00.000Z",
+  "qui": "Camille",
+  "poste": "",
+  "action": "Sauvegarde",
+  "objet": "",
+  "detail": "complète · 31 fichiers"
+ },
+ {
+  "quand": "2026-11-25T16:10:00.000Z",
+  "qui": "Camille",
+  "poste": "",
+  "action": "Nouvelle version",
+  "objet": "Aide alimentaire : adresses utiles",
+  "detail": "v3 → v4"
+ }
+]

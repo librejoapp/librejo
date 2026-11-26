@@ -15,12 +15,12 @@
   <div class="container">
     <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
     <nav aria-label="Pages du site">
-      <a href="installer.html">Installer</a>
       <a href="guides.html">Guides</a>
       <a href="faq.html">Questions</a>
       <a href="telecharger.html" aria-current="page">Télécharger</a>
+      <a href="projet.html">Le projet</a>
     </nav>
-    <a class="btn btn--card" href="appli/?demo">Essayer la démo</a>
+    <a class="btn btn--go" href="installer.html">Installer</a>
   </div>
 </header>
 <main id="contenu">
@@ -34,9 +34,9 @@
 <section class="part reveal">
   <div class="container">
     <ul class="dl">
-      <li><h2>Le dossier de test</h2><p>Une structure fictive, l’Association des Tilleuls, pour essayer sans risque. Mot de passe admin : test.</p><div class="actions"><a class="btn btn--go" href="telechargements/Librejo-dossier-test.zip" download>Télécharger le dossier de test</a><a class="btn btn--card" href="appli/?demo">Ou essayez-le directement en ligne</a></div><small>Fichier zip, à décompresser avant de le choisir dans Librejo. En ligne, rien à installer : la démo s’ouvre sur cette structure fictive, et tout reste dans votre navigateur.</small></li>
+      <li id="test"><h2>Le dossier de test</h2><p>Une structure fictive, l’Association des Tilleuls, avec vingt et un documents inventés. Mot de passe admin : test.</p><a class="btn btn--go" href="telechargements/Librejo-dossier-test.zip" download>Télécharger le dossier de test</a><small>Fichier zip, à décompresser avant de le choisir dans Librejo.</small></li>
       <li><h2>Le code source</h2><p>Tout le code de Librejo est public. Chacun peut le lire, le vérifier et proposer des améliorations.</p><a class="btn btn--card" href="https://github.com/librejoapp/librejo">Voir le code sur GitHub</a></li>
-      <li><h2>La version hors ligne</h2><p>Pour les structures sans Internet : un dossier à copier, sans installation.</p><p class="muted">Bientôt disponible.</p></li>
+      <li><h2>La version hors ligne</h2><p>Pour les structures sans Internet, un dossier à copier. Elle est en préparation : écrivez-nous si vous en avez besoin.</p><a class="btn btn--card" href="mailto:librejo@proton.me?subject=Librejo%20hors%20ligne">Nous écrire</a></li>
       <li><h2>Les guides à imprimer</h2><p>Trois documents en PDF, à imprimer ou à envoyer à vos collègues.</p><div class="actions"><a class="btn btn--card" href="guides/guide-equipe.pdf" target="_blank" rel="noopener">Guide de l’équipe</a><a class="btn btn--card" href="guides/guide-admin.pdf" target="_blank" rel="noopener">Guide de l’admin</a><a class="btn btn--card" href="guides/installer-librejo.pdf" target="_blank" rel="noopener">Fiche d’installation</a></div></li>
     </ul>
   </div>
@@ -51,7 +51,7 @@
     </div>
     <div>
       <h2>Démarrer</h2>
-      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="appli/?demo">Essayer la démo</a></li></ul>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="telecharger.html#test">Dossier de test</a></li></ul>
     </div>
     <div>
       <h2>Apprendre</h2>
@@ -59,7 +59,7 @@
     </div>
     <div>
       <h2>Le projet</h2>
-      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+      <ul><li><a href="projet.html">Qui sommes-nous</a></li><li><a href="mailto:librejo@proton.me">Nous écrire</a></li><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
     </div>
   </div>
 </footer>
@@ -70,6 +70,12 @@ if ('IntersectionObserver' in window) {
   const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
 }
+// Sur téléphone : s'envoyer le lien du site (partage du téléphone, sinon mail)
+document.querySelectorAll('[data-sendlink]').forEach((a) => {
+  const url = location.origin + location.pathname.replace(/[^/]*$/, '');
+  a.href = 'mailto:?subject=' + encodeURIComponent('Librejo, à ouvrir sur un ordinateur') + '&body=' + encodeURIComponent(url);
+  a.addEventListener('click', (e) => { if (navigator.share) { e.preventDefault(); navigator.share({ title: 'Librejo', url }).catch(() => {}); } });
+});
 const ready = (s) => s.classList.add('ready');
 document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
 

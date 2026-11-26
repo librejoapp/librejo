@@ -15,12 +15,12 @@
   <div class="container">
     <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
     <nav aria-label="Pages du site">
-      <a href="installer.html" aria-current="page">Installer</a>
       <a href="guides.html">Guides</a>
       <a href="faq.html">Questions</a>
       <a href="telecharger.html">Télécharger</a>
+      <a href="projet.html">Le projet</a>
     </nav>
-    <a class="btn btn--card" href="appli/?demo">Essayer la démo</a>
+    <a class="btn btn--go" aria-current="page" href="installer.html">Installer</a>
   </div>
 </header>
 <main id="contenu">
@@ -39,7 +39,8 @@
       <li><h3>Choisissez le dossier</h3><p>Le dossier partagé de votre structure.</p></li>
       <li><h3>Suivez l’assistant</h3><p>Nom, logo, catégories, mot de passe.</p></li>
     </ol>
-    <div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--go" href="appli/">Ouvrir Librejo</a><a class="btn btn--card" href="appli/?demo">Pas encore prêt ? Essayez la démo</a><a class="btn btn--card" href="guides/installer-librejo.pdf" target="_blank" rel="noopener">La fiche d’installation en PDF</a></div>
+    <div class="actions" style="margin-top: var(--space-xl)"><a class="btn btn--go desk-only" href="appli/">Ouvrir Librejo</a><a class="btn btn--card" href="guides/installer-librejo.pdf" target="_blank" rel="noopener">La fiche d’installation en PDF</a></div>
+    <p class="phone"><a class="btn btn--go" data-sendlink href="mailto:?subject=Librejo&amp;body=https%3A%2F%2Flibrejoapp.github.io%2F">M’envoyer le lien</a><small>Librejo s’utilise sur un ordinateur. Envoyez-vous le lien pour l’ouvrir au bureau.</small></p>
   </div>
 </section>
 <section class="part reveal guide">
@@ -61,7 +62,7 @@
     </div>
     <div>
       <h2>Démarrer</h2>
-      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="appli/?demo">Essayer la démo</a></li></ul>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="telecharger.html#test">Dossier de test</a></li></ul>
     </div>
     <div>
       <h2>Apprendre</h2>
@@ -69,7 +70,7 @@
     </div>
     <div>
       <h2>Le projet</h2>
-      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+      <ul><li><a href="projet.html">Qui sommes-nous</a></li><li><a href="mailto:librejo@proton.me">Nous écrire</a></li><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
     </div>
   </div>
 </footer>
@@ -80,6 +81,12 @@ if ('IntersectionObserver' in window) {
   const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
 }
+// Sur téléphone : s'envoyer le lien du site (partage du téléphone, sinon mail)
+document.querySelectorAll('[data-sendlink]').forEach((a) => {
+  const url = location.origin + location.pathname.replace(/[^/]*$/, '');
+  a.href = 'mailto:?subject=' + encodeURIComponent('Librejo, à ouvrir sur un ordinateur') + '&body=' + encodeURIComponent(url);
+  a.addEventListener('click', (e) => { if (navigator.share) { e.preventDefault(); navigator.share({ title: 'Librejo', url }).catch(() => {}); } });
+});
 const ready = (s) => s.classList.add('ready');
 document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
 

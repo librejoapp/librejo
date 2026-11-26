@@ -15,12 +15,12 @@
   <div class="container">
     <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
     <nav aria-label="Pages du site">
-      <a href="installer.html">Installer</a>
       <a href="guides.html">Guides</a>
       <a href="faq.html" aria-current="page">Questions</a>
       <a href="telecharger.html">Télécharger</a>
+      <a href="projet.html">Le projet</a>
     </nav>
-    <a class="btn btn--card" href="appli/?demo">Essayer la démo</a>
+    <a class="btn btn--go" href="installer.html">Installer</a>
   </div>
 </header>
 <main id="contenu">
@@ -32,7 +32,7 @@
 </section>
 
 <section class="part reveal">
-  <div class="container">
+  <div class="container askgrid">
     <div class="faq">
       <details><summary>Est-ce vraiment gratuit ?</summary><p>Oui. Librejo est gratuit et libre : pas d’abonnement, et le code est public.</p></details>
       <details><summary>Où sont nos documents ?</summary><p>Dans le dossier de votre structure, et nulle part ailleurs. Le site ne sert que l’application : il ne reçoit rien.</p></details>
@@ -43,8 +43,13 @@
       <details><summary>Peut-on faire des ordonnances ?</summary><p>Librejo propose une page à l’en-tête du médecin, qu’il rédige, imprime et signe. Ce n’est ni une ordonnance numérique ni une aide à la prescription.</p></details>
       <details><summary>Les modèles sont-ils fiables ?</summary><p>Ce sont des trames, écrites à partir de sources publiques. Faites-les relire par votre direction, un juriste ou un médecin avant de vous en servir.</p></details>
       <details><summary>Et si Librejo s’arrête un jour ?</summary><p>Vos documents restent des fichiers ordinaires, dans des dossiers ordinaires. Vous les gardez, avec ou sans Librejo.</p></details>
-      <details><summary>Où en est le projet ?</summary><p>Librejo est en développement actif, gratuit et libre. Essayez la démo ou le dossier de test, et écrivez-nous vos retours : <a href="mailto:librejo@proton.me">librejo@proton.me</a>.</p></details>
+      <details><summary>Où en est le projet ?</summary><p>Librejo est en développement actif, gratuit et libre. Essayez-le d’abord avec le <a href="telecharger.html#test">dossier de test</a>, et écrivez-nous vos retours : <a href="mailto:librejo@proton.me">librejo@proton.me</a>.</p></details>
     </div>
+    <aside class="note ask">
+      <h2>Une autre question ?</h2>
+      <p>Écrivez-nous, nous répondons à chaque message.</p>
+      <a class="btn btn--card" href="mailto:librejo@proton.me">librejo@proton.me</a>
+    </aside>
   </div>
 </section>
 
@@ -57,7 +62,7 @@
     </div>
     <div>
       <h2>Démarrer</h2>
-      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="appli/?demo">Essayer la démo</a></li></ul>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="telecharger.html#test">Dossier de test</a></li></ul>
     </div>
     <div>
       <h2>Apprendre</h2>
@@ -65,7 +70,7 @@
     </div>
     <div>
       <h2>Le projet</h2>
-      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+      <ul><li><a href="projet.html">Qui sommes-nous</a></li><li><a href="mailto:librejo@proton.me">Nous écrire</a></li><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
     </div>
   </div>
 </footer>
@@ -76,6 +81,12 @@ if ('IntersectionObserver' in window) {
   const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
 }
+// Sur téléphone : s'envoyer le lien du site (partage du téléphone, sinon mail)
+document.querySelectorAll('[data-sendlink]').forEach((a) => {
+  const url = location.origin + location.pathname.replace(/[^/]*$/, '');
+  a.href = 'mailto:?subject=' + encodeURIComponent('Librejo, à ouvrir sur un ordinateur') + '&body=' + encodeURIComponent(url);
+  a.addEventListener('click', (e) => { if (navigator.share) { e.preventDefault(); navigator.share({ title: 'Librejo', url }).catch(() => {}); } });
+});
 const ready = (s) => s.classList.add('ready');
 document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
 
