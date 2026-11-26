@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-26T08:17:26+00:00",
+  "generatedAt": "2026-11-26T08:56:00+00:00",
   "title": "Design System: Librejo",
   "extensions": {
     "colorMeta": {
@@ -162,28 +162,28 @@
         "role": "neutral",
         "displayName": "Texte sur nuit",
         "tonalRamp": [
-          "#202d2b",
-          "#334c48",
-          "#456d66",
-          "#578f86",
-          "#81b1a9",
-          "#b3ccc8",
-          "#d8e4e2",
-          "#f0f4f4"
+          "#3c3e3e",
+          "#6a7070",
+          "#959c9c",
+          "#bbc4c4",
+          "#e0e7e7",
+          "#eaefef",
+          "#f4f7f7",
+          "#fcfcfc"
         ]
       },
       "texte-sur-nuit-2": {
         "role": "neutral",
         "displayName": "Texte sur nuit 2",
         "tonalRamp": [
-          "#212b2a",
-          "#364947",
-          "#4a6864",
-          "#5e8883",
-          "#87aba6",
-          "#b6c9c6",
-          "#dae2e1",
-          "#f1f4f3"
+          "#353a39",
+          "#5f6766",
+          "#859090",
+          "#a7b5b4",
+          "#cedada",
+          "#dee6e6",
+          "#eff3f2",
+          "#fafbfb"
         ]
       },
       "creme": {
@@ -381,6 +381,48 @@
           "#e2e0d2",
           "#f4f3ec"
         ]
+      },
+      "ambre-repere": {
+        "role": "secondary",
+        "displayName": "Ambre repère",
+        "tonalRamp": [
+          "#33230d",
+          "#5b3f17",
+          "#7f5820",
+          "#a06f28",
+          "#c89e62",
+          "#dabe96",
+          "#eddfcb",
+          "#f9f5ee"
+        ]
+      },
+      "danger-texte": {
+        "role": "neutral",
+        "displayName": "Texte danger",
+        "tonalRamp": [
+          "#2c0e03",
+          "#4e1904",
+          "#6d2306",
+          "#892c08",
+          "#b56546",
+          "#ce9884",
+          "#e6ccc2",
+          "#f7efeb"
+        ]
+      },
+      "danger-fond": {
+        "role": "neutral",
+        "displayName": "Fond danger",
+        "tonalRamp": [
+          "#46413f",
+          "#7e7471",
+          "#b0a39e",
+          "#ddcdc7",
+          "#fceee9",
+          "#fdf4f0",
+          "#fefaf8",
+          "#fffdfd"
+        ]
       }
     },
     "typographyMeta": {
@@ -394,7 +436,7 @@
       },
       "corps": {
         "displayName": "Corps",
-        "purpose": "Texte courant et champs."
+        "purpose": "Texte courant et champs. Tailles en rem (jetons --fs-*) : elles suivent la taille de police du navigateur ; plancher de lecture 12px."
       },
       "aide": {
         "displayName": "Aide",
@@ -411,26 +453,46 @@
     },
     "shadows": [
       {
+        "name": "petit-relief",
+        "value": "0 1px 3px rgba(90,60,20,.12)",
+        "purpose": "Choix actif d’un groupe, étape en cours, pastille numérotée (--shadow-soft)."
+      },
+      {
+        "name": "page-posee",
+        "value": "0 1px 4px rgba(90,60,20,.16)",
+        "purpose": "Pages de document dans les comparaisons et aperçus (--shadow-sheet)."
+      },
+      {
         "name": "carte-posee",
         "value": "0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07)",
-        "purpose": "Cartes au repos."
+        "purpose": "Cartes au repos (--shadow-card)."
       },
       {
         "name": "carte-soulevee",
         "value": "0 10px 24px rgba(90,60,20,.12)",
-        "purpose": "Survol, menus déroulants."
+        "purpose": "Survol, menus déroulants, aperçu en direct (--shadow-raised)."
       },
       {
         "name": "fenetre",
-        "value": "0 18px 40px -14px rgba(13,42,94,.45)",
-        "purpose": "Fenêtres modales. Valeur marine héritée de Docubus, à réchauffer."
+        "value": "0 18px 40px -14px rgba(70,45,12,.38)",
+        "purpose": "Fenêtres modales, volets, bulles, assistant (--shadow-pop)."
+      },
+      {
+        "name": "voile",
+        "value": "rgba(46,34,16,.45)",
+        "purpose": "Voile sous une fenêtre (--scrim)."
+      },
+      {
+        "name": "voile-fort",
+        "value": "rgba(46,34,16,.74)",
+        "purpose": "Voile sous l’aperçu d’un PDF (--scrim-strong)."
       }
     ],
     "motion": [
       {
         "name": "reduit",
-        "value": "prefers-reduced-motion: transitions et animations coupées",
-        "purpose": "Respect du réglage système."
+        "value": "prefers-reduced-motion: transitions et animations coupées (une seule règle globale)",
+        "purpose": "Respect du réglage système ; l’éclair de repère devient un contour ambre repère."
       }
     ],
     "breakpoints": [
@@ -456,7 +518,7 @@
       "refersTo": "bouton-principal-alt",
       "description": "Action principale sur fond clair quand l'ambre est déjà pris.",
       "html": "<button class=\"ds-btn-alt\">Entrer</button>",
-      "css": ".ds-btn-alt{background:#174f4c;color:#fff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
+      "css": ".ds-btn-alt{background:#174f4c;color:#ffffff;border:0;border-radius:8px;height:40px;padding:0 16px;font:700 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-alt:hover{background:#1F6F6B}.ds-btn-alt:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Bouton secondaire",
@@ -464,7 +526,7 @@
       "refersTo": "bouton-principal",
       "description": "Actions secondaires (Annuler, Revenir).",
       "html": "<button class=\"ds-btn-2\">Revenir sans effacer</button>",
-      "css": ".ds-btn-2{background:#fff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
+      "css": ".ds-btn-2{background:#ffffff;color:#17302F;border:1px solid #d2cbbb;border-radius:8px;height:40px;padding:0 16px;font:600 16px Asap,system-ui,sans-serif;cursor:pointer}.ds-btn-2:hover{background:#faf8f3}.ds-btn-2:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Champ",
@@ -472,7 +534,7 @@
       "refersTo": "champ",
       "description": "Champ de formulaire, 48px, halo bleu canard au focus.",
       "html": "<label class=\"ds-f\"><span>Nom</span><input class=\"ds-in\" dir=\"auto\" value=\"NGUYỄN Thị\"></label>",
-      "css": ".ds-f{display:grid;gap:6px;font:600 14px Asap,system-ui,sans-serif;color:#17302F}.ds-in{height:48px;border:1px solid #d2cbbb;border-radius:14px;background:#fff;color:#17302F;padding:0 12px;font:400 16px Asap,system-ui,sans-serif}.ds-in:focus{outline:none;border-color:#1F6F6B;box-shadow:0 0 0 3px rgba(31,111,107,.3)}"
+      "css": ".ds-f{display:grid;gap:6px;font:600 14px Asap,system-ui,sans-serif;color:#17302F}.ds-in{height:48px;border:1px solid #d2cbbb;border-radius:14px;background:#ffffff;color:#17302F;padding:0 12px;font:400 16px Asap,system-ui,sans-serif}.ds-in:focus{outline:none;border-color:#1F6F6B;box-shadow:0 0 0 3px rgba(31,111,107,.3)}"
     },
     {
       "name": "Carte de formulaire",
@@ -480,7 +542,7 @@
       "refersTo": "carte",
       "description": "Fiche posée sur le fond crème, liseré haut en intercalaire.",
       "html": "<div class=\"ds-card\"><h3>Bon d’orientation CCAS</h3><p>Domiciliation, CSS, RSA : en moins d’une minute.</p><span class=\"ds-badge\">Formulaire</span></div>",
-      "css": ".ds-card{background:#fff;color:#17302F;border:1px solid #ece5d8;border-top:4px solid #174f4c;border-radius:14px;box-shadow:0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07);padding:16px;display:grid;gap:8px;font-family:Asap,system-ui,sans-serif;max-width:300px;transition:box-shadow .2s}.ds-card:hover{box-shadow:0 10px 24px rgba(90,60,20,.12)}.ds-card h3{margin:0;font-size:18px}.ds-card p{margin:0;color:#46595a;font-size:14px}.ds-badge{justify-self:start;background:#fcf1dc;color:#8a5a0b;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700}"
+      "css": ".ds-card{background:#ffffff;color:#17302F;border:1px solid #ece5d8;border-top:4px solid #174f4c;border-radius:14px;box-shadow:0 1px 2px rgba(90,60,20,.05),0 6px 20px rgba(90,60,20,.07);padding:16px;display:grid;gap:8px;font-family:Asap,system-ui,sans-serif;max-width:300px;transition:box-shadow .2s}.ds-card:hover{box-shadow:0 10px 24px rgba(90,60,20,.12)}.ds-card h3{margin:0;font-size:18px}.ds-card p{margin:0;color:#46595a;font-size:14px}.ds-badge{justify-self:start;background:#fcf1dc;color:#8a5a0b;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700}"
     },
     {
       "name": "Pastille de choix",
@@ -488,15 +550,15 @@
       "refersTo": "pastille",
       "description": "Choix rapide ; état choisi par remplissage et coche.",
       "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">✓ Sans domicile</button><button class=\"ds-chip\" aria-pressed=\"false\">Hébergé(e) chez un tiers</button></div>",
-      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#fff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{border:1px solid #d2cbbb;background:#ffffff;color:#17302F;border-radius:999px;min-height:36px;padding:0 14px;font:600 14px Asap,system-ui,sans-serif;cursor:pointer}.ds-chip[aria-pressed=\"true\"]{background:#1F6F6B;border-color:#1F6F6B;color:#fff}.ds-chip:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     },
     {
       "name": "Menu latéral",
       "kind": "nav",
       "refersTo": "menu-lateral",
-      "description": "Le meuble du bureau : clair par défaut, stable, toujours au même endroit.",
-      "html": "<nav class=\"ds-side\"><div class=\"ds-brand\">librejo</div><button aria-selected=\"true\">Accueil</button><button>Formulaires</button><button>Impression rapide</button><button>Annuaire</button></nav>",
-      "css": ".ds-side{background:#f0eee4;border-right:1px solid #ece5d8;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#174f4c;padding:0 8px 14px}.ds-side button{all:unset;color:#174f4c;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.7)}.ds-side button[aria-selected=\"true\"]{background:#fff;font-weight:700}.ds-side button:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
+      "description": "Le meuble du bureau : clair par défaut, stable, toujours au même endroit. Une navigation (pas des onglets) : aria-current=\"page\" sur la page affichée, Tab sur chaque entrée, flèches en plus.",
+      "html": "<nav class=\"ds-side\" aria-label=\"Pages de Librejo\"><div class=\"ds-brand\">librejo</div><button aria-current=\"page\">Accueil</button><button>Formulaires</button><button>Impression rapide</button><button>Annuaire</button></nav>",
+      "css": ".ds-side{background:#f0eee4;border-right:1px solid #ece5d8;width:220px;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-radius:14px}.ds-brand{font:700 24px Poppins,system-ui,sans-serif;color:#174f4c;padding:0 8px 14px}.ds-side button{all:unset;color:#174f4c;font:600 16px Asap,system-ui,sans-serif;padding:10px 12px;border-radius:8px;cursor:pointer}.ds-side button:hover{background:rgba(255,255,255,.7)}.ds-side button[aria-current=\"page\"]{background:#ffffff;font-weight:700}.ds-side button:focus-visible{outline:3px solid #174f4c;outline-offset:2px}"
     }
   ],
   "narrative": {
@@ -517,17 +579,17 @@
       },
       {
         "name": "The Adjusted Colour Rule",
-        "body": "Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée. Aucune couleur de structure ne passe sous 4,5:1 pour du texte.",
+        "body": "Quand une structure choisit ses couleurs (Réglages › Apparence), Librejo corrige la couleur pour rester lisible (WCAG AA) et affiche la couleur réellement appliquée : 4,5:1 au moins pour le texte (menu clair et sombre compris), 3:1 pour les repères non textuels (ambre repère, --accent-line). Les couleurs du papier à en-tête des PDF suivent la même règle à l’impression : titres à 4,5:1 sur le blanc, traits à 2:1, couleur imprimée affichée.",
         "section": "colors"
       },
       {
         "name": "The Enseigne Rule",
-        "body": "Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. (Le nom est affiché par le logo SVG en tracés. La police Permanent Marker, `--f-brand` et `.wordmark`, hérités de Docubus, sont du code mort à retirer.)",
+        "body": "Poppins est l'enseigne : il écrit « librejo » et rien d'autre. Toute l'interface parle en Asap. Le nom est affiché par le logo SVG en tracés : aucune police d’affichage n’est chargée (le Permanent Marker de Docubus a été retiré).",
         "section": "typography"
       },
       {
         "name": "The Warm Shadow Rule",
-        "body": "Les ombres sont chaudes et diffuses, jamais décalées ni dures, jamais en lueur colorée.",
+        "body": "Les ombres et les voiles sont chauds (brun doré) et diffus, jamais décalés ni durs, jamais gris, marine ou en lueur colorée.",
         "section": "elevation & depth"
       },
       {
@@ -542,10 +604,11 @@
       "Do écrire tout le texte de l'interface en Asap, et le nom « librejo » en Poppins Bold.",
       "Do libeller les actions par leur verbe (« Imprimer », « Créer le document ») plutôt que par une icône seule.",
       "Do viser RGAA / WCAG AA : 4,5:1 pour le texte, focus de 3px en bleu canard nuit sur fond clair et en ambre sur fond sombre (3:1 au moins sur chaque fond), titres réels, fenêtres vraiment modales (fond inerte, Tab qui boucle).",
-      "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères."
+      "Do dire ce qui est enregistré ou non au moment où ça compte (rappels, MSSanté), dans un encadré, pas en petits caractères.",
+      "Do passer par les jetons --fs-* (en rem) pour toute taille de texte, et par les jetons de couleur et d’ombre pour tout le reste."
     ],
     "donts": [
-      "Don't utiliser le Permanent Marker ni le nom incliné hérités de Docubus.",
+      "Don't réintroduire une police d'affichage ou le nom incliné de Docubus : le nom est le logo SVG.",
       "Don't introduire une deuxième couleur chaude ou colorer de grandes surfaces en ambre.",
       "Don't utiliser d'ombres dures, décalées, grises ou en lueur colorée.",
       "Don't coder une couleur en dur hors des jetons : une couleur codée en dur ne suit pas les couleurs choisies par la structure.",
