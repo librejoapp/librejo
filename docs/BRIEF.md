@@ -283,6 +283,8 @@ Le code est publié sur un site statique (par exemple GitHub Pages, comme le jeu
 
 Dans le dépôt `librejoapp/librejo` (GitHub Pages) : le site de présentation est à la racine (https://librejoapp.github.io/librejo/), l'application dans `appli/` (https://librejoapp.github.io/librejo/appli/, avec son manifeste et son service worker de portée `appli/`). Le `sw.js` de la racine ne sert qu'à retirer l'ancien service worker des postes qui avaient l'application à la racine.
 
+**Démo en ligne (26/11/2026)** : https://librejoapp.github.io/librejo/appli/?demo, l'application elle-même sur la structure fictive (zip de `telechargements/` copié dans le stockage privé du navigateur), avec un bandeau « Démo », « Remettre à zéro » et « Quitter la démo », sans toucher au dossier ni aux préférences du poste ; marche aussi dans Firefox et Safari récents (voir README, « Essayer »).
+
 1. Aller sur le site avec Edge ou Chrome et cliquer sur **Installer**.
 2. L'icône apparaît sur le bureau et dans le menu Démarrer. L'outil s'ouvre dans sa propre fenêtre.
 3. L'assistant démarre et demande de choisir le dossier (NAS, OneDrive, disque…).

@@ -1312,6 +1312,26 @@ html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair
 .sd-off{margin:var(--sp-4) 4px 0;padding:var(--sp-3);border:1px dashed currentColor;border-radius:var(--r-md);opacity:.72;font-size:var(--fs-2)}
 .sd-off-t{margin:0 0 4px;font-weight:700}
 .sd-off ul{margin:0;padding-left:18px;line-height:1.6}
+/* Démo en ligne (appli/?demo) : bandeau permanent en haut, à droite du menu, aligné sur le contenu.
+   Il laisse la place du bouton « ? » (72px), du badge du mode admin et du panneau d'aide, qui sont fixes. */
+#demobar{display:flex;align-items:flex-start;gap:var(--sp-3);margin-left:var(--sbw);padding:var(--sp-3) 72px var(--sp-3) var(--sp-7);background:var(--accent-soft);border-bottom:1px solid var(--warn-line);color:var(--text);font-size:var(--fs-3);line-height:1.45}
+#demobar>svg{width:20px;height:20px;flex:none;margin-top:1px;color:var(--accent-text)}
+#demobar .demo-in{display:grid;gap:var(--sp-2);min-width:0}
+#demobar p{margin:0}
+#demobar .demo-t{max-width:70ch}
+#demobar .demo-acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2) var(--sp-3)}
+#demobar .demo-pw{font-weight:600;color:var(--text-2);margin-right:var(--sp-2)}
+#demobar kbd{font-family:inherit;font-weight:700;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:0 6px;color:var(--text)}
+#demobar .secondary{min-height:32px;padding:0 var(--sp-3)}   /* petite taille (DESIGN.md) : le bandeau reste bas */
+#demobar .linkbtn{text-decoration:underline;text-underline-offset:2px}
+@media (min-width:1500px){ #demobar{padding-left:calc((100vw - var(--sbw) - var(--w-content)) / 2 + var(--sp-7))} }
+body.demo.is-admin #demobar{padding-right:400px}   /* place du badge « Vous modifiez » */
+@media (min-width:1100px){ body.demo.aide-on #demobar{padding-right:calc(var(--aide-w) + 2 * var(--aide-gap))} }
+@media (max-width:900px){
+  #demobar{margin-left:0;padding:var(--sp-3) 64px var(--sp-3) var(--sp-4)}
+  body.demo.is-admin #demobar{padding-right:64px;padding-top:60px}
+}
+@media print{ #demobar{display:none} }
 .sd-ent{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);margin:0 0 var(--sp-4);box-shadow:var(--shadow-card)}
 .sd-ent.todo{border-color:var(--accent);background:var(--accent-soft)}
 .sd-ent small{color:var(--text-muted)}
@@ -1927,6 +1947,9 @@ function sdAtt(E){ const v=k=>String(E[k]||'').trim(), n=v('nom'), a=v('adresse'
   return {nom:n,signataire:n,ville:vi,entete:[n,a,[cp,vi.toUpperCase()].filter(Boolean).join(' ')].filter(Boolean),
     pied:[n,[a,[cp,vi].filter(Boolean).join(' ')].filter(Boolean).join(' – '),[v('tel')&&'Tél. : '+v('tel'),v('mail')].filter(Boolean).join(' – ')].filter(Boolean)}; }
 if(SANS) PAR={...PAR,attestation:sdAtt(sdEnt())};
+/* Démo en ligne (appli/?demo, voir boot.js) : le dossier est la structure fictive copiée dans le stockage privé
+   du navigateur ; les préférences du poste sont rangées à part. La vraie installation n'est jamais lue ni écrite. */
+const DEMO=window.LJ_DEMO&&window.LJ_DEMO.dir?window.LJ_DEMO:null;
 let structure, dests, envoi, webmail;
 /* Destinataire relié à une fiche de l'annuaire : ses adresses viennent de la fiche (sauf celles décochées).
    Si la fiche a disparu ou n'a plus d'adresse, on garde les adresses enregistrées dans les réglages. */
@@ -2291,7 +2314,7 @@ function downloadBlob(blob,name){ const u=URL.createObjectURL(blob), a=document.
    dossier ; l'autorisation est mémorisée sur ce PC. Pour écrire (admin),
    il faut en plus le droit d'écriture dans le dossier.
    ====================================================================== */
-const FSA=!!window.showDirectoryPicker&&!SANS; // sans dossier : rien n'est jamais demandé au navigateur
+const FSA=(!!window.showDirectoryPicker||!!DEMO)&&!SANS; // la démo a son dossier, dans le navigateur (Firefox et Safari compris) ; sans dossier : rien n'est jamais demandé au navigateur
 // Librejo ouvert par un chemin réseau (file://NAS/partage/…) plutôt que par une lettre de lecteur (Z:)
 const UNC_OPEN=location.protocol==='file:'&&!!location.host;
 const UNC_PARTS=UNC_OPEN?decodeURIComponent(location.pathname).split('/').filter(Boolean):[];
@@ -2302,6 +2325,8 @@ const idb={
   async get(k){ try{ const db=await this.open(); return await new Promise(res=>{ const t=db.transaction('h').objectStore('h').get(k); t.onsuccess=()=>res(t.result||null); t.onerror=()=>res(null); }); }catch(e){ return null; } },
   async set(k,v){ try{ const db=await this.open(); return await new Promise(res=>{ const t=db.transaction('h','readwrite'); t.objectStore('h').put(v,k); t.oncomplete=()=>res(true); t.onerror=()=>res(false); }); }catch(e){ return false; } }
 };
+/* Démo : le dossier mémorisé du poste n'est ni lu ni remplacé ; la démo a le sien */
+if(DEMO){ idb.get=async k=>k==='dossier'?DEMO.dir:null; idb.set=async()=>true; dirH=DEMO.dir; }
 class Cancel extends Error{}
 async function permState(h,mode){ if(!h||!h.queryPermission) return h?'granted':'none'; try{ return await h.queryPermission({mode}); }catch(e){ return 'denied'; } }
 function askPick(mode){
@@ -2378,6 +2403,7 @@ async function updateConn(){
   if(st==='granted'&&MISE().police==='perso'&&LJ_PDF_P) loadPdfFont('perso').catch(()=>{});
   if(st==='granted') cfBaseline();
   b.className='conn'+(st==='granted'?' ok status':h&&!isAdmin?' status quiet':'');
+  if(DEMO&&st==='granted'){ b.title='Le dossier de démo est dans ce navigateur'; b.innerHTML=`${svg('<path d="m5 12 5 5 9-10"/>')}Dossier de démo`; return; }
   b.title=st==='granted'?'Librejo peut lire son dossier':'Autoriser Librejo à lire son dossier (impression en un clic, pièces jointes)';
   b.innerHTML=st==='granted'?`${svg('<path d="m5 12 5 5 9-10"/>')}Dossier connecté`:`${svg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}${h?(isAdmin?'Réautoriser le dossier':'Accès au dossier : demandé à la 1re impression'):'Connecter le dossier'}`;
 }
@@ -7517,7 +7543,7 @@ document.addEventListener('click',async e=>{ const b=e.target.closest('[data-sl]
     <p class="hint">Le mode admin n’est utile que sur les postes de ceux qui ajoutent des documents.</p>
     <div class="btns"><button class="primary" id="sl-postes">C’est fait</button><button class="secondary" data-close>Plus tard</button></div>`);
   const p=document.getElementById('sl-postes'); if(p) p.onclick=async()=>{ closeModal(); await mark('postes'); }; });
-setTimeout(()=>{ if(wizNeeded()) wizOpen(); },400);
+setTimeout(()=>{ if(wizNeeded()&&!DEMO) wizOpen(); },400); // en démo, l'assistant reste dans Outils
 
 
 /* ---------- Comparer deux documents (admin) : côte à côte, différences encadrées ---------- */
@@ -8774,6 +8800,20 @@ function sdEntete(){
 }
 document.addEventListener('click',e=>{ if(SANS&&e.target.closest('[data-sdent]')) sdEntete(); });
 
+/* Démo en ligne : bandeau permanent en haut de la page (au-dessus du contenu, à côté du menu), avec le mot de passe
+   admin, « Remettre à zéro » et « Quitter la démo ». Il fait partie de la page : une fenêtre ouverte le rend inerte. */
+function demoStart(){
+  document.body.classList.add('demo');
+  const bar=document.createElement('div'); bar.id='demobar'; bar.setAttribute('role','region'); bar.setAttribute('aria-label','Démo de Librejo');
+  bar.innerHTML=`${svg('<path d="M9 3h6M10 3v6.5L4.6 18.4A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.4-2.6L14 9.5V3"/><path d="M7.5 15h9"/>')}
+    <div class="demo-in"><p class="demo-t"><b>Démo :</b> structure fictive « Association des Tilleuls ». N’y mettez aucune donnée réelle. Tout reste dans ce navigateur.</p>
+    <div class="demo-acts"><p class="demo-pw">Mot de passe admin : <kbd>test</kbd></p><button type="button" class="secondary" id="demo-reset">Remettre à zéro</button><button type="button" class="secondary" id="demo-quit">Quitter la démo</button><a class="linkbtn" href="${esc(DEMO.installer)}">Installer Librejo pour votre structure</a></div></div>`;
+  $('.app').prepend(bar);
+  $('#demo-reset').onclick=()=>askConfirm('Remettre la démo à zéro ?','Vos essais dans la démo (documents ajoutés, réglages, formulaires créés, préférences) sont effacés de ce navigateur, et la démo recommence avec la structure fictive d’origine. Librejo sur ce poste n’est pas touché.','Remettre à zéro',()=>{ if(isAdmin&&regDirty()) regReset(); toast('Remise à zéro de la démo…'); DEMO.reset(); });
+  $('#demo-quit').onclick=()=>{ const out=()=>DEMO.quit(); if(isAdmin&&regDirty()) regAsk(()=>{ regReset(); out(); }); else out(); };
+  const r=document.querySelector('footer .reassure'); if(r) r.lastChild.textContent='Démo : tout reste dans ce navigateur';
+}
+
 /* ======================================================================
    VÉRIFICATIONS DU POSTE
    Navigateur, application installée, autorisation (lecture et écriture, avec un fichier d'essai créé
@@ -8817,7 +8857,8 @@ async function ljChecks(opt={}){
   const L=[], add=(id,etat,titre,vu,faire,copie)=>L.push({id,etat,titre,vu,faire:faire||'',copie:copie||vu});
   const B=ckBrowser(), web=location.protocol!=='file:', usual=/Edge|Chrome/.test(B.nom);
   // 1. navigateur
-  if(B.mobile) add('nav','err','Navigateur',`${B.nom}${B.v?' '+B.v:''} sur téléphone ou tablette.`,`Librejo est prévu pour un ordinateur, avec Microsoft Edge ou Google Chrome. Sur cet appareil, seuls les formulaires marchent (mode « formulaires seulement »).`);
+  if(DEMO&&!B.api&&!B.mobile) add('nav','info','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''} : la démo y marche, son dossier étant dans le navigateur.`,`Pour votre structure, il faudra Microsoft Edge ou Google Chrome sur ordinateur : eux seuls savent ouvrir le dossier partagé.`);
+  else if(B.mobile) add('nav','err','Navigateur',`${B.nom}${B.v?' '+B.v:''} sur téléphone ou tablette.`,`Librejo est prévu pour un ordinateur, avec Microsoft Edge ou Google Chrome. Sur cet appareil, seuls les formulaires marchent (mode « formulaires seulement »).`);
   else if(!B.api) add('nav','err','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''} ne sait pas ouvrir de dossier.`,`Ouvrez Librejo dans Microsoft Edge ou Google Chrome sur ordinateur. En attendant, le mode « formulaires seulement » permet de remplir les formulaires.`);
   else if(!usual) add('nav','warn','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''} : il sait ouvrir les dossiers, mais Librejo n’y est pas testé.`,`Préférez Microsoft Edge (installé sur tous les Windows) ou Google Chrome.`);
   else add('nav','ok','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''}, sur ordinateur.`);
@@ -8827,7 +8868,9 @@ async function ljChecks(opt={}){
   else add('app','info','Application','Ouvert dans un onglet du navigateur.','Installez Librejo (menu du navigateur › Installer Librejo, ou l’icône dans la barre d’adresse). L’autorisation du dossier tient mieux et Librejo a son icône sur le bureau. Si l’installation est interdite, un favori suffit.');
   // 3. autorisation du dossier
   const h=SANS?null:(dirH||await idb.get('dossier'));
-  if(SANS||!h){ add('read','err','Accès au dossier',SANS?(SD_RAISON[SANS.raison]||SD_RAISON.choix):'Aucun dossier n’est encore choisi sur ce poste.',
+  if(DEMO){ add('read','ok','Dossier de démo','Dans le stockage privé de ce navigateur : rien n’est envoyé, rien n’est partagé avec d’autres visiteurs.','Pour votre structure, le dossier sera un dossier partagé (NAS, lecteur réseau, OneDrive…) que tous les postes voient, choisi dans Librejo.');
+    const r=await ckWrite(h); add('write',r.ok?'ok':'err','Écriture dans le dossier',r.ok?'Vérifiée : un petit fichier d’essai a été créé, relu puis supprimé.':`Impossible d’écrire dans le stockage du navigateur (${(r.err&&r.err.name)||'erreur'}).`,r.ok?'':'Libérez de la place, ou « Remettre à zéro » la démo.'); }
+  else if(SANS||!h){ add('read','err','Accès au dossier',SANS?(SD_RAISON[SANS.raison]||SD_RAISON.choix):'Aucun dossier n’est encore choisi sur ce poste.',
       SANS&&SANS.raison==='api'?'Il faut Microsoft Edge ou Google Chrome sur ordinateur.':'Choisissez le dossier de la structure. Si le navigateur ou une stratégie de l’informatique le bloque, l’informatique peut l’autoriser pour Librejo seulement (voir « Si l’accès aux dossiers est bloqué »).'); }
   else{
     const rd=await permState(h,'read');
@@ -9409,6 +9452,12 @@ function aideHTML(c){
       <h3>À quoi sert cette page</h3><p>${c.but}</p>
       <h3>Comment faire</h3><ol class="aide-steps">${(c.etapes||[]).map(x=>`<li><span>${x}</span></li>`).join('')}</ol>
       ${c.saisie?`<h3>Sur ce poste</h3><label class="check plain aide-pref"><input type="checkbox" id="aide-saisie"${saisieLibre?' checked':''}> <span>Taper une lettre sur l’accueil, sans avoir cliqué nulle part, l’écrit dans la recherche</span></label>`:''}
+      ${DEMO?`<section class="aide-adm aide-demo" aria-labelledby="aide-demo-t"><h3 id="aide-demo-t">Démo</h3><p>Vous essayez Librejo avec une structure fictive, l’Association des Tilleuls. Le bandeau en haut de l’écran le rappelle.</p><ul>
+        <li>Tout marche comme en vrai : formulaires et PDF, impression, mail (le fichier .eml est téléchargé, rien n’est envoyé), annuaire, réglages, mode admin.</li>
+        <li><b>Mot de passe admin : test.</b></li>
+        <li>Tout reste dans ce navigateur : rien n’est envoyé, rien n’est partagé avec d’autres visiteurs. N’y mettez aucune donnée réelle.</li>
+        <li><b>Remettre à zéro</b> efface vos essais et recharge la démo neuve. <b>Quitter la démo</b> revient à Librejo sur ce poste, tel qu’il était.</li>
+        <li>Pour votre structure : <a href="${esc(DEMO.installer)}">Installer Librejo</a>.</li></ul></section>`:''}
       ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
     </div>
     <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer l’aide, puis la fenêtre</small></div>`;
@@ -9450,6 +9499,7 @@ function titleSync(){
     else if(c.k==='recherche') t='Recherche « '+String(query||'').trim()+' »';
     else if(String(c.k).startsWith('cat:')) t='Documents › '+t;
     if(SANS&&c.k!=='sans') t+=' (formulaires seulement)'; }
+  if(DEMO) t+=' (démo)';
   t+=' – Librejo';
   if(document.title!==t) document.title=t;
 }
@@ -9500,6 +9550,7 @@ $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
 if(!FSA&&!SANS){ $('#gen-info').textContent='Pour imprimer en un clic et administrer, ouvrez Librejo avec Microsoft Edge ou Google Chrome.'; $('#gen-info').hidden=false; }
 if(SANS) sdStart();
+if(DEMO) demoStart();
 setAdmin(isAdmin);
 setTab(tab);
 renderDocs();
