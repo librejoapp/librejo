@@ -1283,6 +1283,19 @@ html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair
 .sd-ent small{color:var(--text-muted)}
 .sd-modh{margin-top:calc(-1 * var(--sp-4))}
 .sd-modh h3{margin:0 0 var(--sp-1);font-size:var(--fs-6);color:var(--navy)}
+/* Vérifications du poste : une ligne par point, avec ce qui a été vu et quoi faire */
+.ck-list{list-style:none;margin:0;padding:0;display:grid;gap:var(--sp-2)}
+.ck{display:grid;grid-template-columns:24px minmax(0,1fr);gap:var(--sp-3);align-items:start;padding:var(--sp-3);border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);font-size:var(--fs-3);line-height:1.45}
+.ck-i svg{width:22px;height:22px;display:block}
+.ck-ok .ck-i{color:var(--ok-text)}
+.ck-info .ck-i{color:var(--blue)}
+.ck-warn{background:var(--accent-soft);border-color:var(--warn-line)}.ck-warn .ck-i{color:var(--accent-text)}
+.ck-err{background:var(--warn-bg);border-color:var(--warn-line)}.ck-err .ck-i{color:var(--danger)}
+.ck b{color:var(--navy)}
+.ck-do{margin:4px 0 0;color:var(--text-3);max-width:75ch}
+.ck-acts{margin-top:var(--sp-3);gap:var(--sp-2)}
+.wz-checks{margin-top:var(--sp-5);max-width:820px}
+.wz-checks h3{margin:0 0 var(--sp-2);font-size:var(--fs-5);color:var(--navy)}
 .sd-modh+.homecol{margin-top:calc(-1 * var(--sp-2))}
 </style>
 </head>
@@ -2399,6 +2412,7 @@ function renderDocs(){
         <button data-a="compare"><b>Comparer deux documents</b><small>Deux versions dans le dossier ? Côte à côte, différences encadrées, puis choisir laquelle garder</small></button>
         <button data-a="inventaire"><b>Exporter l’inventaire</b><small>Tous les documents et formulaires, avec version et dates (tableur ou PDF)</small></button>
         <button data-a="wizard"><b>Assistant de démarrage</b><small>Revoir la structure, l’équipe, les catégories, les modèles, le mail</small></button>
+        <button data-a="checks"><b>Vérifications du poste</b><small>Navigateur, autorisation, dossier synchronisé : tester, expliquer, copier pour l’informatique</small></button>
         <button data-a="rescan"><b>Actualiser depuis le dossier</b><small>Si des fichiers ont été ajoutés ou déplacés directement dans le dossier</small></button>
         ${DATA.documents.some(needThumb)?`<button data-a="thumbs"><b>Créer les miniatures</b><small>Pour les documents qui n’ont pas encore d’image</small></button>`:`<button data-a="rethumbs"><b>Refaire les miniatures</b><small>Si les images des documents ne correspondent plus</small></button>`}
       </div></details></div></div>`:''}
@@ -2454,7 +2468,7 @@ $('#p-docs').addEventListener('click',e=>{
   if((d=byPath('edit'))) return editDoc(d);
   if((d=byPath('more'))) return moreMenu(e.target.closest('[data-more]'),d);
   const a=e.target.closest('[data-a]'); if(!a) return;
-  ({hasprep:()=>hasPrep(),dashboard:()=>dashboard(),backup:()=>backup(),journal:()=>journal(),archives:()=>archives(),txsetup:()=>txSetup(),compare:()=>comparer(),inventaire:()=>inventaire(),wizard:()=>wizOpen(),adddocs:()=>addDocs(),addlink:()=>editLink(null),addcat:addCat,emojicat:emojiCat,rescan:rescan,renamecat:renameCat,delcat:delCat,addsous:addSous,delsous:delSous,thumbs:makeAllThumbs,rethumbs:()=>askConfirm('Refaire toutes les miniatures ?','Librejo relit chaque document du dossier pour refaire sa miniature. Cela peut prendre une minute.','Refaire',()=>makeAllThumbs(false,true))})[a.dataset.a]();
+  ({hasprep:()=>hasPrep(),dashboard:()=>dashboard(),backup:()=>backup(),journal:()=>journal(),archives:()=>archives(),txsetup:()=>txSetup(),compare:()=>comparer(),inventaire:()=>inventaire(),wizard:()=>wizOpen(),checks:()=>openChecks(),adddocs:()=>addDocs(),addlink:()=>editLink(null),addcat:addCat,emojicat:emojiCat,rescan:rescan,renamecat:renameCat,delcat:delCat,addsous:addSous,delsous:delSous,thumbs:makeAllThumbs,rethumbs:()=>askConfirm('Refaire toutes les miniatures ?','Librejo relit chaque document du dossier pour refaire sa miniature. Cela peut prendre une minute.','Refaire',()=>makeAllThumbs(false,true))})[a.dataset.a]();
 });
 
 /* Imprimer en un clic : le fichier est lu dans le dossier, puis la fenêtre d'impression s'ouvre */
@@ -7056,7 +7070,8 @@ function wizBody(){ const W=WZ, s=W.step;
   if(s===0) return `<h2 id="wz-h">Bienvenue dans Librejo</h2>
     <p class="wz-lead">En quelques minutes, Librejo prépare les documents et les formulaires de votre structure.</p>
     <ul class="wz-points"><li><b>On peut s’arrêter à tout moment</b> et reprendre plus tard là où on en était.</li><li><b>Le facultatif est indiqué</b> : rien ne bloque si vous n’avez pas un numéro sous la main.</li>
-      <li><b>Tout se modifie ensuite</b> dans le mode admin (Réglages).</li><li>Aucune donnée de personne accompagnée n’est demandée ici.</li></ul>`;
+      <li><b>Tout se modifie ensuite</b> dans le mode admin (Réglages).</li><li>Aucune donnée de personne accompagnée n’est demandée ici.</li></ul>
+    <section class="wz-checks" aria-labelledby="wz-ckh"><h3 id="wz-ckh">Vérifications</h3><div id="wz-ck"></div></section>`;
   if(s===1) return `<h2 id="wz-h">Votre structure</h2><p class="wz-lead">Ces informations forment l’en-tête et le bas de page de tous vos documents.</p>
     <div class="wz-split"><div class="fieldgrid">
       <label class="field wide"><span>Nom de la structure</span><input class="in" data-w="nom" value="${esc(W.nom)}" data-autofocus></label>
@@ -7127,6 +7142,7 @@ function wizDraw(){
     <div class="wz-foot"><button type="button" class="ghost" id="wz-later">Continuer plus tard</button><span class="sp"></span>${s?'<button type="button" class="secondary" id="wz-prev">Précédent</button>':''}<button type="button" class="primary" id="wz-next">${last?'C’est parti':s?'Suivant':'Commencer'}</button></div></div></div>`;
   const af=o.querySelector('[data-autofocus]'); (af||o.querySelector('#wz-next')).focus();
   if(s===1) wizPrev();
+  if(s===0) checksInto(document.getElementById('wz-ck')).catch(e=>console.warn('vérifications',e));
 }
 let wzT=0;
 async function wizPrev(){ clearTimeout(wzT); wzT=setTimeout(async()=>{ const cv=document.getElementById('wz-cv'); if(!cv||!window.jspdf) return;
@@ -8371,8 +8387,10 @@ function sdWhy(){
     <p>Librejo n’a pas de serveur : les documents, l’annuaire et les réglages de la structure sont rangés dans un dossier partagé (NAS, lecteur réseau, OneDrive, Google Drive…), que le navigateur ouvre avec votre accord. Sans ce dossier, seuls les formulaires marchent : PDF, impression, téléchargement et mail, comme d’habitude.</p>
     <p class="hint">${SANS.raison==='api'?'Ouvrez Librejo dans <b>Microsoft Edge</b> ou <b>Google Chrome</b> sur un ordinateur pour retrouver tout le reste.':'Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement : aucune donnée n’est envoyée sur Internet.'}</p>
     <p><a href="${SD_KIT}" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>
-    <div class="btns">${SANS.api?'<button class="primary" id="sdw-pick">Choisir le dossier</button>':''}<button class="secondary" data-close>Fermer</button></div>`);
+    <h4 class="mt-s m-0">Vérifications de ce poste</h4><div id="ck-box"></div>
+    <div class="btns">${SANS.api?'<button class="primary" id="sdw-pick">Choisir le dossier</button>':''}<button class="secondary" data-close>Fermer</button></div>`,'wide');
   const b=$('#sdw-pick'); if(b) b.onclick=()=>window.LJ_CHOISIR_DOSSIER&&window.LJ_CHOISIR_DOSSIER();
+  checksInto($('#ck-box')).catch(e=>console.warn('vérifications',e));
 }
 function sdEnteteHTML(){ const E=sdEnt(), n=String(E.nom||'').trim();
   return n?`<div class="sd-ent"><span><b>En-tête des documents :</b> ${esc(n)}${E.ville?' · '+esc(E.ville):''} <small>(gardé dans ce navigateur)</small></span><button type="button" class="secondary sm" data-sdent>Modifier</button></div>`
@@ -8396,6 +8414,127 @@ function sdEntete(){
 }
 document.addEventListener('click',e=>{ if(SANS&&e.target.closest('[data-sdent]')) sdEntete(); });
 
+/* ======================================================================
+   VÉRIFICATIONS DU POSTE
+   Navigateur, application installée, autorisation (lecture et écriture, avec un fichier d'essai créé
+   puis supprimé), dossier synchronisé dans le cloud, chemin réseau (version fichier). Chaque ligne dit
+   ce qui a été vu et quoi faire. Le résultat se copie pour l'informatique, sans aucune donnée de personne.
+   Lancées après le choix d'un dossier, dans l'assistant (Bienvenue) et depuis Documents › Outils.
+   ====================================================================== */
+/* Copies en conflit laissées par les services de synchronisation (OneDrive, Google Drive, Dropbox, Nextcloud…) :
+   « parametres-PC-ACCUEIL.js », « parametres (1).js », « donnees (conflicted copy 2026-11-26).js »,
+   « annuaire_conflict-20261126-101010.js », « Copie de parametres.js »… */
+const CONF_BASES=['parametres','donnees','annuaire','journal','logo-association','recherche-texte'];
+function conflictOf(name){ const l=String(name||'').toLowerCase().normalize('NFC');
+  const pre=l.replace(/^(copie de |copy of )/,''), prefixed=pre!==l;
+  for(const b of CONF_BASES){ if(!pre.startsWith(b)) continue; const m=/^(.*)\.(js|json)$/.exec(pre.slice(b.length)); if(!m) continue;
+    const mid=m[1], ext=m[2]; if(!mid&&!prefixed) continue;
+    if(prefixed||/^(\s*\(\d+\)|\s*\(.*(conflict|conflit|copie|copy).*\)|\s*\[conflict\].*|-[^.]+|_conflict.*|\s*-\s*(copie|copy).*|\s+(copie|copy).*)$/i.test(mid)) return b+'.'+(b==='journal'||b==='recherche-texte'?'json':ext==='json'?'json':'js'); }
+  return null; }
+async function conflictsIn(dir){ const out=[]; try{ for await (const [n,e] of dir.entries()){ if(e.kind!=='file') continue; const of=conflictOf(n); if(of) out.push({nom:n,de:of,h:e}); } }catch(e){} return out; }
+const CK_CLOUD=/onedrive|sharepoint|teams|google ?drive|mon drive|my drive|drive partag|shared drives?|dropbox|nextcloud|owncloud|icloud|pcloud|sync/i;
+const CK_MARK=[/^\.dropbox(\.attr|\.cache)?$/i,/^\.tmp\.drive(down|up)load$/i,/^\.?_?sync_.*\.db$/i,/^\.(owncloud|nextcloud)sync\.log$/i,/^\.sync$/i];
+function ckBrowser(){ const ua=navigator.userAgent||'', uad=navigator.userAgentData;
+  const mobile=(uad&&uad.mobile)||/Android|iPhone|iPad|Mobile/i.test(ua);
+  let nom='', v='';
+  const m=(re)=>{ const x=re.exec(ua); return x?x[1]:''; };
+  if(/Edg\//.test(ua)){ nom='Microsoft Edge'; v=m(/Edg\/(\d+)/); }
+  else if(/OPR\//.test(ua)){ nom='Opera'; v=m(/OPR\/(\d+)/); }
+  else if(/Firefox\//.test(ua)){ nom='Firefox'; v=m(/Firefox\/(\d+)/); }
+  else if(/Chrome\//.test(ua)){ nom=uad&&uad.brands&&uad.brands.some(b=>/Brave/.test(b.brand))?'Brave':'Google Chrome'; v=m(/Chrome\/(\d+)/); }
+  else if(/Safari\//.test(ua)){ nom='Safari'; v=m(/Version\/(\d+)/); }
+  const os=(uad&&uad.platform)||(/Windows/.test(ua)?'Windows':/Mac OS/.test(ua)?'macOS':/Linux/.test(ua)?'Linux':'')||'';
+  return {nom:nom||'Navigateur inconnu',v,os,mobile,api:typeof window.showDirectoryPicker==='function'}; }
+const ckInstalled=()=>{ try{ return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone===true; }catch(e){ return false; } };
+/* Fichier d'essai : créé, relu, puis supprimé. Rien ne reste dans le dossier. */
+async function ckWrite(h){ const N='.librejo-test'; let made=false;
+  try{ const fh=await h.getFileHandle(N,{create:true}); made=true; const w=await fh.createWritable(); await w.write('Librejo : essai d’écriture, supprimé tout de suite.'); await w.close();
+    const t=await (await fh.getFile()).text(); if(!/essai/.test(t)) throw new Error('relecture'); }
+  catch(e){ let left=false; if(made){ try{ await h.removeEntry(N); }catch(_){ left=true; } } return {ok:false,err:e,left}; }
+  try{ await h.removeEntry(N); }catch(e){ return {ok:true,left:true}; }
+  return {ok:true}; }
+async function ljChecks(opt={}){
+  const L=[], add=(id,etat,titre,vu,faire,copie)=>L.push({id,etat,titre,vu,faire:faire||'',copie:copie||vu});
+  const B=ckBrowser(), web=location.protocol!=='file:', usual=/Edge|Chrome/.test(B.nom);
+  // 1. navigateur
+  if(B.mobile) add('nav','err','Navigateur',`${B.nom}${B.v?' '+B.v:''} sur téléphone ou tablette.`,`Librejo est prévu pour un ordinateur, avec Microsoft Edge ou Google Chrome. Sur cet appareil, seuls les formulaires marchent (mode « formulaires seulement »).`);
+  else if(!B.api) add('nav','err','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''} ne sait pas ouvrir de dossier.`,`Ouvrez Librejo dans Microsoft Edge ou Google Chrome sur ordinateur. En attendant, le mode « formulaires seulement » permet de remplir les formulaires.`);
+  else if(!usual) add('nav','warn','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''} : il sait ouvrir les dossiers, mais Librejo n’y est pas testé.`,`Préférez Microsoft Edge (installé sur tous les Windows) ou Google Chrome.`);
+  else add('nav','ok','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''}, sur ordinateur.`);
+  // 2. application installée ou onglet
+  if(!web) add('app','info','Application','Version fichier, ouverte depuis le dossier (file://).','Mettez Librejo.html en favori du navigateur pour le retrouver.');
+  else if(ckInstalled()) add('app','ok','Application','Librejo est installé : il s’ouvre dans sa propre fenêtre.');
+  else add('app','info','Application','Ouvert dans un onglet du navigateur.','Installez Librejo (menu du navigateur › Installer Librejo, ou l’icône dans la barre d’adresse). L’autorisation du dossier tient mieux et Librejo a son icône sur le bureau. Si l’installation est interdite, un favori suffit.');
+  // 3. autorisation du dossier
+  const h=SANS?null:(dirH||await idb.get('dossier'));
+  if(SANS||!h){ add('read','err','Accès au dossier',SANS?(SD_RAISON[SANS.raison]||SD_RAISON.choix):'Aucun dossier n’est encore choisi sur ce poste.',
+      SANS&&SANS.raison==='api'?'Il faut Microsoft Edge ou Google Chrome sur ordinateur.':'Choisissez le dossier de la structure. Si le navigateur ou une stratégie de l’informatique le bloque, l’informatique peut l’autoriser pour Librejo seulement (voir « Si l’accès aux dossiers est bloqué »).'); }
+  else{
+    const rd=await permState(h,'read');
+    const each='Si le navigateur propose « Autoriser à chaque visite », choisissez-le : vous n’aurez plus à redonner votre accord.';
+    if(rd==='granted') add('read','ok','Lecture du dossier','Autorisée sur ce poste.',each);
+    else if(rd==='denied') add('read','err','Lecture du dossier','Refusée par le navigateur.','Dans le navigateur, icône à gauche de l’adresse › Paramètres du site › Fichiers : autorisez Librejo. Si une stratégie de l’informatique l’interdit, demandez-lui de l’autoriser pour Librejo seulement.');
+    else add('read','warn','Lecture du dossier','L’autorisation sera redemandée au prochain clic.',each);
+    let wr=await permState(h,'readwrite');
+    if(wr!=='granted'&&opt.askWrite){ try{ wr=await h.requestPermission({mode:'readwrite'}); }catch(e){} }
+    if(wr==='granted'){ const r=await ckWrite(h);
+      if(r.ok&&!r.left) add('write','ok','Écriture dans le dossier','Vérifiée : un petit fichier d’essai a été créé, relu puis supprimé.');
+      else if(r.ok) add('write','warn','Écriture dans le dossier','L’écriture marche, mais le fichier d’essai « .librejo-test » n’a pas pu être supprimé.','Supprimez-le à la main dans le dossier Librejo (il ne contient rien).');
+      else{ const n=(r.err&&r.err.name)||'Erreur';
+        add('write','err','Écriture dans le dossier',`Impossible d’écrire (${n}).${r.left?' Le fichier d’essai « .librejo-test » est peut-être resté : supprimez-le à la main.':''}`,
+          n==='NoModificationAllowedError'?'Le dossier est en lecture seule, ou un fichier est ouvert ailleurs. Les admins ont besoin du droit de modification sur le dossier Librejo : demandez-le à l’informatique.'
+          :n==='QuotaExceededError'?'Le disque ou l’espace en ligne est plein : faites de la place, puis relancez.'
+          :'Le navigateur ou les droits du dossier refusent l’écriture. Les admins ont besoin du droit de modification sur le dossier Librejo (droits du partage, ou stratégie du navigateur) : demandez-le à l’informatique. L’équipe, elle, n’a besoin que de la lecture.'); } }
+    else add('write','info','Écriture dans le dossier','Pas encore autorisée sur ce poste : c’est normal pour l’équipe, qui n’a besoin que de la lecture.','Elle est demandée à l’entrée en mode admin. Pour la vérifier maintenant : « Tester l’écriture ».');
+    // 4. dossier synchronisé dans le cloud
+    // ce qui est montré à l'écran (noms compris) et ce qui est copié pour l'informatique (sans aucun nom de fichier ni de dossier)
+    const seen=[], seenC=[]; if(CK_CLOUD.test(h.name||'')){ const w=`le nom du dossier contient « ${(CK_CLOUD.exec(h.name)||[''])[0]} »`; seen.push(w); seenC.push(w); }
+    try{ for await (const [n] of h.entries()){ if(CK_MARK.some(re=>re.test(n))) { seen.push(`fichier de synchronisation « ${n} »`); seenC.push(`fichier de synchronisation « ${n} »`); break; } } }catch(e){}
+    let conf=[]; try{ conf=await conflictsIn(await h.getDirectoryHandle('app')); }catch(e){}
+    if(conf.length){ const k=`${conf.length} copie${conf.length>1?'s':''} en conflit dans app`; seen.push(`${k} (${conf.map(c=>c.nom).slice(0,3).join(', ')}${conf.length>3?'…':''})`); seenC.push(k); }
+    const cloudDo='Sur chaque poste, ce même dossier doit être synchronisé (application OneDrive, Google Drive pour ordinateur ou Dropbox) : Teams ou SharePoint ouvert seulement dans le navigateur ne suffit pas. Avec OneDrive : clic droit sur le dossier Librejo › « Toujours conserver sur cet appareil », sinon les fichiers « à la demande » peuvent manquer ou arriver en retard. Évitez que deux admins modifient en même temps.';
+    if(seen.length) add('cloud','warn','Dossier synchronisé',`Dossier « ${h.name} » : ${seen.join(' ; ')}.`,
+      (conf.length?'Copies en conflit : comparez-les avec l’original (en mode admin, Librejo montre les différences), gardez la bonne, supprimez l’autre. Librejo ne les supprime jamais lui-même. ':'')+cloudDo,
+      `Signes de synchronisation dans le cloud : ${seenC.join(' ; ')}.`);
+    else add('cloud','ok','Dossier synchronisé',`Aucun signe de OneDrive, SharePoint, Google Drive ou Dropbox dans le dossier « ${h.name} » (le navigateur ne donne pas son chemin complet).`,
+      'S’il est quand même synchronisé dans le cloud : même dossier synchronisé sur tous les postes, et avec OneDrive « Toujours conserver sur cet appareil ».','Aucun signe de synchronisation dans le cloud (le navigateur ne donne pas le chemin complet).');
+  }
+  // 5. chemin réseau : seulement pour la version fichier (en version web, le dossier se choisit dans une fenêtre)
+  if(!web){ const path=decodeURIComponent(location.pathname);
+    if(UNC_OPEN) add('unc','err','Chemin réseau',`Librejo est ouvert par un chemin réseau (\\\\${UNC_SHARE}\\…) : Chrome et Edge refusent souvent d’autoriser un dossier ouvert ainsi.`,`Connectez un lecteur réseau : dans l’Explorateur, clic droit sur ${UNC_SHARE} › Connecter un lecteur réseau › lettre Z: › « Se reconnecter à la connexion ». Puis ouvrez Z:\\${UNC_REST||'Librejo'}\\Librejo.html et mettez-le en favori.`);
+    else if(/\\temp\\|\/temp\/|appdata\/local\/temp|\.zip\//i.test(path)) add('unc','err','Chemin du fichier','Librejo semble ouvert depuis un zip non extrait (dossier temporaire).','Faites clic droit sur le zip › Extraire tout, puis ouvrez Librejo.html dans le dossier extrait.');
+    else add('unc','ok','Chemin du fichier','Ouvert par une lettre de lecteur ou un disque du poste.'); }
+  // 6. hors ligne
+  if(web&&'serviceWorker' in navigator) add('off',navigator.serviceWorker.controller?'ok':'info','Hors ligne',navigator.serviceWorker.controller?'Librejo est gardé sur ce poste : il s’ouvre même sans Internet.':'Pas encore gardé sur ce poste.','Il le sera au prochain lancement.');
+  return L; }
+const CK_ICO={ok:svg('<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.6 2.6L16 9.5"/>'),info:svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
+  warn:svg('<path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/>'),err:svg('<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>')};
+const CK_MOT={ok:'Bon',info:'Conseil',warn:'À vérifier',err:'Problème'};
+function checksHTML(L){ return `<ul class="ck-list">${L.map(x=>`<li class="ck ck-${x.etat}"><span class="ck-i">${CK_ICO[x.etat]}<span class="sr">${CK_MOT[x.etat]} :</span></span><div><b>${esc(x.titre)}</b> <span>${esc(x.vu)}</span>${x.faire?`<p class="ck-do">${esc(x.faire)}</p>`:''}${x.id==='write'&&x.etat==='info'?`<p class="ck-do"><button type="button" class="secondary sm" data-ckwrite>Tester l’écriture</button></p>`:''}</div></li>`).join('')}</ul>`; }
+function checksText(L){ const d=new Date(), B=ckBrowser(), sym={ok:'[OK]',info:'[conseil]',warn:'[à vérifier]',err:'[problème]'};
+  return [`Librejo : vérifications du poste, le ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,
+    `Version de Librejo : ${DOCUBUS_VERSION}`,`Adresse : ${location.protocol==='file:'?'version fichier (file://)':location.origin+location.pathname}`,
+    `Navigateur : ${B.nom} ${B.v} (${B.os||'système inconnu'})${B.mobile?', téléphone ou tablette':''}`,`Accès aux dossiers (File System Access) : ${B.api?'disponible':'absent'}`,'',
+    ...L.map(x=>`${sym[x.etat]} ${x.titre} : ${x.copie}${x.faire&&x.etat!=='ok'?'\n    → '+x.faire:''}`),'',
+    'Aucune donnée de personne n’est incluse. Librejo n’envoie rien sur Internet : le site ne sert que le code.',
+    'Si l’accès aux dossiers est bloqué : '+SD_KIT].join('\n'); }
+/* Encadré de vérifications (dans une fenêtre ou dans l'assistant), avec « Relancer » et « Copier pour l'informatique » */
+async function checksInto(box,opt={}){ if(!box) return null; box.innerHTML=`<p class="hint">Vérification en cours…</p>`;
+  const L=await ljChecks(opt); if(!box.isConnected) return L;
+  box.innerHTML=checksHTML(L)+`<div class="row ck-acts"><button type="button" class="secondary sm" data-ckcopy>${ICON.copy}Copier pour l’informatique</button><button type="button" class="ghost sm" data-ckagain>Relancer</button></div>`;
+  box.querySelector('[data-ckcopy]').onclick=async()=>{ const ok=await copyText(checksText(L)); toast(ok?'Copié : collez-le dans un mail à l’informatique':'Copie impossible : faites une capture d’écran'); };
+  box.querySelector('[data-ckagain]').onclick=()=>checksInto(box,opt);
+  const w=box.querySelector('[data-ckwrite]'); if(w) w.onclick=()=>checksInto(box,{...opt,askWrite:true});
+  return L; }
+function openChecks(lead){
+  openModal(`<h3 id="modal-title">Vérifications de ce poste</h3><p class="hint">${lead?esc(lead):'Librejo vérifie le navigateur, l’autorisation du dossier et le type de dossier, puis dit quoi faire. Le résultat peut être copié pour l’informatique : il ne contient aucune donnée de personne.'}</p><div id="ck-box"></div>
+    <div class="btns"><button class="secondary" data-close>Fermer</button></div>`,'wide');
+  return checksInto($('#ck-box')); }
+/* Après le choix d'un dossier sur ce poste : vérifications ; la fenêtre ne s'ouvre que s'il y a quelque chose à faire */
+async function checksAfterPick(){ const L=await ljChecks();
+  if(L.some(x=>x.etat==='warn'||x.etat==='err')){ if(!$('#modal').hidden) return; openChecks('Librejo a vérifié ce poste après le choix du dossier. Un point au moins mérite votre attention.'); }
+  else toast('Vérifications : tout est en ordre sur ce poste'); }
+
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
@@ -8406,6 +8545,7 @@ setTab(tab);
 renderDocs();
 renderDeliv();
 updateConn();
+if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().catch(e=>console.warn('vérifications',e)),700);
 })();
 </script>
 <div id="lj-boot" hidden><div class="lj-card"><img src="logo.svg" alt="Librejo"><div class="lj-in"></div></div></div>

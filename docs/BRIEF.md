@@ -362,7 +362,15 @@ Principes de l'assistant :
 - Brouillon gardé sur le poste (sans le mot de passe) : « Continuer plus tard » reprend à la même étape.
 - **Liste de démarrage** sur l'accueil (admin) : 5 premiers documents, annuaire, épingler, papier à en-tête, installer sur les autres postes (avec la marche à suivre). Elle se coche toute seule et se masque.
 - Relançable : Documents › Outils › « Assistant de démarrage ».
-- Pas encore fait : « Essayer avec une structure fictive », vérifications du navigateur et du chemin dans l'assistant, choix des couleurs (restent dans Réglages › Apparence).
+- **Vérifications du poste (26/11/2026)** : dans l'assistant (étape Bienvenue, première installation), après le choix d'un dossier existant (la fenêtre ne s'ouvre que s'il y a quelque chose à faire, sinon un message « tout est en ordre »), et dans Documents › Outils › « Vérifications du poste ». Une ligne par point, avec une coche, un conseil, un avertissement ou un problème, et quoi faire :
+  - navigateur : Edge ou Chrome sur ordinateur ; autre navigateur, téléphone ou navigateur sans accès aux dossiers → mode « formulaires seulement » ;
+  - application installée ou simple onglet (conseil d'installer : l'autorisation tient mieux) ;
+  - lecture du dossier (`queryPermission`) et conseil « Autoriser à chaque visite » ; écriture vérifiée par un fichier d'essai `.librejo-test` créé, relu puis supprimé (si l'écriture n'est pas encore autorisée, ce qui est normal pour l'équipe : bouton « Tester l'écriture ») ;
+  - dossier synchronisé : l'API ne donne pas le chemin, Librejo regarde le nom du dossier (OneDrive, SharePoint, Teams, Google Drive, Dropbox, Nextcloud…), les fichiers de synchronisation et les copies en conflit dans `app/` ; conseils : « Toujours conserver sur cet appareil » (OneDrive, fichiers à la demande), même dossier synchronisé sur tous les postes (Teams ouvert dans le navigateur ne suffit pas) ;
+  - chemin réseau `\\serveur` et zip non extrait : seulement en version fichier (`file://`), où c'est pertinent ;
+  - hors ligne (service worker).
+  - « Copier pour l'informatique » : date, version, adresse du site, navigateur et résultats, sans nom de dossier ni de fichier ni aucune donnée de personne.
+- Pas encore fait : « Essayer avec une structure fictive », choix des couleurs (restent dans Réglages › Apparence).
 
 ## Films de présentation (24-25/11/2026)
 
