@@ -31,7 +31,7 @@ Aucun outil trouvé ne combine, pour une petite structure, documents à jour, fo
 - Les documents et réglages vivent dans le dossier de la structure : NAS ou serveur de fichiers, dossier OneDrive/SharePoint/Teams synchronisé, Google Drive pour ordinateur, Dropbox, Nextcloud. Tous les postes doivent voir le même dossier.
 - Accès au dossier par l'API File System Access, autorisation mémorisée par le navigateur ; hors ligne après installation.
 - Mail : fichier .eml en brouillon pour Outlook, ou messagerie web ; jamais d'envoi direct par Librejo.
-- Mode admin protégé par un mot de passe (verrou contre les erreurs, pas une protection réelle).
+- Mode admin protégé par un mot de passe, enregistré en empreinte (verrou contre les erreurs, pas une protection réelle).
 - Mode « formulaires seulement » quand l'informatique bloque l'accès aux dossiers.
 - Distribution prévue : site d'installation, version hors ligne en zip en secours, kit DSI pour déployer par stratégie de groupe.
 

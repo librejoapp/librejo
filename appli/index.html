@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Politique de sécurité : seuls les scripts du site s'exécutent (jamais du code écrit dans la page ou venu du dossier) ;
+     la liste des Cerfa et les PDF officiels sont les seules lectures hors du site. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://raw.githubusercontent.com https://*.service-public.fr https://*.gouv.fr; worker-src 'self' blob:; frame-src 'self' blob: data:; object-src 'self' blob:; base-uri 'none'; form-action 'none'">
 <title>Librejo</title>
 <meta name="theme-color" content="#1F6F6B">
 <link rel="manifest" href="manifest.webmanifest">

@@ -6,4 +6,4 @@
 - Si la lecture de la source échoue ou donne une liste anormalement courte, il **ne publie rien** : l'ancienne liste reste.
 - Librejo lit ce fichier seulement quand un admin clique sur « Vérifier les Cerfa ». Il ne fait que lire : rien n'est envoyé.
 
-Adresse lue par Librejo : https://raw.githubusercontent.com/julienaron/librejo/main/cerfa/cerfa.json
+Adresse lue par Librejo : https://raw.githubusercontent.com/librejoapp/librejo/main/cerfa/cerfa.json

@@ -5,6 +5,12 @@
    Les fichiers de réglages sont lus comme des données (JSON), jamais exécutés. */
 (function(){
 'use strict';
+/* Librejo ne s'affiche pas dans la page d'un autre site (cadre, iframe) : on ne pourrait pas y voir ce qu'on clique.
+   GitHub Pages ne permet pas l'en-tête frame-ancestors ; ce test le remplace. */
+if (window.top !== window.self) {
+  try { window.top.location.href = window.self.location.href; } catch(e) {}
+  document.documentElement.style.display = 'none'; return;
+}
 var WEB = location.protocol !== 'file:';
 var DATA_FILES = [['app/parametres.js','DOCUBUS_PARAMETRES',true],['app/donnees.js','DOCUBUS_DONNEES',true],
                   ['app/annuaire.js','DOCUBUS_ANNUAIRE',false],['app/logo-association.js','DOCUBUS_LOGO_ASSO',false]];

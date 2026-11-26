@@ -2,6 +2,13 @@
    ou directement en version fichier. Fichier à part pour la politique de sécurité (CSP : script-src 'self'). */
 (function(){
 'use strict';
+/* Miniatures : orientation et image absente. Écouteurs posés ici plutôt que dans des attributs onload/onerror
+   (la politique de sécurité de la page interdit le code écrit dans le HTML). */
+document.addEventListener('load',e=>{ const t=e.target; if(t.tagName==='IMG'&&t.hasAttribute('data-land')&&t.naturalWidth>t.naturalHeight) t.classList.add('land'); },true);
+document.addEventListener('error',e=>{ const t=e.target; if(t.tagName!=='IMG'||!t.dataset.err) return;
+  if(t.dataset.err==='ico'){ const sp=document.createElement('span'); sp.className='ico '+(t.dataset.k||''); sp.setAttribute('role','img'); sp.setAttribute('aria-label','Fichier '+(t.dataset.lab||'')); sp.textContent=t.dataset.lab||''; t.replaceWith(sp); }
+  else if(t.dataset.err==='noimg'){ t.parentNode&&t.parentNode.classList.add('noimg'); t.remove(); }
+  else t.remove(); },true);
 /* ======================================================================
    Librejo — version locale (ordinateurs du bureau, sans internet).
    - La liste des documents, leurs descriptions et les formulaires sont dans
@@ -813,6 +820,15 @@ function composeUrl(to,subject,body){
   if(subject) q.push('subject='+encodeURIComponent(subject)); if(body) q.push('body='+encodeURIComponent(body));
   return webmail+(webmail.includes('?')?'&':'?')+q.join('&');
 }
+/* Ouvrir un fichier du dossier : seuls PDF, images et texte s'affichent (sous un type imposé) ; le reste
+   (HTML, SVG, Word…) est téléchargé. Une adresse blob: a l'origine de Librejo : un fichier HTML ou SVG ouvert
+   ainsi pourrait exécuter du code avec les droits de l'application (même règle que boot.js). */
+const SAFE_VIEW={pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',txt:'text/plain;charset=utf-8'};
+function openSafe(blob,name){ const ext=String(name||'').split('.').pop().toLowerCase();
+  if(!SAFE_VIEW[ext]){ downloadBlob(blob,name); toast('Ce type de fichier ne s’ouvre pas dans Librejo : il est téléchargé'); return; }
+  const u=URL.createObjectURL(new Blob([blob],{type:SAFE_VIEW[ext]})); window.open(u,'_blank'); setTimeout(()=>URL.revokeObjectURL(u),300000); }
+/* Liens venus du dossier, de l'annuaire ou d'une liste en ligne : seulement http(s) (jamais javascript:, data:…) */
+const safeHref=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
 function downloadBlob(blob,name){ const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),120000); }
 
 /* ======================================================================
@@ -945,8 +961,10 @@ $('#adminbtn').addEventListener('click',()=>{
     <p class="fielderr" id="pw-err" role="alert" hidden></p>
     <label class="field"><span>Votre prénom <small>(facultatif, pour le journal des modifications)</small></span><input class="in" id="pw-who" value="${esc(jrWho())}" autocomplete="given-name"></label>
     <div class="btns"><button class="primary alt" id="pw-ok">Entrer</button><button class="secondary" data-close>Annuler</button></div>`);
-  const go=()=>{ const pw=$('#pw');
-    if(pw.value===(PAR.motdepasse||'docubus')){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>cfAdminCheck()).then(ok=>{ if(ok) setTimeout(autoThumbs,600); }).catch(e=>{ const m=fsErr(e); m&&toast(m); }); }
+  const go=async()=>{ const pw=$('#pw'), okb=$('#pw-ok'); okb.disabled=true; let ok=false; try{ ok=await pwCheck(pw.value); }finally{ okb.disabled=false; }
+    /* ancien mot de passe en clair : converti en empreinte (enregistrée avec la prochaine modification des réglages) */
+    if(ok&&pwPlain()&&pw.value) try{ const h=await pwHash(pw.value); if(typeof h==='object') PAR.motdepasse=h; }catch(e){}
+    if(ok){ try{ localStorage.setItem(JR_WHO,$('#pw-who').value.trim()); }catch(e){} closeModal(); setAdmin(true); toast('Vous pouvez maintenant modifier'); if(FSA) getDir('readwrite').then(()=>cfAdminCheck()).then(ok=>{ if(ok) setTimeout(autoThumbs,600); }).catch(e=>{ const m=fsErr(e); m&&toast(m); }); }
     else { const m=$('#pw-err'); m.textContent=pw.value?'Ce n’est pas le bon mot de passe. Vérifiez les majuscules et réessayez.':'Saisissez le mot de passe admin.'; m.hidden=false; pw.setAttribute('aria-invalid','true'); pw.setAttribute('aria-describedby','pw-err'); pw.focus(); pw.select(); } };
   $('#pw-ok').onclick=go; $('#pw').addEventListener('input',()=>{ $('#pw-err').hidden=true; $('#pw').removeAttribute('aria-invalid'); });
   /* Entrée dans l'un ou l'autre champ : valider sans laisser l'appui atteindre un autre bouton */
@@ -2233,7 +2251,7 @@ function renderPinned(){
   const {order}=pinnedAndUsed();
   if(!order.length) return '';
   const tile=(title,sub,btns,mark,th,href)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
-  const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" onerror="this.remove()">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin));
+  const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin));
   return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
     ${order.map(([t,x])=>t==='f'?F(x):t==='k'?K(x):D(x)).join('')}
@@ -2542,7 +2560,7 @@ async function makeAllThumbs(auto,all){
 }
 function thumbHtml(d,cls){
   const [k,lab]=kind(d.ext), src=thumbSrc(d);
-  return src?`<img class="${cls}" src="${src}" alt="" loading="lazy" onload="if(this.naturalWidth>this.naturalHeight)this.classList.add('land')" onerror="this.outerHTML='<span class=&quot;ico ${k}&quot; role=&quot;img&quot; aria-label=&quot;Fichier ${lab}&quot;>${lab}</span>'">`:`<span class="ico ${k}" role="img" aria-label="Fichier ${esc(lab)}">${esc(lab)}</span>`;
+  return src?`<img class="${cls}" src="${src}" alt="" loading="lazy" data-land data-err="ico" data-k="${esc(k)}" data-lab="${esc(lab)}">`:`<span class="ico ${k}" role="img" aria-label="Fichier ${esc(lab)}">${esc(lab)}</span>`;
 }
 
 /* ---------- Vue en vignettes ---------- */
@@ -2554,7 +2572,7 @@ function gridCard(d,ts,showCat){
   if(isLink(d)) return linkCard(d,ts,showCat);
   const href=hrefOf(d.chemin);
   return `<div class="gcard" style="${catColVars(d.categorie)}" data-row="${esc(d.chemin)}">
-    <a class="gthumb" href="${href}" target="_blank" rel="noopener" aria-label="Ouvrir ${esc(d.titre)}${d.ext?`, fichier ${esc(String(d.ext).toUpperCase())}`:''}">${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" onload="if(this.naturalWidth>this.naturalHeight)this.classList.add('land')" onerror="this.parentNode.classList.add('noimg');this.remove()">`:''}<span class="gext" aria-hidden="true">${esc((d.ext||'').toUpperCase())}</span></a>
+    <a class="gthumb" href="${href}" target="_blank" rel="noopener" aria-label="Ouvrir ${esc(d.titre)}${d.ext?`, fichier ${esc(String(d.ext).toUpperCase())}`:''}">${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" data-land data-err="noimg">`:''}<span class="gext" aria-hidden="true">${esc((d.ext||'').toUpperCase())}</span></a>
     <div class="gbody"><b><a class="gtitle" href="${href}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a>${favBtn('d:'+d.id)}</b>${stBadge(d)}${d.modele?'<span class="badge accent m-0">Modèle à remplir</span>':''}<small>${showCat?esc(catName(d.categorie))+' · ':''}${d.version?'v'+esc(d.version)+' · ':''}${docDate(d.date)}</small>${TXT_ON&&ts.length&&txOf(d)&&ts.some(t=>txOf(d).includes(t))?`<span class="desc txhit">📄 « ${hl(excerpt(txRaw(d),ts,110),ts)} »</span>`:''}</div>
     <div class="gact">
       ${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}
@@ -2808,7 +2826,7 @@ function ppColAdj(M){ return [['c1','Couleur imprimée pour les titres'],['c2','
 function drawReg(){
   if(!rdraft) rdraft={medecins:meds().map(m=>({...m})),medecinLigne:PAR.medecinLigne||DEFAULT_MED_LINE,attestation:{...structure},destinataires:dests.map(d=>{ const o={nom:d.nom||'',structure:d.structure||'',attention:d.attention||'',adresses:[...(d.adresses||[])],partenaire:annuPart(d.partenaire)?d.partenaire:'',exclues:[...(d.exclues||[])]};
       if(!o.partenaire&&o.adresses.length){ const c=ANNU.partenaires.filter(p=>o.adresses.every(a=>(p.emails||[]).includes(a))); if(c.length===1){ o.partenaire=c[0].id; o.exclues=c[0].emails.filter(m=>!o.adresses.includes(m)); o.auto=true; } }
-      return o; }),envoi:[...envoi],webmail,support:PAR.support||'',mail:PAR.mail||'outlook',motdepasse:PAR.motdepasse||'docubus',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})},fiche:{...(PAR.fiche||{})},nommage:{...NOMMAGE()}};
+      return o; }),envoi:[...envoi],webmail,support:PAR.support||'',mail:PAR.mail||'outlook',motdepasse:'',equipe:(PAR.equipe||[]).map(p=>({...p})),tampon:PAR.tampon||null,apparence:{...THEME_DEF,...(PAR.apparence||{})},mise:{...MISE_DEF,...(PAR.mise||{})},fiche:{...(PAR.fiche||{})},nommage:{...NOMMAGE()}};
   if(rdraftBase===null) rdraftBase=JSON.stringify(rdraft);
   const a=rdraft.attestation, ap=rdraft.apparence, th=applyTheme(ap), own=ownLogo(ap);
   /* Couleur réellement appliquée quand le contraste a demandé de l'ajuster */
@@ -2929,7 +2947,8 @@ function drawReg(){
         ${rdraft.tampon?'<button class="ghost danger" id="r-tpdel">Retirer</button>':''}</div>
       <p class="hint muted">PNG à fond transparent de préférence, 1 Mo maximum. Imprimé sous la signature des attestations et formulaires.</p></div>
     <div class="card top" data-rsec="securite"><h3>Mot de passe admin</h3>
-      <label class="field"><span>Mot de passe</span><input class="in" id="r-pw" value="${esc(rdraft.motdepasse)}" autocomplete="off"></label>
+      <label class="field"><span>Nouveau mot de passe <small>(laisser vide pour garder l’actuel)</small></span><input class="in" id="r-pw" type="password" value="${esc(rdraft.motdepasse)}" autocomplete="new-password" aria-describedby="r-pw-h"></label>
+        <p class="hint muted" id="r-pw-h">Librejo n’enregistre qu’une empreinte du mot de passe : personne ne peut le relire, ni ici ni dans le dossier. En cas d’oubli, un admin qui a encore l’accès en choisit un nouveau.</p>
       <p class="hint muted">Il évite les erreurs de manipulation. La vraie protection, ce sont les droits d'écriture sur le dossier.</p></div>
     <div class="card top" data-rsec="securite"><h3>Assistant de démarrage</h3>
       <p class="hint muted m-0">Pour revoir d’un coup la structure, l’équipe, les catégories, les modèles et le mail.</p>
@@ -3021,12 +3040,15 @@ async function saveReg(){
   (r.equipe||[]).forEach(p=>{ if(String(p.mail||'').trim()&&!MAIL.test(String(p.mail).trim())) errs.push(`Équipe : l’adresse de ${p.nom||'une personne'} est incorrecte.`); });
   if(!/^https:\/\//.test(r.webmail)) errs.push("L'adresse d'Outlook doit commencer par https://");
   if(r.support&&!MAIL.test(r.support)) errs.push(`Signaler un problème : adresse incorrecte « ${r.support} ».`);
-  if(!r.motdepasse) errs.push('Le mot de passe ne peut pas être vide.');
-  else if(r.motdepasse!==PAR.motdepasse&&pwLikeName(r.motdepasse,r.attestation.nom||structure.nom||'')) errs.push('Le mot de passe ressemble trop au nom de la structure : choisissez autre chose.');
+  if(r.motdepasse){ if(r.motdepasse.length<6) errs.push('Le nouveau mot de passe doit avoir au moins 6 caractères.');
+    else if(/^(docubus|librejo|motdepasse|123456)$/i.test(r.motdepasse)) errs.push('Choisissez un mot de passe moins courant.');
+    else if(pwLikeName(r.motdepasse,r.attestation.nom||structure.nom||'')) errs.push('Le mot de passe ressemble trop au nom de la structure : choisissez autre chose.'); }
   r.medecins.forEach((m,i)=>{ if(!String(m.nom||'').replace(/^Dr\s*/,'').trim()) errs.push(`Médecin ${i+1} : nom manquant.`); if(!/^\d{11}$/.test(m.rpps||'')) errs.push(`${m.nom||'Médecin '+(i+1)} : le n° RPPS doit compter 11 chiffres.`); });
   if(errs.length){ openModal(`<h3 id="modal-title">À corriger</h3><ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="secondary" data-close>OK</button>`); return false; }
+  /* mot de passe : empreinte du nouveau, ou de l'ancien s'il était encore en clair */
+  const pwNew=r.motdepasse?await pwHash(r.motdepasse):pwPlain()?await pwHash(PAR.motdepasse||'docubus'):PAR.motdepasse;
   const old=PAR, nomChange=JSON.stringify(r.nommage)!==JSON.stringify(NOMMAGE());
-  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,support:r.support||'',mail:r.mail,motdepasse:r.motdepasse,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff,fiche:Object.fromEntries(Object.entries(r.fiche||{}).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>v)),nommage:{...r.nommage}};
+  PAR={...PAR,equipe:(r.equipe||[]).map(p=>({id:p.id||'e'+rid(),nom:String(p.nom||'').trim(),fonction:String(p.fonction||'').trim(),tel:String(p.tel||'').trim(),mail:String(p.mail||'').trim(),numero:String(p.numero||'').trim()})).filter(p=>p.nom),attestation:r.attestation,destinataires:r.destinataires.map(d=>({nom:d.nom.trim(),structure:d.structure.trim(),attention:d.attention.trim(),adresses:d.adresses,...(annuPart(d.partenaire)?{partenaire:d.partenaire,exclues:d.exclues||[]}:{})})),envoi:r.envoi,webmail:r.webmail,support:r.support||'',mail:r.mail,motdepasse:pwNew,tampon:r.tampon,medecins:r.medecins.map(m=>({nom:m.nom.trim(),rpps:m.rpps})),medecinLigne:String(r.medecinLigne||'').trim(),apparence:r.apparence,mise:r.mise,formsOff:PAR.formsOff,fiche:Object.fromEntries(Object.entries(r.fiche||{}).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>v)),nommage:{...r.nommage}};
   const newLogo=r.apparence.logo&&r.apparence.logo!==((old.apparence||{}).logo);
   if(r.persoFont&&!await run(()=>writeRel('app/polices-pdf/perso.json',new Blob([JSON.stringify(r.persoFont)],{type:'application/json'})))){ PAR=old; return false; }
   if(await run(saveParams,'Réglages enregistrés')){ jlog('Réglages enregistrés',''); if(nomChange) jlog('Réglages enregistrés','Nom des fichiers',PAR.nommage.fichier+' · dossiers : '+PAR.nommage.dossier);
@@ -4825,7 +4847,7 @@ function linkThumb(d){
 }
 
 function linkRow(d,ts,showCat){
-  const u=esc(d.url);
+  const u=esc(safeHref(d.url)||'#');
   return `<tr><td class="col-icon"><span class="ico lien" aria-hidden="true">${ICON_LINK}</span></td>
     <td class="t"><a href="${u}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a><span class="badge">Lien web</span>${isAdmin&&d.epingle?' <span title="Épinglé en accueil">★</span>':''}
       <small>${showCat?esc(destName(destOf(d)))+' · ':(d.sous&&!filter.includes('/')?esc(d.sous)+' · ':'')}${esc(linkHost(d.url))}</small>
@@ -4839,9 +4861,9 @@ function linkRow(d,ts,showCat){
     </div></td></tr>`;
 }
 function linkCard(d,ts,showCat){
-  const u=esc(d.url);
+  const u=esc(safeHref(d.url)||'#');
   return `<div class="gcard">
-    <a class="gthumb lien${thumbSrc(d)?'':' auto'}" href="${u}" target="_blank" rel="noopener" ${thumbSrc(d)?`aria-label="Ouvrir ${esc(d.titre)}"`:'tabindex="-1" aria-hidden="true"'}>${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" onerror="this.remove()">`:linkVignette(d)}</a>
+    <a class="gthumb lien${thumbSrc(d)?'':' auto'}" href="${u}" target="_blank" rel="noopener" ${thumbSrc(d)?`aria-label="Ouvrir ${esc(d.titre)}"`:'tabindex="-1" aria-hidden="true"'}>${thumbSrc(d)?`<img src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:linkVignette(d)}</a>
     <div class="gbody"><b><a class="gtitle" href="${u}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a></b><span class="badge m-0 self-start">Lien web</span><small>${showCat?esc(catName(d.categorie))+' · ':''}${docDate(d.date)}</small></div>
     <div class="gact">
       <a class="iconbtn" href="${u}" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>
@@ -5276,7 +5298,7 @@ function homeFormRow(f){
   return `<li><button type="button" class="hrow" data-fill="${esc(f.id)}"><span class="hi" aria-hidden="true">${esc(formEmoji(f))}</span><span class="hn"><b>${esc(f.titre)}</b>${s?`<small>${esc(s)}</small>`:''}</span><span class="hgo">Remplir</span></button></li>`;
 }
 function homeDocRow(d){
-  if(isLink(d)) return `<li><div class="hrow"><span class="hi lien" aria-hidden="true">🔗</span><a class="hn" href="${esc(d.url)}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc('Lien web · '+linkHost(d.url))}</small></a>
+  if(isLink(d)) return `<li><div class="hrow"><span class="hi lien" aria-hidden="true">🔗</span><a class="hn" href="${esc(safeHref(d.url)||'#')}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc('Lien web · '+linkHost(d.url))}</small></a>
     <span class="ha"><button class="iconbtn" data-lsend="${esc(d.id)}" title="Envoyer le lien" aria-label="Envoyer le lien ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
   return `<li><div class="hrow"><span class="hi thumb" aria-hidden="true">${thumbHtml(d,'')}</span><a class="hn" href="${hrefOf(d.chemin)}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc(String(d.ext||'').toUpperCase())}</small></a>
     <span class="ha">${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="iconbtn" data-print="${esc(d.chemin)}" title="Imprimer" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}</button>`:''}<button class="iconbtn" data-send="${esc(d.chemin)}" title="Envoyer" aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
@@ -5774,18 +5796,22 @@ function czEmptyModal(d,e,first){
    données ouvertes de Service-Public). Il ne fait que lire, sur clic de l'admin : rien n'est envoyé.
    Une nouvelle version n'est jamais installée seule : l'admin compare et valide. */
 const czNum=n=>{ const m=String(n||'').match(/(\d{5})\s*\*?\s*(\d{2})?/); return m?{base:m[1],v:m[2]?+m[2]:0}:null; };
-const CZ_LIST_DEFAULT='https://raw.githubusercontent.com/julienaron/librejo/main/cerfa/cerfa.json';
+const CZ_LIST_DEFAULT='https://raw.githubusercontent.com/librejoapp/librejo/main/cerfa/cerfa.json';
+const CZ_LIST_OLD='https://raw.githubusercontent.com/julienaron/librejo/main/cerfa/cerfa.json'; // ancienne adresse (dépôt personnel) : remplacée
+/* Liens de la liste : https vers un site public officiel seulement (service-public, gouv.fr) */
+const czSafe=u=>{ try{ const x=new URL(String(u||'')); return x.protocol==='https:'&&/(^|\.)(service-public\.(gouv\.)?fr|gouv\.fr)$/.test(x.hostname)?x.href:''; }catch(e){ return ''; } };
 async function cerfaCheck(){
   const docs=cerfaDocs();
   openModal(`<h3 id="modal-title">Vérifier les Cerfa</h3><div id="cc-wrap">
     <p class="m-0">Librejo lit la liste publique des Cerfa en vigueur et ${docs.length>1?`la compare aux ${docs.length} Cerfa proposés à l’équipe`:docs.length?'la compare au Cerfa proposé à l’équipe':'la compare aux Cerfa proposés à l’équipe (aucun pour l’instant)'}. <b>Il ne fait que lire : rien n’est envoyé.</b> Aucune nouvelle version n’est installée sans votre accord.</p>
-    <label class="field"><span>Adresse de la liste <small>(fournie avec Librejo ; à changer seulement si on vous le demande)</small></span><input class="in" id="cc-url" value="${esc(PAR.cerfaListe||CZ_LIST_DEFAULT)}" placeholder="https://…/cerfa.json" spellcheck="false"></label>
+    <label class="field"><span>Adresse de la liste <small>(fournie avec Librejo ; à changer seulement si on vous le demande)</small></span><input class="in" id="cc-url" value="${esc(PAR.cerfaListe&&PAR.cerfaListe!==CZ_LIST_OLD?PAR.cerfaListe:CZ_LIST_DEFAULT)}" placeholder="https://…/cerfa.json" spellcheck="false"></label>
     <div id="cc-res"></div>
     <div class="btns"><button class="primary" id="cc-go">Vérifier maintenant</button><button class="secondary" data-close>Fermer</button></div></div>`,'wide');
   $('#cc-go').onclick=async()=>{
     const url=$('#cc-url').value.trim(), res=$('#cc-res'); if(!/^(https:\/\/|http:\/\/localhost[:/])/.test(url)){ toast('Indiquez l’adresse de la liste (https://…).'); return; }
     res.innerHTML='<p class="hint">Lecture de la liste…</p>'; let L;
-    try{ const r=await fetch(url,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}); if(!r.ok) throw new Error('réponse '+r.status); L=await r.json(); if(!L||!L.cerfa) throw new Error('liste illisible'); }
+    try{ const r=await fetch(url,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'}); if(!r.ok) throw new Error('réponse '+r.status); L=await r.json(); if(!L||!L.cerfa||typeof L.cerfa!=='object') throw new Error('liste illisible');
+      Object.values(L.cerfa).forEach(c=>{ if(c&&typeof c==='object'){ c.page=czSafe(c.page); c.url=czSafe(c.url); c.numero=String(c.numero||''); c.titre=String(c.titre||''); } }); }
     catch(e){ res.innerHTML=`<div class="cz-warn"><span>La liste n’a pas pu être lue (${esc(e.message||'réseau')}). Le réseau ou le pare-feu de la structure bloque peut-être cette adresse : parlez-en au service informatique, ou vérifiez à la main sur service-public.fr.</span></div>`; return; }
     const rows=[], okDocs=[];
     docs.forEach(d=>{ const loc=czNum(d.cerfa.numero), rem=loc&&L.cerfa[loc.base], rv=rem&&czNum(rem.numero);
@@ -5934,7 +5960,7 @@ function wizBody(){ const W=WZ, s=W.step;
     ${W.mailmode&&W.mailmode!=='aucun'?`<label class="field"><span>Adresse(s) d’envoi de l’équipe <small>(une par ligne : reçoivent une copie)</small></span><textarea class="in" data-w="envoi" rows="2" spellcheck="false">${esc(W.envoi)}</textarea></label>
       <div class="row"><button type="button" class="secondary" id="wz-test">${ICON.mail}Tester</button><small class="hint">Prépare un mail d’essai, sans rien envoyer.</small></div>`:''}`;
   if(s===6) return `<h2 id="wz-h">Le mot de passe admin</h2><p class="wz-lead">Il protège le mode admin, qui permet d’ajouter et de modifier les documents.</p>
-    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>C’est un verrou contre les erreurs de manipulation, pas un coffre-fort : il est écrit en clair dans les réglages. La vraie protection, ce sont les droits d’accès au dossier, gérés par votre service informatique.</span></div>
+    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>C’est un verrou contre les erreurs de manipulation, pas un coffre-fort. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier. La vraie protection, ce sont les droits d’accès au dossier, gérés par votre service informatique.</span></div>
     <div class="fieldgrid"><label class="field"><span>Mot de passe <small>(6 caractères au moins)</small></span><input class="in" type="password" id="wz-pw" value="${esc(W.pw)}" autocomplete="new-password" data-autofocus></label>
       <label class="field"><span>À nouveau</span><input class="in" type="password" id="wz-pw2" value="${esc(W.pw2)}" autocomplete="new-password"></label></div>`;
   const nf=MODELES.filter(m=>W.packs&&W.packs.includes(m.pack)).length, typ=(WZ_TYPES.find(t=>t[0]===W.type)||[])[1]||'—';
@@ -5948,6 +5974,23 @@ function wizBody(){ const W=WZ, s=W.step;
       <dt>Mot de passe</dt><dd>${W.pw?'choisi':'<b class="danger">à choisir (étape 7)</b>'}</dd></dl>`;
 }
 /* Mot de passe trop proche du nom de la structure (« mimosa » pour « Les Mimosas ») */
+/* Mot de passe admin : seule une empreinte est enregistrée dans parametres.js (PBKDF2-SHA-256, sel aléatoire),
+   jamais le mot de passe lui-même : l'équipe qui lit le dossier ne le voit pas, même s'il sert ailleurs.
+   Cela reste un verrou contre les erreurs, pas une protection : le mode admin se décide dans le navigateur.
+   Anciens réglages (mot de passe en clair) : acceptés, et convertis en empreinte au premier enregistrement. */
+const PW_ITER=210000, hexOf=b=>[...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join(''), bytesOf=h=>new Uint8Array((h.match(/../g)||[]).map(x=>parseInt(x,16)));
+async function pwHash(pw,sel,iter=PW_ITER){
+  if(!(window.crypto&&crypto.subtle)) return pw; // navigateur sans Web Crypto (page non sécurisée) : on garde l'ancien format
+  const salt=sel?bytesOf(sel):crypto.getRandomValues(new Uint8Array(16));
+  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},k,256);
+  return {algo:'pbkdf2-sha256',iter,sel:hexOf(salt),empreinte:hexOf(b)};
+}
+async function pwCheck(pw){ const m=PAR.motdepasse||'docubus';
+  if(typeof m==='string') return pw===m;
+  if(!m||m.algo!=='pbkdf2-sha256'||!(window.crypto&&crypto.subtle)) return false;
+  const h=await pwHash(pw,m.sel,m.iter||PW_ITER); let d=0; for(let i=0;i<Math.max(h.empreinte.length,m.empreinte.length);i++) d|=(h.empreinte.charCodeAt(i)||0)^(m.empreinte.charCodeAt(i)||0); return d===0; }
+const pwPlain=()=>typeof (PAR.motdepasse||'docubus')==='string';
 function pwLikeName(pw,nom){ const k=x=>norm(x).replace(/[^a-z0-9]/g,''), p=k(pw); if(!p) return false;
   const stop=new Set(['les','des','une','aux','association','centre','foyer','maison','residence','service','structure']);
   const words=norm(nom).split(/[^a-z0-9]+/).filter(w=>w.length>=4&&!stop.has(w)).map(w=>w.replace(/(es|s|x)$/,'')).filter(w=>w.length>=4);
@@ -6028,7 +6071,7 @@ async function wizFinish(){
   const off=new Set(formsOffBase()); // médicaux et substitution : masqués d'office selon les médecins et le type (formsAuto)
   PAR={...PAR,attestation:{...(PAR.attestation||{}),...ent},fiche:{...(PAR.fiche||{}),adresse:W.adresse.trim(),cp:W.cp.trim(),ville:W.ville.trim(),tel:W.tel.trim(),mail:W.mail.trim(),siret:W.siret.trim(),finess:W.finess.trim()},
     typeStructure:W.type,medecins:meds,mail:W.mailmode==='aucun'?'outlook':W.mailmode,sansMail:W.mailmode==='aucun',envoi:W.envoi.split(/[\s,;]+/).filter(m=>MAIL.test(m)),webmail:W.webmail,
-    motdepasse:W.pw,formsOff:[...off],assistant:'fait',demarrage:{debut:today(),faits:[],masque:false},
+    motdepasse:await pwHash(W.pw),formsOff:[...off],assistant:'fait',demarrage:{debut:today(),faits:[],masque:false},
     apparence:{...THEME_DEF,...(PAR.apparence||{}),...(W.logo?{logo:W.logo,menuLogo:'both'}:{})}};
   await saveData(); await saveParams();
   if(W.logo){ const j=await logoForPdf(W.logo); await guardedWrite('app/logo-association.js','// Librejo : logo de la structure pour l\'en-tête des PDF (écrit par l\'assistant).\nwindow.DOCUBUS_LOGO_ASSO = '+JSON.stringify(j)+';\n'); window.DOCUBUS_LOGO_ASSO=j; }
@@ -6430,7 +6473,7 @@ async function archives(){
   b.addEventListener('click',async e=>{
     const s=e.target.closest('[data-arsort]'); if(s){ archSort=s.dataset.arsort; b.querySelectorAll('[data-arsort]').forEach(x=>x.setAttribute('aria-pressed',String(x===s))); draw(); return; }
     const row=e.target.closest('[data-ar]'); if(!row) return; const a=A.find(x=>x.rel===row.dataset.ar);
-    if(e.target.closest('[data-arview]')&&FSA){ e.preventDefault(); try{ const f=await readRel(a.rel); const u=URL.createObjectURL(f); window.open(u,'_blank'); setTimeout(()=>URL.revokeObjectURL(u),60000); }catch(err){ const m=fsErr(err); m&&toast(m); } return; }
+    if(e.target.closest('[data-arview]')&&FSA){ e.preventDefault(); try{ const f=await readRel(a.rel); openSafe(f,a.rel.split('/').pop()); }catch(err){ const m=fsErr(err); m&&toast(m); } return; }
     if(e.target.closest('[data-arcmp]')){ try{ const [cur,old]=await Promise.all([readRel(a.doc.chemin),readRel(a.rel)]); comparer({A:{file:old},B:{file:cur,doc:a.doc}}); }catch(err){ const m=fsErr(err); m&&toast(m); } return; }
     if(e.target.closest('[data-arrest]')) restoreArch(a);
   });
@@ -6893,7 +6936,7 @@ function formsByGroupHTML(){ // une liste déroulante par rubrique (même prése
    seule fenêtre d'impression, pages à l'italienne comprises.
    ====================================================================== */
 let docxLibReady=null;
-function getDocxLib(){ if(!docxLibReady) docxLibReady=loadScript('app/lib/docx-preview.min.js').then(()=>window.docx).catch(e=>{ docxLibReady=null; throw e; }); return docxLibReady; }
+function getDocxLib(){ if(!docxLibReady) docxLibReady=needLib('jszip').then(()=>loadScript('app/lib/docx-preview.min.js')).then(()=>window.docx) /* docx-preview a besoin de JSZip */.catch(e=>{ docxLibReady=null; throw e; }); return docxLibReady; }
 const PRINT_EXT=['pdf','png','jpg','jpeg','webp','docx'];
 const PACK_CSS=`@page{size:A4 portrait;margin:0}@page land{size:A4 landscape;margin:0}
 html,body{margin:0;padding:0;background:#fff}
@@ -7921,7 +7964,7 @@ const AIDE_REGLAGES={
       'Cliquez sur <b>Enregistrer les réglages</b>.']},
   securite:{titre:'Réglages : Accès',
     but:'Le mot de passe du mode admin, et l’assistant de démarrage.',
-    etapes:['<b>Mot de passe admin</b> : un verrou contre les erreurs de manipulation, pas un coffre-fort. La vraie protection, ce sont les droits sur le dossier.',
+    etapes:['<b>Nouveau mot de passe admin</b> : laissez vide pour garder l’actuel. Librejo n’en garde qu’une empreinte, il ne peut donc pas être affiché ; en cas d’oubli, un admin encore connecté en choisit un nouveau. C’est un verrou contre les erreurs, pas un coffre-fort : la vraie protection, ce sont les droits sur le dossier.',
       '<b>Relancer l’assistant</b> pour revoir d’un coup la structure, l’équipe, les catégories, les modèles et le mail.',
       'Cliquez sur <b>Enregistrer les réglages</b>.']}
 };
@@ -7958,7 +8001,7 @@ const AIDE_WIZ=[
   {but:'Le mot de passe du mode admin, qui permet d’ajouter et de modifier les documents.',
     etapes:['Choisissez un mot de passe de 6 caractères au moins, sans rapport avec le nom de la structure.',
       'Saisissez-le une deuxième fois dans <b>À nouveau</b>.',
-      'C’est un verrou contre les erreurs, pas un coffre-fort : il est écrit en clair dans les réglages.']},
+      'C’est un verrou contre les erreurs, pas un coffre-fort. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier.']},
   {but:'Le récapitulatif, avant que Librejo écrive les réglages dans le dossier de la structure.',
     etapes:['Relisez chaque ligne. Cliquez sur une étape, à gauche, pour y revenir.',
       'Cliquez sur <b>C’est parti</b>.',

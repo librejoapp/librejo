@@ -79,6 +79,13 @@ Librejo prépare un brouillon (.eml) ; Outlook y ajoute la signature automatique
 
 Dans l'aide (« ? ») et dans les vérifications du poste, **Signaler un problème** prépare un mail avec la version de Librejo, le navigateur, l'adresse d'ouverture et le résultat des vérifications, jamais de données sur les personnes. Il part par défaut à l'équipe Librejo, **librejo@proton.me** ; une structure peut mettre une autre adresse dans Réglages › Mail. Rien n'est envoyé par Librejo.
 
+## Sécurité
+
+- **Politique de sécurité du contenu (CSP)** dans `appli/index.html` : seuls les scripts du site s'exécutent. Le code de l'application est dans `appli/app.js` (chargé par `boot.js`) ; aucun code n'est écrit dans la page ni dans des attributs `onclick`, `onload`… Les seules lectures hors du site sont la liste des Cerfa (`raw.githubusercontent.com`) et les PDF officiels (`*.service-public.fr`, `*.gouv.fr`). Toute nouvelle bibliothèque ou adresse doit y être ajoutée.
+- **Fichiers du dossier** : seuls PDF, images et texte s'ouvrent dans le navigateur ; les autres (HTML, SVG, Word…) sont téléchargés, jamais exécutés. Les liens des documents et de la liste des Cerfa ne sont acceptés qu'en `http(s)`.
+- **Mot de passe admin** : seule une empreinte (PBKDF2-SHA-256, sel aléatoire) est enregistrée dans `app/parametres.js`. Les anciens mots de passe en clair restent acceptés et sont convertis au premier enregistrement. Cela reste un verrou contre les erreurs, pas une protection : la vraie protection, ce sont les droits sur le dossier.
+- Librejo refuse de s'afficher dans un cadre (iframe) d'un autre site.
+
 ## Deux postes qui modifient en même temps
 
 Librejo n'a pas de serveur : deux admins (ou un dossier OneDrive, Google Drive, Dropbox, Nextcloud) peuvent enregistrer les mêmes réglages presque en même temps.
