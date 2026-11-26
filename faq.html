@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questions fréquentes sur Librejo</title>
+<meta name="description" content="Les réponses aux questions qu’on nous pose sur Librejo : prix, données, installation.">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<header class="slab">
+  <div class="container">
+    <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+    <nav aria-label="Pages du site">
+      <a href="installer.html">Installer</a>
+      <a href="guides.html">Guides</a>
+      <a href="faq.html" aria-current="page">Questions</a>
+      <a href="telecharger.html">Télécharger</a>
+    </nav>
+    <a class="btn btn--card" href="appli/?demo">Essayer la démo</a>
+  </div>
+</header>
+<main id="contenu">
+<section class="page-head desk">
+  <div class="container rise">
+    <h1>Questions fréquentes</h1>
+    <p class="lead">Ce qu’on nous demande le plus souvent.</p>
+  </div>
+</section>
+
+<section class="part reveal">
+  <div class="container">
+    <div class="faq">
+      <details><summary>Est-ce vraiment gratuit ?</summary><p>Oui. Librejo est gratuit et libre : pas d’abonnement, et le code est public.</p></details>
+      <details><summary>Où sont nos documents ?</summary><p>Dans le dossier de votre structure, et nulle part ailleurs. Le site ne sert que l’application : il ne reçoit rien.</p></details>
+      <details><summary>Peut-on y mettre des informations sur les personnes accompagnées ?</summary><p>Non, et Librejo est fait pour l’éviter. Ce que vous tapez dans un formulaire part dans le PDF ou le mail, puis s’efface. Rien n’est gardé.</p></details>
+      <details><summary>Faut-il un serveur ou un informaticien ?</summary><p>Non. Il faut un navigateur et un dossier partagé que vous avez sans doute déjà : un NAS, OneDrive, Google Drive.</p></details>
+      <details><summary>Sur quels appareils ?</summary><p>Sur un ordinateur, avec Chrome ou Edge. Librejo n’est pas prévu pour les téléphones.</p></details>
+      <details><summary>Librejo remplace-t-il notre dossier usager ?</summary><p>Non, il le complète. Le dossier de chaque personne reste dans votre logiciel habituel. Librejo s’occupe des documents communs et des formulaires.</p></details>
+      <details><summary>Peut-on faire des ordonnances ?</summary><p>Librejo propose une page à l’en-tête du médecin, qu’il rédige, imprime et signe. Ce n’est ni une ordonnance numérique ni une aide à la prescription.</p></details>
+      <details><summary>Les modèles sont-ils fiables ?</summary><p>Ce sont des trames, écrites à partir de sources publiques. Faites-les relire par votre direction, un juriste ou un médecin avant de vous en servir.</p></details>
+      <details><summary>Et si Librejo s’arrête un jour ?</summary><p>Vos documents restent des fichiers ordinaires, dans des dossiers ordinaires. Vous les gardez, avec ou sans Librejo.</p></details>
+      <details><summary>Où en est le projet ?</summary><p>C’est un prototype, à l’essai. Testez-le avec des données fictives. Nous cherchons des structures pilotes.</p></details>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="foot" id="pages">
+  <div class="container">
+    <div>
+      <a class="mark" href="index.html"><img src="images/logo.svg" alt="Librejo, accueil" width="118" height="38"></a>
+      <p>Né dans un CSAPA-CAARUD de Marseille. Gratuit et libre.</p>
+    </div>
+    <div>
+      <h2>Démarrer</h2>
+      <ul><li><a href="installer.html">Installer</a></li><li><a href="telecharger.html">Télécharger</a></li><li><a href="appli/?demo">Essayer la démo</a></li></ul>
+    </div>
+    <div>
+      <h2>Apprendre</h2>
+      <ul><li><a href="guides.html#equipe">Guide de l’équipe</a></li><li><a href="guides.html#admin">Guide de l’admin</a></li><li><a href="faq.html">Questions</a></li></ul>
+    </div>
+    <div>
+      <h2>Le projet</h2>
+      <ul><li><a href="https://github.com/librejoapp/librejo">Code source</a></li></ul>
+    </div>
+  </div>
+</footer>
+<script>
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('play', e.isIntersecting)), { threshold: 0.4 });
+  document.querySelectorAll('.loop').forEach((l) => io.observe(l));
+  const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((s) => rv.observe(s));
+}
+const ready = (s) => s.classList.add('ready');
+document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
+
+</script>
+<noscript><style>.reveal > .container > *, .shot { opacity: 1 !important; transform: none !important; }</style></noscript>
+</body>
+</html>

@@ -22,7 +22,52 @@ async function startMain(){
 }
 if (!WEB) { startMain(); return; }
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
+/* ---------- Démo en ligne : appli/?demo ----------
+   La même application, ouverte sur la structure fictive « Association des Tilleuls », copiée dans le stockage privé
+   du navigateur (Origin Private File System, dossier « librejo-demo »). Rien n'est envoyé, rien n'est partagé entre
+   visiteurs. La démo ne touche jamais à la vraie installation du poste :
+   - le dossier de la structure mémorisé en IndexedDB (« docubus » › « dossier ») n'est ni lu ni écrit ;
+   - les préférences du poste (localStorage) et le mode admin (sessionStorage) sont rangés à part : pendant la démo,
+     localStorage et sessionStorage sont remplacés par des vues préfixées « librejo-demo: » (comme STK_NS dans la
+     démo de Stockaarud). Sans « ?demo », l'application retrouve le vrai dossier et les vraies préférences.
+   La démo reste active tant que l'adresse garde « ?demo » (l'application ne change que le #ancre en naviguant). */
+var DEMO = /^\?(?:.*&)?demo(?:[=&]|$)/.test(location.search);
+var DEMO_NS = 'librejo-demo:', DEMO_DIR = 'librejo-demo', DEMO_ZIP = '../telechargements/Librejo-dossier-test.zip', DEMO_OK = '.demo-prete';
+var realStore = {};
+function nsStore(name){
+  var real = null; try { real = window[name]; } catch(e){}
+  realStore[name] = real;
+  function own(){ var out=[]; if (!real) return out; for (var i=0;i<real.length;i++){ var k=real.key(i); if (k && k.indexOf(DEMO_NS)===0) out.push(k.slice(DEMO_NS.length)); } return out; }
+  function need(){ if (!real) throw new DOMException('Stockage indisponible', 'SecurityError'); return real; }
+  var api = {
+    getItem: function(k){ return need().getItem(DEMO_NS+k); },
+    setItem: function(k,v){ need().setItem(DEMO_NS+k, String(v)); },
+    removeItem: function(k){ need().removeItem(DEMO_NS+k); },
+    key: function(i){ var o=own(); return i<o.length ? o[i] : null; },
+    clear: function(){ own().forEach(function(k){ real.removeItem(DEMO_NS+k); }); }
+  };
+  Object.defineProperty(api, 'length', {get:function(){ return own().length; }});
+  try { Object.defineProperty(window, name, {configurable:true, enumerable:true, get:function(){ return api; }}); } catch(e){ return false; }
+  return window[name] === api;
+}
+function nsClear(name){ var r = realStore[name]; if (!r) return; try { for (var i=r.length-1;i>=0;i--){ var k=r.key(i); if (k && k.indexOf(DEMO_NS)===0) r.removeItem(k); } } catch(e){} }
+var DEMO_NS_OK = true;
+if (DEMO) {
+  DEMO_NS_OK = nsStore('localStorage') && nsStore('sessionStorage');
+  window.LJ_DEMO = {
+    dir: null, installer: '../installer.html',
+    /* Remettre à zéro : efface le dossier de démo et les clés de démo de ce navigateur, puis recharge une démo neuve */
+    reset: async function(){
+      try { var root = await navigator.storage.getDirectory(); await root.removeEntry(DEMO_DIR, {recursive:true}); } catch(e){}
+      nsClear('localStorage'); nsClear('sessionStorage');
+      location.reload();
+    },
+    /* Quitter : l'application normale, sur ce poste (vrai dossier, vraies préférences) */
+    quit: function(){ location.href = location.pathname; }
+  };
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(function(){});
 
 /* même base que le reste de l'application : la poignée du dossier est partagée */
 function idbOpen(){ return new Promise(function(res,rej){ var r=indexedDB.open('docubus',1); r.onupgradeneeded=function(){ r.result.createObjectStore('h'); }; r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }
@@ -66,7 +111,8 @@ cover(true);
 function done(){ ui.hidden = true; cover(false); cacheSuite(); }
 /* Service worker : second temps de la mise en cache (aperçus, polices arabe et géorgienne), une fois l'application ouverte */
 function cacheSuite(){ if (!('serviceWorker' in navigator)) return;
-  setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (r.active) r.active.postMessage('librejo-cache-suite'); }).catch(function(){}); }, 4000); }
+  setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (!r.active) return; r.active.postMessage('librejo-cache-suite');
+    if (DEMO) r.active.postMessage('librejo-cache-demo'); /* le zip de la démo : « Remettre à zéro » marche aussi hors ligne */ }).catch(function(){}); }, 4000); }
 function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
   var h=ui.querySelector('.lj-in h1'); if (h) { h.id='lj-t';
     /* titre de l'onglet : l'écran affiché (« Accès au dossier refusé – Librejo ») ; l'application prend ensuite le relais */
@@ -97,6 +143,7 @@ async function load(){
     try { window[f[1]] = parseData(await readText(f[0]), f[1]); }
     catch(e){ if (f[2]) missing.push(f[0]+(e.message==='format'||e instanceof SyntaxError?' (illisible)':' (introuvable)')); }
   }
+  if (missing.length && DEMO) { demoFailed({name:'format'}); return; }
   if (missing.length) {
     show('<h1>Le dossier ne contient pas les réglages attendus</h1><p>Fichiers manquants ou illisibles :</p><ul>'+missing.map(function(m){ return '<li>'+esc(m)+'</li>'; }).join('')+'</ul><p>Choisissez le dossier qui contient <b>app</b> et <b>Documents</b>.</p><button class="lj-btn" id="lj-pick">Choisir un autre dossier</button>');
     document.getElementById('lj-pick').onclick = pick; sdOffer('introuvable');
@@ -154,7 +201,71 @@ async function reauth(){
   pick();
 }
 
+/* ---------- Démo : préparation du dossier fictif dans le stockage privé du navigateur ---------- */
+function demoScreen(title, html){
+  show('<h1>'+title+'</h1>'+html+'<p class="lj-aide"><a href="'+DEMO_ZIP+'" download>Télécharger le dossier de test</a> · <a href="../installer.html">Installer Librejo pour votre structure</a></p><a class="lj-btn lj-sec" href="./">Ouvrir Librejo sans la démo</a>');
+}
+function demoUnsupported(){
+  demoScreen('La démo ne marche pas dans ce navigateur',
+    '<p>Elle a besoin du stockage privé des navigateurs récents : Google Chrome, Microsoft Edge, Firefox ou Safari à jour, sur ordinateur. Ce navigateur ne le propose pas (ou la navigation privée le bloque).</p>'
+    +'<p class="lj-aide">Vous pouvez aussi télécharger le dossier de test et le choisir dans Librejo, avec Chrome ou Edge.</p>');
+}
+function demoFailed(e){
+  var n = e && e.name || '';
+  demoScreen('La démo n’a pas pu démarrer',
+    '<p>'+(n==='QuotaExceededError'?'Le navigateur manque de place pour la démo (environ 100 Ko).'
+      :n==='reseau'?'Le dossier fictif n’a pas pu être téléchargé. Vérifiez la connexion à Internet, puis réessayez.'
+      :n==='SecurityError'||n==='NotAllowedError'?'Le navigateur refuse le stockage privé (navigation privée, ou stockage bloqué pour ce site).'
+      :'Le dossier fictif n’a pas pu être préparé dans ce navigateur'+(n?' ('+esc(n)+')':'')+'.')+'</p>'
+    +'<button class="lj-btn" id="lj-demo-again">Recommencer la démo</button>');
+  document.getElementById('lj-demo-again').onclick = function(){ window.LJ_DEMO.reset(); };
+}
+function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=function(){ rej({name:'reseau'}); }; document.head.appendChild(s); }); }
+/* le dossier de la structure dans librejo-demo (celui qui contient app et Documents) */
+async function demoFind(base){ for await (var e of base.values()) if (e.kind==='directory' && await looksRight(e).catch(function(){ return false; })) return e; return null; }
+/* Une seule source : le zip du site (telechargements/Librejo-dossier-test.zip, le même que la page « Télécharger »),
+   décompressé avec JSZip. Le repère « .demo-prete » n'est écrit qu'une fois tout copié : une copie interrompue
+   est refaite au lancement suivant. */
+async function demoInstall(root){
+  try { await root.removeEntry(DEMO_DIR, {recursive:true}); } catch(e){}
+  var base = await root.getDirectoryHandle(DEMO_DIR, {create:true});
+  var r; try { r = await fetch(DEMO_ZIP); } catch(e){ throw {name:'reseau'}; }
+  if (!r.ok) throw {name:'reseau'};
+  var buf = await r.arrayBuffer();
+  if (!window.JSZip) await loadScript('app/lib/jszip.min.js');
+  var zip = await window.JSZip.loadAsync(buf), files = [];
+  zip.forEach(function(path, f){ if (!f.dir) files.push(f); });
+  for (var i=0;i<files.length;i++){
+    var parts = files[i].name.normalize('NFC').split('/').filter(function(p){ return p && p!=='.' && p!=='..'; }), name = parts.pop(), d = base;
+    for (var j=0;j<parts.length;j++) d = await d.getDirectoryHandle(parts[j], {create:true});
+    var w = await (await d.getFileHandle(name, {create:true})).createWritable(); await w.write(await files[i].async('blob')); await w.close();
+  }
+  var h = await demoFind(base); if (!h) throw {name:'format'};
+  var m = await (await base.getFileHandle(DEMO_OK, {create:true})).createWritable(); await m.write(new Date().toISOString()); await m.close();
+  return h;
+}
+async function demoBoot(){
+  document.title = 'Démo – Librejo';
+  var ok = DEMO_NS_OK && navigator.storage && typeof navigator.storage.getDirectory === 'function'
+    && typeof FileSystemFileHandle !== 'undefined' && 'createWritable' in FileSystemFileHandle.prototype;
+  if (!ok) { demoUnsupported(); return; }
+  try {
+    var root = await navigator.storage.getDirectory(), h = null;
+    try { var base = await root.getDirectoryHandle(DEMO_DIR); await base.getFileHandle(DEMO_OK); h = await demoFind(base); } catch(e){ h = null; }
+    if (!h) {
+      show('<h1>Préparation de la démo</h1><p role="status">Librejo copie la structure fictive « Association des Tilleuls » dans ce navigateur…</p>');
+      h = await demoInstall(root);
+    }
+    dir = h; window.LJ_DEMO.dir = h; window.LJ_CHOIX = 'demo';
+    await load();
+  } catch(e) {
+    console.warn('démo', e);
+    demoFailed(e);
+  }
+}
+
 async function boot(){
+  if (DEMO) { demoBoot(); return; }
   /* Navigateur sans accès aux dossiers (Firefox, Safari…) : les formulaires marchent quand même */
   if (!window.showDirectoryPicker) { formsOnly('api'); return; }
   dir = await idbGet('dossier');
