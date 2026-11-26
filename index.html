@@ -371,6 +371,10 @@ table.docs .t .badge:not(.accent){margin:var(--sp-1) var(--sp-1) 0 0}
 .badch{font-size:1.15em;padding:0 .15em;background:var(--warn-bg);border-radius:4px}
 .fielderr,.dialog .fielderr{margin:calc(-1 * var(--sp-1)) 0 var(--sp-2);color:var(--danger);font-size:var(--fs-3);font-weight:600}
 .errors{margin:0;padding:10px var(--sp-3) 10px 30px;background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line);border-radius:var(--r-md);font-size:var(--fs-3);display:grid;gap:var(--sp-1)}
+.errors:focus{outline:3px solid var(--focus,var(--navy));outline-offset:2px}
+/* message d'erreur cliquable : il mène au champ */
+.errgo{border:0;background:none;padding:2px 0;color:inherit;font:inherit;font-weight:600;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.errgo:hover{text-decoration-thickness:2px}
 .privacy{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-3);font-weight:700;color:var(--ok-text)}
 .privacy svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
 .privacy .pemo{font-size:17px;line-height:1.2;flex:none}
@@ -1635,7 +1639,7 @@ function validate(){
 function renderDeliv(){
   const p=$('#p-deliv');
   const {errs,bad}=showErrors?validate():{errs:[],bad:new Set()};
-  const B=k=>bad.has(k)?' bad':'';
+  const B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const d=F.csapa!==''?dest():null;
   const patients=F.patients.map((pt,i)=>{
     const formes=pt.trt?FORMES[pt.trt]:[];
@@ -1704,7 +1708,7 @@ function renderDeliv(){
     </div>
     ${patients}
     <button class="secondary wide" data-act="addpat">${ICON.plus}Ajouter un patient</button>
-    ${errs.length?`<ul class="errors" role="alert">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot"><button class="primary big" data-act="prepare">${ICON.mail}Préparer l'envoi (${F.patients.length} PDF)</button></div>
     <div class="row end"><button class="ghost danger" data-act="clear">${ICON.trash}Tout effacer</button></div>`;
 }
@@ -3256,7 +3260,7 @@ function renderFill(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f){ formView=null; return renderForms(); }
   const errs=fShowErr?validateFill(f):[];
   const bad=new Set(errs.map(x=>x.k));
-  const input=c=>{ const v=FV[c.id]??'', B=bad.has(c.id)?' bad':'';
+  const input=c=>{ const v=FV[c.id]??'', B=bad.has(c.id)?` bad" data-errk="${esc(c.id)}`:'';
     if(c.type==='long') return `<textarea class="in${B}" data-f="${c.id}" rows="4">${esc(v)}</textarea>`;
     if(c.type==='date') return `<input class="in${B}" type="date" data-f="${c.id}" value="${esc(v)}">`;
     if(c.type==='nombre') return `<input class="in num${B}" inputmode="decimal" data-f="${c.id}" value="${esc(v)}">`;
@@ -3270,11 +3274,11 @@ function renderFill(){
     <div class="card top w-form">
       <div class="fieldgrid">
         ${(f.champs||[]).map(c=>{ const t=c.type==='equipe'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
-        <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
+        <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
         <label class="field"><span>Date du document</span><input class="in" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
     </div>
-    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li>${esc(x.m)}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x.k)}">${esc(x.m)}</li>`).join('')}</ul>`:''}
     <div class="row w-form"><button class="primary big" data-mkpdf>${ICON.mail}Créer le PDF et préparer l'envoi</button></div>
     <div class="row w-form end"><button class="ghost danger" data-fclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -3305,7 +3309,7 @@ function formBlob(f,tp){
 }
 async function makeFormPdf(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f) return;
-  fShowErr=true; if(validateFill(f).length){ renderFill(); return; } fShowErr=false;
+  fShowErr=true; if(validateFill(f).length){ renderFill(); errsShow('#p-forms'); return; } fShowErr=false;
   let tp=null; try{ tp=await loadTampon(); }catch(e){}
   const blob=formBlob(f,tp);
   const file=new File([blob],`${fileSafe(f.titre)}_${FV._date||today()}.pdf`,{type:'application/pdf'});
@@ -3560,7 +3564,7 @@ function editKit(id){
     const sel=new Set(kd.docs);
     $('#k-docs').innerHTML=cats().map(c=>{ const ds=DATA.documents.filter(d=>d.categorie===c.id&&!isLink(d)); if(!ds.length) return '';
       return `<div class="mini-lbl mt-s">${esc(c.nom)}</div>${ds.map(d=>`<label class="check plain"><input type="checkbox" data-kd="${esc(d.id)}" ${sel.has(d.id)?'checked':''}> ${esc(d.titre)} <small class="hint muted">${esc(d.ext.toUpperCase())}</small></label>`).join('')}`; }).join('')||'<p class="hint">Aucun document.</p>';
-    $('#k-order').innerHTML=kd.docs.map((did,i)=>{ const d=docById(did); return d?`<div class="row gap-s"><span class="grow">${i+1}. ${esc(d.titre)}</span><button class="iconbtn" data-kup="${i}" ${i?'':'disabled'} aria-label="Monter">${ICON.upA}</button></div>`:''; }).join('');
+    $('#k-order').innerHTML=kd.docs.map((did,i)=>{ const d=docById(did); return d?`<div class="row gap-s"><span class="grow">${i+1}. ${esc(d.titre)}</span><button class="iconbtn" data-kup="${i}" ${i?'':'disabled'} aria-label="Monter « ${esc(d.titre)} »">${ICON.upA}</button></div>`:''; }).join('');
   };
   openModal(`<h3 id="modal-title">${k?'Modifier le kit':'Nouveau kit'}</h3>
     <label class="field"><span>Nom du kit</span><input class="in" id="k-titre" value="${esc(kd.titre)}" placeholder="ex. Dossier d'inclusion complet"></label>
@@ -3972,7 +3976,7 @@ function drawFormList(){
     <h3>Formulaires</h3>
     <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
     ${DATA.formulaires.length?`<table class="docs"><tbody>${DATA.formulaires.map(f=>`<tr><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
-      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
+      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
     <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>`;
   $('#asub').onclick=async e=>{
     const ma=e.target.closest('[data-madd]'); if(ma) return addModele(ma.dataset.madd);
@@ -4049,7 +4053,7 @@ function drawFormEditor(){
         <div class="choice">${EQ_INFOS.map(([i,l])=>`<button type="button" class="chip sm" data-cinfo="${i}" data-cidx="${i}" aria-pressed="${(c.infos||['fonction','tel']).includes(i)}">${l}</button>`).join('')}</div><small class="hint">Coché = proposé par défaut ; l’équipe peut changer.</small></div>`
       :`<label class="field"><span class="mini-lbl">Choix possibles <small>(si « Choix », séparés par des virgules)</small></span><input class="in" data-ck="options" value="${esc(c.options||'')}" ${c.type==='choix'?'':'disabled'}></label>`}
       <label class="chk"><input type="checkbox" data-ck="requis" ${c.requis?'checked':''}> Obligatoire</label>
-      <div class="row gap-xs h-input"><button class="iconbtn" data-cup="${i}" aria-label="Monter" ${i?'':'disabled'}>${ICON.upA}</button><button class="iconbtn" data-cdel="${i}" aria-label="Supprimer le champ">${ICON.trash}</button></div>
+      <div class="row gap-xs h-input"><button class="iconbtn" data-cup="${i}" aria-label="Monter le champ « ${esc(c.label||i+1)} »" ${i?'':'disabled'}>${ICON.upA}</button><button class="iconbtn" data-cdel="${i}" aria-label="Supprimer le champ « ${esc(c.label||i+1)} »">${ICON.trash}</button></div>
     </div>`).join('')}</div>
     <div><button class="secondary" data-cadd>${ICON.plus}Ajouter un champ</button></div>
     <h3 class="mt-s">Texte du document</h3>
@@ -4244,7 +4248,7 @@ function drawReg(){
     <div class="card top w-wide" data-rsec="equipe"><h3>Professionnels de l’équipe</h3>
       <p class="hint muted m-0">Proposés dans les formulaires : l’équipe choisit une ou plusieurs personnes, et ce qui apparaît (fonction, téléphone, mail, n° professionnel). Aussi en choix rapide pour les signataires. Coordonnées professionnelles seulement.</p>
       <div class="eqlist">${(rdraft.equipe||[]).map((p,i)=>`<div class="eqrow" data-eqr="${i}">${[['nom','Prénom Nom'],['fonction','Fonction'],['tel','Téléphone'],['mail','Mail'],['numero','N° pro (ADELI, RPPS…)']].map(([k,ph])=>`<input class="in" data-ek="${k}" value="${esc(p[k]||'')}" placeholder="${ph}" aria-label="${ph}" ${k==='mail'?'spellcheck="false"':''}>`).join('')}
-        <div class="row gap-xs"><button type="button" class="iconbtn" data-equp="${i}" aria-label="Monter" ${i?'':'disabled'}>${ICON.upA}</button><button type="button" class="iconbtn" data-eqdel="${i}" aria-label="Retirer ${esc(p.nom||'cette personne')}">${ICON.trash}</button></div></div>`).join('')||'<p class="hint">Personne pour l’instant.</p>'}</div>
+        <div class="row gap-xs"><button type="button" class="iconbtn" data-equp="${i}" aria-label="Monter ${esc(p.nom||'cette personne')}" ${i?'':'disabled'}>${ICON.upA}</button><button type="button" class="iconbtn" data-eqdel="${i}" aria-label="Retirer ${esc(p.nom||'cette personne')}">${ICON.trash}</button></div></div>`).join('')||'<p class="hint">Personne pour l’instant.</p>'}</div>
       <div><button type="button" class="secondary" id="r-eqadd">${ICON.plus}Ajouter une personne</button></div></div>
     <div class="card top" data-rsec="equipe"><h3>Médecins (signature et RPPS)</h3>
       <p class="hint">Proposés comme signataires de l'attestation de délivrance et dans les modèles Word (champs {Médecin}, {Signataire}, {RPPS}). À mettre à jour à chaque arrivée ou départ.</p>
@@ -4840,7 +4844,7 @@ function editSemList(l){
   const items=l.items.map(i=>({doc:i.doc}));
   const opts=()=>cats().map(c=>{ const ds=docs().filter(d=>d.categorie===c.id&&!isLink(d)&&!items.some(i=>i.doc===d.id)); return ds.length?`<optgroup label="${esc(c.nom)}">${ds.map(d=>`<option value="${esc(d.id)}">${esc(d.titre)}</option>`).join('')}</optgroup>`:''; }).join('');
   const draw=()=>{ $('#sl-items').innerHTML=items.length?items.map((it,i)=>{ const d=docById(it.doc); return d?`<div class="slrow" data-i="${i}"><span class="grow">${esc(d.titre)}</span>
-      <button class="iconbtn" data-up="${i}" ${i?'':'disabled'} aria-label="Monter">↑</button><button class="iconbtn" data-down="${i}" ${i<items.length-1?'':'disabled'} aria-label="Descendre">↓</button><button class="iconbtn" data-rm="${i}" aria-label="Retirer ${esc(d.titre)}">${ICON.trash}</button></div>`:''; }).join(''):'<p class="hint">Aucun document : ajoutez-en avec la liste ci-dessous.</p>';
+      <button class="iconbtn" data-up="${i}" ${i?'':'disabled'} aria-label="Monter ${esc(d.titre)}">↑</button><button class="iconbtn" data-down="${i}" ${i<items.length-1?'':'disabled'} aria-label="Descendre ${esc(d.titre)}">↓</button><button class="iconbtn" data-rm="${i}" aria-label="Retirer ${esc(d.titre)}">${ICON.trash}</button></div>`:''; }).join(''):'<p class="hint">Aucun document : ajoutez-en avec la liste ci-dessous.</p>';
     $('#sl-add').innerHTML=`<option value="">Ajouter un document…</option>${opts()}`; };
   openModal(`<h3 id="modal-title">Documents de l’impression rapide</h3>
     <div id="sl-items" class="stack s"></div>
@@ -4930,7 +4934,7 @@ function rlValidate(){
 }
 function renderRelais(){
   const p=$('#p-relais'); if(!p) return;
-  const errs=rlErr?rlValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=rlErr?rlValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-r="${k}" value="${esc(RL[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const area=(k,ph,rows=3)=>`<textarea class="in${B(k)}" data-r="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(RL[k])}</textarea>`;
   const date=k=>`<input class="in${B(k)}" type="date" data-r="${k}" value="${esc(RL[k])}">`;
@@ -4979,7 +4983,7 @@ function renderRelais(){
       </div></div>
     <div class="card top w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi le saisir dans Outlook)</small></span>${recipHTML('rl-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="row w-form"><button class="primary big" data-rgo>${ICON.mail}Créer le PDF et préparer l'envoi</button></div>
     <div class="row w-form end"><button class="ghost danger" data-rclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=rlRecip?rlRecip.get():[];
@@ -5003,7 +5007,7 @@ function rlBind(){
 }
 function relaisPdf(){
   const errs=LIVE_DRY?[]:(rlErr=true,rlValidate());
-  if(errs.length){ renderRelais(); const el=$('#p-relais .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderRelais(); errsShow('#p-relais'); return; }
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
   const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); const st=structure;
   const NAVY=pdfRGB('--navy'),ORANGE=pdfRGB('--accent'),GREY=[93,103,121],INK=[20,32,58],SOFT=[238,241,246]; const {L,R,W,PL}=GEO();
@@ -5153,7 +5157,7 @@ const cmSrcTxt=p=>p.src==='exif'?"date enregistrée par l'appareil photo":p.src=
 
 function renderCmi(){
   const p=$('#p-cmi'); if(!p) return;
-  const errs=cmErr?cmValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=cmErr?cmValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-c="${k}" value="${esc(CM[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const area=(k,ph,rows=3)=>`<textarea class="in${B(k)}" data-c="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(CM[k])}</textarea>`;
   const seg=(k,opts)=>`<div class="seg${B(k)}">${opts.map(([v,l])=>`<button type="button" data-cs="${k}" data-v="${v}" aria-pressed="${CM[k]===v}">${l}</button>`).join('')}</div>`;
@@ -5232,7 +5236,7 @@ function renderCmi(){
       ${seg('remise',[['main',"À la demande de l'intéressé·e, remis en main propre"],['requisition','Sur réquisition']])}
       ${CM.remise==='requisition'?`<label class="field"><span>Requérant <small>(nom et fonction)</small></span>${txt('requerant','ex. Capitaine X, commissariat du 3e arrondissement')}</label>`:''}
       <label class="check plain"><input type="checkbox" data-cb="numeros" ${CM.numeros?'checked':''}> Ajouter une page « Numéros utiles » pour la personne</label></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-cgo>${ICON.file}Créer le certificat (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-cclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -5286,7 +5290,7 @@ async function cmPhotoJpeg(x,n){
 
 async function cmiPdf(){
   const errs=LIVE_DRY?[]:(cmErr=true,cmValidate());
-  if(errs.length){ renderCmi(); const el=$('#p-cmi .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderCmi(); errsShow('#p-cmi'); return; }
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
   const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); const st=structure;
   const NAVY=pdfRGB('--navy'),ORANGE=pdfRGB('--accent'),GREY=[93,103,121],INK=[20,32,58],SOFT=[238,241,246]; const {L,R,W,PL}=GEO();
@@ -5494,7 +5498,7 @@ function asValidate(){
 }
 function renderAtt(){
   const p=$('#p-att'); if(!p) return;
-  const errs=asErr?asValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=asErr?asValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-a="${k}" value="${esc(AS[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const dt=k=>`<input class="in${B(k)}" type="date" data-a="${k}" value="${esc(AS[k])}">`;
   const md=medChoice();
@@ -5529,7 +5533,7 @@ function renderAtt(){
         ${AS.rdv.length?`<div class="choice mt-s">${AS.rdv.map(d=>`<span class="rchip">${frDate(d)}<button type="button" data-rdvdel="${d}" aria-label="Retirer le ${frDate(d)}">×</button></span>`).join('')}</div>`:''}</div>
       <div class="field"><span>Rythme des rendez-vous <small>(facultatif)</small></span><div class="choice">${AS_RYTHMES.map(r=>`<button type="button" class="chip" data-ac="rythme" data-v="${r}" aria-pressed="${AS.rythme===r}">${r}</button>`).join('')}</div></div>
       <label class="check plain"><input type="checkbox" data-acb="regulier" ${AS.regulier?'checked':''}> Indiquer que le suivi est régulier</label></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-ago>${ICON.file}Créer l'attestation (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-aclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -5552,7 +5556,7 @@ function attBind(){
 }
 function attPdf(){
   const errs=LIVE_DRY?[]:(asErr=true,asValidate());
-  if(errs.length){ renderAtt(); const el=$('#p-att .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderAtt(); errsShow('#p-att'); return; }
   const st=structure, md=medChoice(), fem=AS.civ==='Mme', e_=fem?'e':'';
   const who=fmtCivNom(AS.civ,AS.nom,AS.prenom);
   const P=letterPdf('Attestation de suivi','');
@@ -5596,7 +5600,7 @@ function mtValidate(){
 }
 function renderMt(){
   const p=$('#p-mt'); if(!p) return;
-  const errs=mtErr?mtValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=mtErr?mtValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-m="${k}" value="${esc(MT[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const area=(k,ph,rows=3)=>`<textarea class="in${B(k)}" data-m="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(MT[k])}</textarea>`;
   const words=parseDose(MT.dose)>0?doseLettres(MT.dose)+' par jour':'';
@@ -5629,7 +5633,7 @@ function renderMt(){
       <label class="check${B('consent')?' warn-text':''}"><input type="checkbox" data-mcb="consent" ${MT.consent?'checked':''}> Le patient est informé de ce courrier et ne s'y oppose pas</label></div>
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi imprimer le courrier)</small></span>${recipHTML('mt-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-mgo>${ICON.file}Créer le courrier (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-mclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=mtRecip?mtRecip.get():[]; mtRecip=bindRecip(p.querySelector('#mt-rc'),prev);
@@ -5653,7 +5657,7 @@ function mtBind(){
 }
 function mtPdf(){
   const errs=LIVE_DRY?[]:(mtErr=true,mtValidate());
-  if(errs.length){ renderMt(); const el=$('#p-mt .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderMt(); errsShow('#p-mt'); return; }
   const st=structure, md=medChoice(), fem=MT.civ==='Mme', e_=fem?'e':'';
   const who=fmtCivNom(MT.civ,MT.nom,MT.prenom);
   const P=letterPdf('Courrier médical','Confidentiel – secret médical');
@@ -5754,7 +5758,7 @@ function clStart(){
 }
 function renderCl(){
   const p=$('#p-cl'); if(!p) return;
-  const errs=clErr?clValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=clErr?clValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-cl="${k}" value="${esc(CL[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   p.innerHTML=`<button class="backlink" data-clback>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">🖊️</span>Certificat libre</h2>
@@ -5777,7 +5781,7 @@ function renderCl(){
       <p class="cl-start" id="cl-start">${esc(clStart())}</p>
       <label class="field"><span>Suite du texte</span><textarea class="in${B('texte')}" data-cl="texte" rows="7" placeholder="ex. son état de santé ne contre-indique pas la pratique du sport.">${esc(CL.texte)}</textarea></label>
       <label class="check plain"><input type="checkbox" data-clb="remise" ${CL.remise?'checked':''}> Ajouter « Certificat établi à la demande de l'intéressé(e) et remis en main propre pour faire valoir ce que de droit. »</label></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-clgo>${ICON.file}Créer le certificat (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-clclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -5799,7 +5803,7 @@ function clBind(){
 }
 function clPdf(){
   const errs=LIVE_DRY?[]:(clErr=true,clValidate());
-  if(errs.length){ renderCl(); const el=$('#p-cl .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderCl(); errsShow('#p-cl'); return; }
   const md=medChoice(), e_=CL.civ==='Mme'?'e':'';
   const P=letterPdf('Certificat médical','');
   P.y=80;
@@ -5942,7 +5946,7 @@ const orQsp=()=>{ const n=parseInt(OR.qsp,10), u=OR.unite; return `QSP ${n} ${u=
 function renderOrdo(){
   const p=$('#p-ordo'); if(!p) return;
   if(!OR.mail) OR.mail=RESULT_MAIL();
-  const T=ordoType(OR.type), errs=orErr?orValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const T=ordoType(OR.type), errs=orErr?orValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-or="${k}" value="${esc(OR[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const cat=ordoCat(), q=norm(orFilter), shown=cat.map((m,i)=>({m,i})).filter(({m})=>!q||norm(m.nom+' '+m.cat).includes(q));
   const cats=[...new Set(shown.map(x=>x.m.cat||'Autres'))];
@@ -5989,7 +5993,7 @@ function renderOrdo(){
         <label class="field"><span>&nbsp;</span><select class="in" data-or="unite">${['jours','semaines','mois','an'].map(u=>`<option ${OR.unite===u?'selected':''}>${u}</option>`).join('')}</select></label>
         <label class="field"><span>Renouvellement</span><select class="in" data-or="renouv">${['0','1','2','3','4','5'].map(n=>`<option value="${n}" ${OR.renouv===n?'selected':''}>${n==='0'?'Non renouvelable':'À renouveler '+n+' fois'}</option>`).join('')}</select></label></div>`:''}
       ${hasAld||(T.coche&&OR.ald)?`<p class="hint m-0">Ordonnance bizone : ${T.coche?'les examens sont imprimés':'les lignes cochées ALD sont imprimées'} dans la partie « affection de longue durée ».</p>`:''}</div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-orgo>${ICON.file}Créer l'ordonnance (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-orclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -6026,7 +6030,7 @@ function ordoBind(){
 }
 function ordoPdf(){
   const errs=LIVE_DRY?[]:(orErr=true,orValidate());
-  if(errs.length){ renderOrdo(); const el=$('#p-ordo .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderOrdo(); errsShow('#p-ordo'); return; }
   const st=structure, e_=OR.civ==='Mme'?'e':'', T=ordoType(OR.type), cat=ordoCat();
   const P=letterPdf('Ordonnance',T.sub), {doc,C,L,R,W}=P;
   P.y=64; P.right([`${villeLe(st)}${frDate(OR.date)}`],{after:4});
@@ -6081,7 +6085,7 @@ function drawOrdoAdmin(){
       <label class="field"><span class="mini-lbl">Rubrique</span><input class="in" data-odk="cat" list="od-cats" value="${esc(m.cat||'')}"></label>
       ${T.coche?'':`<label class="field od-poso"><span class="mini-lbl">${posoLbl}</span><textarea class="in" data-odk="poso" rows="${Math.max(2,m.poso.length)}">${esc(m.poso.join('\n'))}</textarea></label>`}
       ${T.coche?'':`<label class="field od-aide"><span class="mini-lbl">Aide à la prescription (non imprimée, facultatif)</span><input class="in" data-odk="aide" value="${esc(m.aide||'')}"></label>`}
-      <button class="iconbtn align-input" data-oddel="${i}" aria-label="Supprimer">${ICON.trash}</button></div>`).join('')}</div>
+      <button class="iconbtn align-input" data-oddel="${i}" aria-label="Supprimer la ligne ${i+1}${m.nom?` « ${esc(m.nom)} »`:''}">${ICON.trash}</button></div>`).join('')}</div>
     <div><button class="secondary" data-odadd>${ICON.plus}Ajouter une ligne</button></div>
     <div class="row"><button class="primary" id="od-save">Enregistrer la liste « ${esc(T.l)} »</button><button class="ghost" id="od-def">Remettre la liste de départ</button><button class="ghost" id="od-cancel">Annuler les changements</button></div></div>`;
   const box=$('#asub');
@@ -6366,7 +6370,7 @@ function urValidate(){
 }
 function renderUrg(){
   const p=$('#p-urg'); if(!p) return;
-  const errs=urErr?urValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=urErr?urValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-u="${k}" value="${esc(UR[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const area=(k,ph,rows=2)=>`<textarea class="in${B(k)}" data-u="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(UR[k])}</textarea>`;
   const words=parseDose(UR.dose)>0?doseLettres(UR.dose)+' par jour':'';
@@ -6416,7 +6420,7 @@ function renderUrg(){
     </div>
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : le plus souvent, le courrier est imprimé et remis à la personne)</small></span>${recipHTML('ur-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-ugo>${ICON.file}Créer le courrier (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-uclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=urRecip?urRecip.get():[]; urRecip=bindRecip(p.querySelector('#ur-rc'),prev);
@@ -6439,7 +6443,7 @@ function urBind(){
 }
 function urPdf(){
   const errs=LIVE_DRY?[]:(urErr=true,urValidate());
-  if(errs.length){ renderUrg(); const el=$('#p-urg .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderUrg(); errsShow('#p-urg'); return; }
   const st=structure, fem=UR.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(UR.civ,UR.nom,UR.prenom);
   const P=letterPdf('Orientation aux urgences','Confidentiel – données de santé');
   P.y=64; P.right([UR.hopital.trim(),UR.service.trim()],{bold:true,after:2});
@@ -6495,7 +6499,7 @@ function cpValidate(){
 }
 function renderCp(){
   const p=$('#p-cp'); if(!p) return;
-  const errs=cpErr?cpValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=cpErr?cpValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-c="${k}" value="${esc(CP[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const area=(k,ph,rows=2)=>`<textarea class="in${B(k)}" data-c="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(CP[k])}</textarea>`;
   p.innerHTML=`<button class="backlink" data-cback>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
@@ -6522,7 +6526,7 @@ function renderCp(){
     </div>
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi imprimer le courrier)</small></span>${recipHTML('cp-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-cgo>${ICON.file}Créer le courrier (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-cclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=cpRecip?cpRecip.get():[]; cpRecip=bindRecip(p.querySelector('#cp-rc'),prev);
@@ -6542,7 +6546,7 @@ function cpBind(){
 }
 function cpPdf(){
   const errs=LIVE_DRY?[]:(cpErr=true,cpValidate());
-  if(errs.length){ renderCp(); const el=$('#p-cp .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderCp(); errsShow('#p-cp'); return; }
   const st=structure;
   const P=letterPdf('Courrier','');
   P.y=64; P.right([CP.dest.trim(),CP.attention.trim()?'À l’attention de '+CP.attention.trim():'',...CP.adresse.split('\n').map(s=>s.trim())],{after:6});
@@ -6736,7 +6740,7 @@ elReset();
 function elValidate(){ const e=[]; if(!EL.date) e.push(['date','Date manquante.']); if(!EL.texte.trim()&&!EL.titre.trim()) e.push(['texte','Le document est vide : écrivez au moins un titre ou un texte.']); return e; }
 function renderEl(){
   const p=$('#p-el'); if(!p) return;
-  const errs=elErr?elValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=elErr?elValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const area=(k,ph,rows)=>`<textarea class="in${B(k)}" data-e="${k}" rows="${rows}" placeholder="${esc(ph)}">${esc(EL[k])}</textarea>`;
   p.innerHTML=`<button class="backlink" data-eback>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">📄</span>En-tête libre</h2>
@@ -6754,7 +6758,7 @@ function renderEl(){
     </div>
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi imprimer)</small></span>${recipHTML('el-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-ego>${ICON.file}Créer le document (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-eclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=elRecip?elRecip.get():[]; elRecip=bindRecip(p.querySelector('#el-rc'),prev);
@@ -6770,7 +6774,7 @@ function elBind(){
 }
 function elPdf(){
   const errs=LIVE_DRY?[]:(elErr=true,elValidate());
-  if(errs.length){ renderEl(); const el=$('#p-el .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderEl(); errsShow('#p-el'); return; }
   const st=structure, P=letterPdf(EL.titre.trim(),'');
   P.y=64; P.right(EL.dest.split('\n').map(s=>s.trim()),{after:5});
   P.right([`${villeLe(st)}${frDate(EL.date)}`],{after:6});
@@ -7221,7 +7225,7 @@ function wizBody(){ const W=WZ, s=W.step;
     <div class="fieldgrid"><label class="field wide"><span>Signature habituelle des courriers</span><input class="in" data-w="signataire" value="${esc(W.signataire)}" placeholder="ex. L’équipe de ${esc(W.nom||'la structure')}" data-autofocus></label></div>
     <div class="field"><span>Des médecins prescrivent-ils dans votre structure ?</span><div class="choice">${[['oui','Oui'],['non','Non']].map(([v,t])=>`<button type="button" class="chip" data-wset="medecins" data-v="${v}" aria-pressed="${W.medecins===v}">${t}</button>`).join('')}</div></div>
     ${W.medecins==='oui'?`<p class="hint">Leur nom et leur numéro RPPS apparaissent sur les certificats et les en-têtes d’ordonnance. Librejo ne fait pas de prescription : l’ordonnance reste un papier signé à la main.</p>
-      <div id="wz-meds">${(W.meds.length?W.meds:[{nom:'',rpps:''}]).map((m,i)=>`<div class="wz-med"><input class="in" data-med="${i}" data-k="nom" value="${esc(m.nom)}" placeholder="Dr Prénom NOM" aria-label="Nom du médecin"><input class="in" data-med="${i}" data-k="rpps" value="${esc(m.rpps)}" placeholder="RPPS (11 chiffres)" inputmode="numeric" aria-label="RPPS"><button type="button" class="iconbtn" data-meddel="${i}" aria-label="Retirer">×</button></div>`).join('')}</div>
+      <div id="wz-meds">${(W.meds.length?W.meds:[{nom:'',rpps:''}]).map((m,i)=>`<div class="wz-med"><input class="in" data-med="${i}" data-k="nom" value="${esc(m.nom)}" placeholder="Dr Prénom NOM" aria-label="Nom du médecin"><input class="in" data-med="${i}" data-k="rpps" value="${esc(m.rpps)}" placeholder="RPPS (11 chiffres)" inputmode="numeric" aria-label="RPPS"><button type="button" class="iconbtn" data-meddel="${i}" aria-label="Retirer ${m.nom?esc(m.nom):'ce médecin'}">×</button></div>`).join('')}</div>
       <button type="button" class="ghost sm" id="wz-medadd">${ICON.plus}Ajouter un médecin</button>`:W.medecins==='non'?'<p class="hint">Les formulaires médicaux (certificats, ordonnance, relais de traitement) ne seront pas proposés. Vous pourrez les activer plus tard.</p>':''}`;
   if(s===3){ if(!W.cats) W.cats=(WZ_CATS[W.type]||WZ_CATS.autre).slice();
     return `<h2 id="wz-h">Vos catégories</h2><p class="wz-lead">Les rubriques où ranger vos documents. ${W.type?'Voici une proposition pour votre type de structure : ':''}renommez, supprimez ou ajoutez. Les dossiers seront créés tout seuls.</p>
@@ -8299,7 +8303,7 @@ function ccValidate(){
 }
 function renderCcas(){
   const p=$('#p-ccas'); if(!p) return;
-  const errs=ccErr?ccValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?' bad':'';
+  const errs=ccErr?ccValidate():[], bad=new Set(errs.map(x=>x[0])), B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const txt=(k,ph='',extra='')=>`<input class="in${B(k)}" data-ck="${k}" value="${esc(CC[k])}" placeholder="${esc(ph)}" autocomplete="off" ${extra}>`;
   const chips=(k,list,multi)=>`<div class="choice${B(k)}">${list.map(v=>`<button type="button" class="chip" data-ckc="${k}" data-v="${esc(v)}" aria-pressed="${multi?CC[k].includes(v):CC[k]===v}">${esc(v)}</button>`).join('')}</div>`;
   const ccas=ANNU.partenaires.filter(x=>/ccas|action sociale/.test(norm(x.nom+' '+x.type)));
@@ -8342,7 +8346,7 @@ function renderCcas(){
       </div></div>
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : le plus souvent, le bon est imprimé et remis à la personne)</small></span>${recipHTML('cc-rc')}${senderHTML()}</div></div>
-    ${errs.length?`<ul class="errors w-form" role="alert">${errs.map(x=>`<li>${esc(x[1])}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot w-form"><button class="primary big" data-ckgo>${ICON.file}Créer le bon (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-ckclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=ccRecip?ccRecip.get():[]; ccRecip=bindRecip(p.querySelector('#cc-rc'),prev);
@@ -8366,7 +8370,7 @@ function ccBind(){
 }
 function ccPdf(){
   const errs=LIVE_DRY?[]:(ccErr=true,ccValidate());
-  if(errs.length){ renderCcas(); const el=$('#p-ccas .errors'); el&&el.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(errs.length){ renderCcas(); errsShow('#p-ccas'); return; }
   const st=structure, fem=CC.civ==='Mme', e_=fem?'e':'', who=fmtCivNom(CC.civ,CC.nom,CC.prenom);
   const P=letterPdf('Bon d’orientation','Centre communal d’action sociale');
   P.y=64; P.right([CC.dest.trim(),CC.attention.trim()?'À l’attention de '+CC.attention.trim():''],{bold:true,after:2});
@@ -8470,9 +8474,42 @@ const ERR_FORMS={'p-relais':[()=>rlErr,rlValidate,()=>renderRelais()],'p-cmi':[(
   'p-cp':[()=>cpErr,cpValidate,()=>renderCp()],'p-el':[()=>elErr,elValidate,()=>renderEl()],'p-ccas':[()=>ccErr,ccValidate,()=>renderCcas()],
   'p-forms':[()=>fShowErr&&!!DATA.formulaires.find(x=>x.id===formView),()=>validateFill(DATA.formulaires.find(x=>x.id===formView)).map(x=>[x.k,x.m]),()=>renderFill()]};
 function errsNearButton(){ document.querySelectorAll('main>section.panel ul.errors.w-form').forEach(u=>{ const sf=u.nextElementSibling; if(sf&&sf.classList.contains('stickyfoot')){ u.classList.remove('w-form'); sf.prepend(u); } }); }
-new MutationObserver(errsNearButton).observe(document.querySelector('main'),{childList:true,subtree:true});
+/* Erreurs accessibles (pas seulement en couleur) : chaque champ fautif (marqué data-errk avec la classe .bad)
+   reçoit aria-invalid et aria-describedby vers son message ; chaque message de la liste devient un bouton
+   qui mène au champ. Le formulaire est redessiné à chaque correction : les attributs suivent tout seuls. */
+const errCtrl=el=>el.matches('input,select,textarea')?el:null;
+function errsA11y(panel){
+  const ul=panel.querySelector('ul.errors');
+  if(ul){ if(!ul.id) ul.id=panel.id+'-errs'; ul.tabIndex=-1; if(!ul.hasAttribute('aria-label')) ul.setAttribute('aria-label','À corriger');
+    [...ul.children].forEach((li,i)=>{ if(!li.id) li.id=`${panel.id}-err-${i}`; }); }
+  panel.querySelectorAll('[data-errk]:not(li)').forEach(el=>{
+    const k=el.dataset.errk, lis=ul?[...ul.querySelectorAll(`:scope>li[data-errk="${CSS.escape(k)}"]`)]:[];
+    if(!errCtrl(el)){ // groupe de boutons (civilité, motifs…) ou ligne de champs : nommé par l'intitulé du champ
+      if(!el.hasAttribute('role')) el.setAttribute('role','group');
+      const sp=!el.hasAttribute('aria-label')&&!el.hasAttribute('aria-labelledby')&&el.closest('.field')&&el.closest('.field').querySelector(':scope>span');
+      if(sp){ if(!sp.id) sp.id=`${panel.id}-lbl-${k}`; el.setAttribute('aria-labelledby',sp.id); } }
+    el.setAttribute('aria-invalid','true');
+    if(lis.length){ const ids=lis.map(li=>li.id), cur=(el.getAttribute('aria-describedby')||'').split(' ').filter(x=>x&&!/-err-\d+$/.test(x));
+      el.setAttribute('aria-describedby',[...cur,...ids].join(' ')); }
+  });
+  if(ul) ul.querySelectorAll(':scope>li[data-errk]').forEach(li=>{ if(li.querySelector('.errgo')||!panel.querySelector(`[data-errk="${CSS.escape(li.dataset.errk)}"]:not(li)`)) return;
+    const b=document.createElement('button'); b.type='button'; b.className='errgo'; b.dataset.errgo=li.dataset.errk; b.append(...li.childNodes); li.append(b); });
+}
+function errsA11yAll(){ document.querySelectorAll('main>section.panel:not([hidden])').forEach(errsA11y); }
+/* Après « Créer » : le focus va sur la liste (lue par le lecteur d'écran), Tab mène au premier champ à corriger */
+function errsShow(sel){ const panel=$(sel); if(!panel) return; errsNearButton(); errsA11y(panel);
+  const ul=panel.querySelector('ul.errors'); if(!ul) return; ul.scrollIntoView({block:'center'}); ul.focus({preventScroll:true}); }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.errgo'); if(!b) return;
+  const panel=b.closest('main>section.panel'), el=panel&&panel.querySelector(`[data-errk="${CSS.escape(b.dataset.errgo)}"]:not(li)`); if(!el) return;
+  const f=errCtrl(el)||el.querySelector('input:not([type=hidden]),select,textarea,button:not(:disabled)')||el;
+  f.scrollIntoView({block:'center'}); f.focus({preventScroll:true}); });
+/* Champ corrigé sans que le formulaire soit redessiné (la classe .bad est retirée à la saisie) : attributs retirés aussi */
+document.addEventListener('input',e=>{ const t=e.target; if(!t||!t.dataset||t.dataset.errk===undefined||t.classList.contains('bad')) return;
+  t.removeAttribute('aria-invalid'); const d=(t.getAttribute('aria-describedby')||'').split(' ').filter(x=>x&&!/-err-\d+$/.test(x));
+  d.length?t.setAttribute('aria-describedby',d.join(' ')):t.removeAttribute('aria-describedby'); delete t.dataset.errk; });
+new MutationObserver(()=>{ errsNearButton(); errsA11yAll(); }).observe(document.querySelector('main'),{childList:true,subtree:true});
 function keepFocus(panel,draw){ const a=document.activeElement; let sel=null, s0=null, s1=null;
-  if(a&&panel.contains(a)&&a!==panel){ sel=a.tagName.toLowerCase()+(a.id?'#'+CSS.escape(a.id):'')+Object.entries(a.dataset).map(([k,v])=>`[data-${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="${CSS.escape(v)}"]`).join('');
+  if(a&&panel.contains(a)&&a!==panel){ sel=a.tagName.toLowerCase()+(a.id?'#'+CSS.escape(a.id):'')+Object.entries(a.dataset).filter(([k])=>k!=='errk'&&k!=='errgo').map(([k,v])=>`[data-${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="${CSS.escape(v)}"]`).join('');
     try{ s0=a.selectionStart; s1=a.selectionEnd; }catch(e){} }
   const y=window.scrollY; draw(); window.scrollTo(0,y);
   if(sel){ const b=panel.querySelector(sel); if(b){ b.focus({preventScroll:true}); try{ if(s0!=null) b.setSelectionRange(s0,s1); }catch(e){} } } }

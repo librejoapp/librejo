@@ -241,7 +241,7 @@ Arrondis généreux et réguliers : 8px pour les boutons et petits contrôles, 1
 ### Inputs / Fields
 - **Style :** fond papier, bordure filet fort 1px, arrondi 14px, hauteur 48px, texte 16px ; zones de texte de 70px minimum ; `dir="auto"` pour accueillir l'arabe.
 - **Focus :** bordure bleu canard et halo de 3px à 30 % de bleu canard.
-- **Error :** message sous le champ, en orange brûlé, relié au champ (`aria-describedby`, `aria-invalid`).
+- **Error :** champ bordé et teinté d'orange brûlé, jamais la couleur seule : `aria-invalid` et `aria-describedby` vers son message. Les messages sont réunis dans la liste « À corriger », juste au-dessus du bouton de fin ; chacun est un bouton qui mène au champ. Après « Créer », le focus va sur la liste ; elle se met à jour pendant la correction.
 
 ### Navigation
 - **Menu latéral (clair, par défaut) :** fond menu clair avec un filet à droite, texte bleu canard nuit 16px graisse 600, icônes 19px ; survol en voile blanc 70 %, élément actif sur fond blanc en graisse 700 ; focus en bleu canard nuit.
