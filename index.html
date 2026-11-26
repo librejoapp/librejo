@@ -86,7 +86,7 @@
   /* Dimensions */
   --h-control:40px;  /* boutons */
   --h-input:48px;    /* champs */
-  --sbw:256px;       /* largeur du menu */
+  --sbw:16rem;       /* largeur du menu : 256 px, et le double quand le navigateur agrandit le texte à 200 % */
   --w-content:1200px;
   --w-form:860px;    /* formulaires */
   --w-wide:980px;    /* réglages */
@@ -152,8 +152,8 @@ h2.sec .o{color:var(--blue);font-weight:600}
 
 /* Navigation et catégories du menu */
 .sidebar nav.top{display:flex;flex-direction:column;gap:2px}
-.sidebar nav.top button,.catbtn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;border:0;background:transparent;color:var(--text-on-dark);padding:10px var(--sp-3);border-radius:var(--r-sm);font-size:var(--fs-4);font-weight:600}
-.sidebar nav.top button svg,.catbtn svg{width:19px;height:19px;flex:0 0 auto;opacity:.85}
+.sidebar nav.top button,.catbtn{width:100%;overflow-wrap:anywhere;display:flex;align-items:center;gap:11px;text-align:left;border:0;background:transparent;color:var(--text-on-dark);padding:10px var(--sp-3);border-radius:var(--r-sm);font-size:var(--fs-4);font-weight:600}
+.sidebar nav.top button svg,.catbtn svg{width:1.1875rem;height:1.1875rem;flex:0 0 auto;opacity:.85}
 .sidebar nav.top button:hover,.catbtn:hover{background:rgba(255,255,255,.07);color:var(--on-color)}
 .sidebar nav.top button[aria-current="page"],.catbtn[aria-pressed="true"]{background:rgba(255,255,255,.11);color:var(--on-color)}
 .sidecats{margin-top:22px;display:flex;flex-direction:column;gap:1px}
@@ -348,6 +348,8 @@ input.in.w-num{width:84px}
 .tablebox{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card);overflow-x:auto}
 .tablebox.mt-m{margin-top:var(--sp-4)}
 table.docs{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
+/* tableau trop large pour la fenêtre (zoom fort) : il défile dans son cadre, la page ne s'élargit pas */
+.tblwrap{overflow-x:auto;max-width:100%}
 table.docs th{background:var(--surface-3);color:var(--text-3);text-align:left;font-size:var(--fs-1);font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px var(--sp-4);white-space:nowrap;border-bottom:1px solid var(--line)}
 table.docs th.right{text-align:right}
 table.docs th button{all:unset;cursor:pointer}
@@ -1396,7 +1398,13 @@ body.has-aide #adminflag{right:72px}
   #aide{top:64px}
   body.has-aide #adminflag{right:64px}
 }
-@media (max-height:500px){ .aide-f small{display:none} .aide-h{padding:var(--sp-3) var(--sp-4) var(--sp-2)} }
+/* fenêtre basse (zoom de 200 à 400 %, 320 × 256 ou moins) : le panneau prend toute la hauteur et défile en entier,
+   titre, explications et pied compris, au lieu de n'en montrer qu'une bande */
+@media (max-height:500px){
+  #aide{top:var(--sp-2);bottom:var(--sp-2);overflow-y:auto;overscroll-behavior:contain}
+  #aide .aide-b{flex:none;overflow:visible}
+  .aide-h{padding:var(--sp-3) var(--sp-4) var(--sp-2)}
+}
 /* l'aperçu en direct d'un formulaire est à la même place : il revient à la fermeture de l'aide */
 body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
 @media print{ #aidebtn,#aide{display:none!important} }
@@ -4063,21 +4071,21 @@ function modelesHTML(){
   return `<div class="card top w-wide"><h3>Bibliothèque de modèles</h3>
     <p class="hint">Des formulaires prêts à l’emploi. « Ajouter » en fait une copie que vous pouvez ensuite modifier librement. Relisez toujours le texte avant de l’utiliser.</p>
     ${MODELE_PACKS.map(([k,nom,txt])=>`<h4 class="mt-s m-0">${esc(nom)}</h4><p class="hint muted m-0">${esc(txt)}</p>
-      <table class="docs"><tbody>${MODELES.filter(m=>m.pack===k).map(m=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${m.emoji||'📝'}</span></td><td class="t"><b>${esc(m.titre)}</b><small>${esc(m.description)}${m.source?` · <i>${esc(m.source)}</i>`:''}</small></td>
-        <td><div class="act">${modeleAdded(m)?`<span class="badge">Déjà ajouté</span><button class="ghost" data-madd="${m.id}">Ajouter une copie</button>`:`<button class="secondary sm" data-madd="${m.id}">${ICON.plus}Ajouter</button>`}</div></td></tr>`).join('')}</tbody></table>`).join('')}</div>`;
+      <div class="tblwrap"><table class="docs"><tbody>${MODELES.filter(m=>m.pack===k).map(m=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${m.emoji||'📝'}</span></td><td class="t"><b>${esc(m.titre)}</b><small>${esc(m.description)}${m.source?` · <i>${esc(m.source)}</i>`:''}</small></td>
+        <td><div class="act">${modeleAdded(m)?`<span class="badge">Déjà ajouté</span><button class="ghost" data-madd="${m.id}">Ajouter une copie</button>`:`<button class="secondary sm" data-madd="${m.id}">${ICON.plus}Ajouter</button>`}</div></td></tr>`).join('')}</tbody></table></div>`).join('')}</div>`;
 }
 function drawFormList(){
   if(!$('#asub')) return;
   $('#asub').innerHTML=`${modelesHTML()}<div class="card top w-wide">
     <h3>Formulaires intégrés</h3>
     <p class="hint">Leur texte est fixe, mais ce qu'ils proposent se règle : destinataires, adresses, médecins, partenaires. « Masquer » les retire de la liste de l'équipe.</p>
-    <table class="docs"><tbody>${BUILTIN_FORMS.map(f=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}${formsOff().includes(f.id)?` · <b>${esc(formsOffBase().includes(f.id)?'masqué':formsAuto(f.id)||'masqué')}</b>`:(PAR.formsOn||[]).includes(f.id)&&formsAuto(f.id)?' · <b>activé par vous</b>':''}</small></td>
-      <td><div class="act"><button class="secondary sm" data-foff="${f.id}">${formsOff().includes(f.id)?'Proposer':'Masquer'}</button>${f.tab==='deliv'?`<button class="secondary" data-goset="dest">Destinataires</button>`:''}${f.sets.includes('annu')?`<button class="secondary" data-goset="annu">Annuaire</button>`:''}${f.sets.includes('catalogue')?`<button class="secondary" data-goset="catalogue">Listes de l'ordonnance</button>`:''}${f.sets.includes('med')?`<button class="secondary" data-goset="med">Médecins</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>
+    <div class="tblwrap"><table class="docs"><tbody>${BUILTIN_FORMS.map(f=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}${formsOff().includes(f.id)?` · <b>${esc(formsOffBase().includes(f.id)?'masqué':formsAuto(f.id)||'masqué')}</b>`:(PAR.formsOn||[]).includes(f.id)&&formsAuto(f.id)?' · <b>activé par vous</b>':''}</small></td>
+      <td><div class="act"><button class="secondary sm" data-foff="${f.id}">${formsOff().includes(f.id)?'Proposer':'Masquer'}</button>${f.tab==='deliv'?`<button class="secondary" data-goset="dest">Destinataires</button>`:''}${f.sets.includes('annu')?`<button class="secondary" data-goset="annu">Annuaire</button>`:''}${f.sets.includes('catalogue')?`<button class="secondary" data-goset="catalogue">Listes de l'ordonnance</button>`:''}${f.sets.includes('med')?`<button class="secondary" data-goset="med">Médecins</button>`:''}</div></td></tr>`).join('')}</tbody></table></div></div>
     <div class="card top w-wide">
     <h3>Formulaires</h3>
     <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
-    ${DATA.formulaires.length?`<table class="docs"><tbody>${DATA.formulaires.map(f=>`<tr><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
-      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
+    ${DATA.formulaires.length?`<div class="tblwrap"><table class="docs"><tbody>${DATA.formulaires.map(f=>`<tr><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
+      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
     <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>`;
   $('#asub').onclick=async e=>{
     const ma=e.target.closest('[data-madd]'); if(ma) return addModele(ma.dataset.madd);
