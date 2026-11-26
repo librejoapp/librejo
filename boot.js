@@ -58,7 +58,19 @@ async function looksRight(h){
 
 /* ---------- écran d'ouverture ---------- */
 var ui = document.getElementById('lj-boot');
-function show(html){ ui.hidden=false; ui.querySelector('.lj-in').innerHTML = html; }
+/* Tant que l'écran d'ouverture est affiché, l'application (cachée dessous) est inerte : ni Tab, ni clic,
+   ni lecteur d'écran. Le premier arrêt de Tab est le premier bouton de l'écran d'ouverture. */
+function cover(on){
+  for (var i=0, k=document.body.children; i<k.length; i++){ var el=k[i];
+    if (el===ui || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName)) continue;
+    if (on && !el.inert){ el.inert=true; el.setAttribute('data-lj-boot-inert',''); }
+    else if (!on && el.hasAttribute('data-lj-boot-inert')){ el.inert=false; el.removeAttribute('data-lj-boot-inert'); } }
+  if (!on && window.LJ_LAYERS_SYNC) window.LJ_LAYERS_SYNC();
+}
+cover(true);
+function done(){ ui.hidden = true; cover(false); }
+function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
+  var h=ui.querySelector('.lj-in h1'); if (h) h.id='lj-t'; }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 /* Entrée « Remplir un formulaire sans dossier », sous le choix du dossier (raison : refus, introuvable, choix) */
 function sdOffer(raison){
@@ -75,7 +87,7 @@ async function formsOnly(raison){
   window.DOCUBUS_PARAMETRES = {assistant:'fait'}; window.DOCUBUS_DONNEES = {categories:[],documents:[],formulaires:[]};
   window.DOCUBUS_ANNUAIRE = {partenaires:[],types:[]}; window.DOCUBUS_LOGO_ASSO = null;
   if (!(await startMain())) return;
-  ui.hidden = true;
+  done();
 }
 
 async function load(){
@@ -92,7 +104,7 @@ async function load(){
   }
   sdSet(null);
   if (!(await startMain())) return;
-  ui.hidden = true;
+  done();
   try { var n=(window.DOCUBUS_PARAMETRES||{}).attestation; var f=document.getElementById('lj-foot'); if(f&&n&&n.nom) f.textContent='Librejo · '+n.nom; } catch(e){}
 }
 async function pick(){

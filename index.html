@@ -1389,7 +1389,7 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
     <div class="sidefoot">
       <button class="conn" id="conn" title="Autoriser Librejo à lire son dossier (impression en un clic, pièces jointes)"></button>
       <button class="adminbtn" id="guidebtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.6"/><path d="M12 17h.01"/></svg>Mode d’emploi</button>
-      <button class="adminbtn" id="adminbtn"></button>
+      <button class="adminbtn" id="adminbtn" type="button">Accès admin</button>
     </div>
   </aside>
 
@@ -1478,15 +1478,54 @@ function closeAsked(){ if($('#modal').hidden) return; const g=modalGuard&&modalG
   w.innerHTML=`<p id="mg-t"><b>${esc(g)}</b></p><div class="row"><button type="button" class="primary danger" id="mg-close">Fermer sans ajouter</button><button type="button" class="secondary" id="mg-stay">Continuer</button></div>`;
   box.prepend(w); box.scrollTop=0; $('#mg-stay').focus();
   $('#mg-close').onclick=()=>{ modalGuard=null; closeModal(); }; $('#mg-stay').onclick=()=>{ w.remove(); const f=box.querySelector('input,button'); f&&f.focus(); }; }
+/* Fenêtres vraiment modales. Tant qu'une fenêtre est ouverte, le reste de la page est inerte
+   (ni clic, ni Tab, ni lecteur d'écran) et Tab boucle dans la fenêtre. Les fenêtres peuvent s'empiler
+   (conflit de réglages ou aperçu d'un PDF au-dessus d'une autre) : seule celle du dessus reste active,
+   dans l'ordre de leur z-index. L'aide « ? » est rattachée à la fenêtre ouverte (aideHost) : elle reste utilisable.
+   L'écran de démarrage (#lj-boot) compte comme une fenêtre tant qu'il est affiché. */
+const LAYERS=['#lj-boot:not([hidden])','#pdfprev','#cfdlg','#wiz:not([hidden])','#modal:not([hidden])'];
+const layerTop=()=>{ for(const s of LAYERS){ const e=document.querySelector(s); if(e) return e; } return null; };
+const inertSet=new Set();
+function layersSync(){
+  const top=layerTop();
+  inertSet.forEach(el=>{ if(!top||el.parentNode!==document.body||el===top||el.contains(top)){ el.inert=false; inertSet.delete(el); } });
+  if(!top) return;
+  for(const el of document.body.children){
+    if(el===top||el.contains(top)||el.id==='toast'||el.id==='lj-boot'||/^(SCRIPT|STYLE|LINK)$/.test(el.tagName)||el.inert) continue;
+    el.inert=true; inertSet.add(el);
+  }
+}
+window.LJ_LAYERS_SYNC=layersSync;
+new MutationObserver(ms=>{ if(ms.some(m=>m.target===document.body||m.target.parentNode===document.body)) layersSync(); })
+  .observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
+const FOCUSABLE='a[href],button,input:not([type=hidden]),select,textarea,summary,iframe,[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
+function layerFocusables(top){
+  const seen=new Set();
+  return [...top.querySelectorAll(FOCUSABLE)].filter(e=>{
+    if(e.disabled||e.closest('[inert]')||!e.getClientRects().length||getComputedStyle(e).visibility==='hidden') return false;
+    if(e.type==='radio'&&e.name){ const k=e.form+'|'+e.name; const g=[...top.querySelectorAll(`input[type=radio][name="${CSS.escape(e.name)}"]`)]; const on=g.find(x=>x.checked)||g[0]; if(e!==on||seen.has(k)) return false; seen.add(k); }
+    return true; });
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Tab'||e.defaultPrevented||e.ctrlKey||e.altKey||e.metaKey) return;
+  const top=layerTop(); if(!top) return;
+  const f=layerFocusables(top); if(!f.length){ e.preventDefault(); return; }
+  const a=document.activeElement, first=f[0], last=f[f.length-1];
+  let go=null;
+  if(!top.contains(a)) go=e.shiftKey?last:first;
+  else if(!e.shiftKey&&(a===last||!f.some(x=>a.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_FOLLOWING))) go=first;
+  else if(e.shiftKey&&(a===first||!f.some(x=>a.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_PRECEDING))) go=last;
+  if(go){ e.preventDefault(); go.focus(); }
+},true);
 function openModal(html,cls){
   lastFocus=document.activeElement; modalGuard=null;
   const box=$('#modal-box'); box.className='dialog'+(cls?' '+cls:''); box.innerHTML=html;
-  $('#modal').hidden=false; document.body.style.overflow='hidden';
+  $('#modal').hidden=false; document.body.style.overflow='hidden'; layersSync();
   const f=box.querySelector('[data-autofocus]')||box.querySelector('input,button'); f&&f.focus();
 }
 function closeModal(){
   if($('#modal').hidden) return;
-  $('#modal').hidden=true; document.body.style.overflow=''; $('#modal-box').innerHTML='';
+  $('#modal').hidden=true; document.body.style.overflow=''; $('#modal-box').innerHTML=''; layersSync();
   /* Le focus revient au bouton d'origine au tour suivant : si la fenêtre se ferme sur la touche Entrée,
      le même appui ne doit pas « cliquer » ce bouton (ex. Accès admin, qui ressortirait aussitôt). */
   const lf=lastFocus; lastFocus=null;
@@ -6664,12 +6703,14 @@ function previewUrl(u,name){
       <button type="button" class="primary sm" data-pvprint>${ICON.print}Imprimer</button>
       <button type="button" class="secondary sm" data-pvclose>Fermer l’aperçu</button></div>
     <iframe src="${u}" title="Aperçu du document"></iframe>`;
-  document.body.appendChild(o);
+  const opener=document.activeElement; document.body.appendChild(o); layersSync(); pvOpener=opener;
   o.querySelector('[data-pvclose]').onclick=closePreview;
   o.querySelector('[data-pvprint]').onclick=()=>{ const fr=o.querySelector('iframe'); try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ toast('Ctrl+P pour imprimer'); } };
   o.querySelector('[data-pvclose]').focus();
 }
-function closePreview(){ const o=document.getElementById('pdfprev'); if(o){ o.remove(); } }
+let pvOpener=null;
+function closePreview(){ const o=document.getElementById('pdfprev'); if(o){ o.remove(); layersSync();
+  const f=pvOpener; pvOpener=null; if(f&&f.isConnected&&f!==document.body&&!f.closest('[inert]')) f.focus(); } }
 // Échap ferme d'abord l'aperçu, sans fermer la fenêtre qui est dessous
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElementById('pdfprev')){ e.stopImmediatePropagation(); e.preventDefault(); closePreview(); } },true);
 // Tous les liens « Aperçu » vers un document créé dans Librejo
@@ -8681,7 +8722,7 @@ function cfAsk(rel,base,cur,mine){ return new Promise(resolve=>{
     <div class="cf-confirm" id="cf-c" hidden></div>
     <div class="btns" id="cf-b"><button type="button" class="primary" id="cf-reload">Recharger ses modifications</button><button type="button" class="secondary" id="cf-force">Enregistrer quand même</button><button type="button" class="ghost" id="cf-no">Ne rien enregistrer pour l’instant</button></div></div>`;
   document.body.appendChild(o);
-  const end=v=>{ o.remove(); document.removeEventListener('keydown',key,true); if(prev&&prev.isConnected&&prev.focus) prev.focus(); resolve(v); };
+  const end=v=>{ o.remove(); layersSync(); document.removeEventListener('keydown',key,true); if(prev&&prev.isConnected&&prev.focus) prev.focus(); resolve(v); };
   const key=e=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); const c=o.querySelector('#cf-c'); if(!c.hidden){ c.hidden=true; o.querySelector('#cf-b').hidden=false; o.querySelector('#cf-reload').focus(); } else end('cancel'); } };
   document.addEventListener('keydown',key,true);
   const ask=(txt,yes,danger,v)=>{ const c=o.querySelector('#cf-c'), b=o.querySelector('#cf-b'); b.hidden=true; c.hidden=false;
@@ -9198,7 +9239,7 @@ if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().c
 else setTimeout(()=>cfStartup().catch(e=>console.warn('modifications simultanées',e)),900);
 })();
 </script>
-<div id="lj-boot" hidden><div class="lj-card"><img src="logo.svg" alt="Librejo"><div class="lj-in"></div></div></div>
+<div id="lj-boot" hidden><div class="lj-card" role="dialog" aria-modal="true" aria-labelledby="lj-t"><img src="logo.svg" alt="Librejo"><div class="lj-in"></div></div></div>
 <script src="boot.js"></script>
 </body>
 </html>
