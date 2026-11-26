@@ -109,4 +109,4 @@ Librejo n'a pas de serveur : deux admins (ou un dossier OneDrive, Google Drive
 
 - Les modèles de formulaires et de procédures sont des trames **à faire relire** (juriste, médecin, direction) avant usage.
 - Librejo n'est ni une ordonnance numérique ni un logiciel d'aide à la prescription.
-- Licence : à choisir (logiciel libre prévu).
+- Licence : EUPL 1.2 (European Union Public Licence), voir le fichier `LICENSE`. Les bibliothèques et polices tierces gardent leur propre licence.
