@@ -159,7 +159,7 @@ h2.sec .o{color:var(--blue);font-weight:600}
 .sidebar nav.top button,.catbtn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;border:0;background:transparent;color:var(--text-on-dark);padding:10px var(--sp-3);border-radius:var(--r-sm);font-size:var(--fs-4);font-weight:600}
 .sidebar nav.top button svg,.catbtn svg{width:19px;height:19px;flex:0 0 auto;opacity:.85}
 .sidebar nav.top button:hover,.catbtn:hover{background:rgba(255,255,255,.07);color:var(--on-color)}
-.sidebar nav.top button[aria-selected="true"],.catbtn[aria-pressed="true"]{background:rgba(255,255,255,.11);color:var(--on-color)}
+.sidebar nav.top button[aria-current="page"],.catbtn[aria-pressed="true"]{background:rgba(255,255,255,.11);color:var(--on-color)}
 .sidecats{margin-top:22px;display:flex;flex-direction:column;gap:1px}
 .sidelab{font-size:var(--fs-1);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-on-dark-2);padding:0 var(--sp-3) var(--sp-2)}
 .catbtn{font-size:var(--fs-3);font-weight:500;padding:var(--sp-2) var(--sp-3)}
@@ -1012,6 +1012,9 @@ body[class*=saison-]{background-image:linear-gradient(to bottom,var(--saison),va
 #pdfprev .pv-bar{display:flex;align-items:center;gap:var(--sp-2);background:var(--surface);border-radius:var(--r-md) var(--r-md) 0 0;padding:var(--sp-2) var(--sp-3)}
 #pdfprev .pv-bar b{color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #pdfprev .grow{flex:1}
+#pdfprev .pv-bar{flex-wrap:wrap}
+#pdfprev .pv-kbd{flex-basis:100%;text-align:right;color:var(--text-muted);font-size:var(--fs-1)}
+#pdfprev .pv-kbd kbd{font-family:inherit;font-weight:600;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:4px;padding:0 4px;color:var(--text)}
 #pdfprev iframe{flex:1;width:100%;border:0;background:var(--surface);border-radius:0 0 var(--r-md) var(--r-md)}
 @media (max-width:600px){#pdfprev{padding:0}#pdfprev .pv-bar{border-radius:0;flex-wrap:wrap}}
 
@@ -1213,7 +1216,7 @@ table.docs img.thumb.land:hover{transform:scale(5.5)}
 html.menu-clair .sidebar{background:var(--menu-bg);color:var(--text);border-right:1px solid var(--line)}
 html.menu-clair .sidebar nav.top button,html.menu-clair .catbtn{color:var(--menu-ink)}
 html.menu-clair .sidebar nav.top button:hover,html.menu-clair .catbtn:hover{background:rgba(255,255,255,.7);color:var(--menu-ink)}
-html.menu-clair .sidebar nav.top button[aria-selected="true"],html.menu-clair .catbtn[aria-pressed="true"]{background:var(--surface);color:var(--menu-ink);font-weight:700}
+html.menu-clair .sidebar nav.top button[aria-current="page"],html.menu-clair .catbtn[aria-pressed="true"]{background:var(--surface);color:var(--menu-ink);font-weight:700}
 html.menu-clair .sidelab,html.menu-clair .catbtn .count,html.menu-clair .sidenote{color:var(--menu-muted)}
 html.menu-clair .catbtn[aria-pressed="true"] .count{color:var(--text-muted)}
 html.menu-clair .catbtn.sub{color:var(--menu-ink)}
@@ -1269,9 +1272,9 @@ table.docs .act{gap:4px}
 .fcard.tile .row{flex-wrap:nowrap}
 .lbtn{padding:0 11px}
 /* Sélection du menu : fond teinté, sans liseré latéral */
-.sidebar nav.top button[aria-selected="true"],.catbtn[aria-pressed="true"]{box-shadow:none}
-html.menu-clair .sidebar nav.top button[aria-selected="true"],html.menu-clair .catbtn[aria-pressed="true"]{box-shadow:var(--shadow-soft);outline:1.5px solid var(--accent-line);outline-offset:-1.5px}
-html:not(.menu-clair) .sidebar nav.top button[aria-selected="true"],html:not(.menu-clair) .catbtn[aria-pressed="true"]{background:rgba(255,255,255,.16);outline:1.5px solid var(--accent-on-dark);outline-offset:-1.5px}
+.sidebar nav.top button[aria-current="page"],.catbtn[aria-pressed="true"]{box-shadow:none}
+html.menu-clair .sidebar nav.top button[aria-current="page"],html.menu-clair .catbtn[aria-pressed="true"]{box-shadow:var(--shadow-soft);outline:1.5px solid var(--accent-line);outline-offset:-1.5px}
+html:not(.menu-clair) .sidebar nav.top button[aria-current="page"],html:not(.menu-clair) .catbtn[aria-pressed="true"]{background:rgba(255,255,255,.16);outline:1.5px solid var(--accent-on-dark);outline-offset:-1.5px}
 .adminbar{border-left:1px solid var(--line);border-top:3px solid var(--accent)}
 .quick{border-left:1px solid var(--line)}
 #emltip{border-left:1px solid var(--line);border-top:3px solid var(--accent)}
@@ -1407,12 +1410,12 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
     <div class="brand">
       <div class="lj-brandbox"><div class="lj-brand"><img class="lj-lib" src="logo-blanc.svg" alt="Librejo"></div><p id="lj-name" hidden></p></div>
     </div>
-    <nav class="top" role="tablist" aria-label="Navigation" aria-orientation="vertical">
-    <button role="tab" data-tab="docs" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>Accueil</button>
-    <button role="tab" data-tab="forms" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg>Formulaires</button>
-    <button role="tab" data-tab="semaine" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Impression rapide</button>
-    <button role="tab" data-tab="annu" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.7.7 2.8 2.4 3.1 5.2"/></svg>Annuaire</button>
-    <button role="tab" data-tab="admin" aria-selected="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Administration</button>
+    <nav class="top" aria-label="Pages de Librejo">
+    <button type="button" data-tab="docs" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>Accueil</button>
+    <button type="button" data-tab="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg>Formulaires</button>
+    <button type="button" data-tab="semaine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Impression rapide</button>
+    <button type="button" data-tab="annu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.7.7 2.8 2.4 3.1 5.2"/></svg>Annuaire</button>
+    <button type="button" data-tab="admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Administration</button>
   </nav>
     <div class="sidecats" id="sidecats"></div>
     <div class="sidefoot">
@@ -1629,35 +1632,36 @@ function parseDDN(s){
   if(y<1900||t>new Date()) return null; return t;
 }
 function validate(){
-  const errs=[],bad=new Set();
-  if(!F.date){ errs.push('Date du document manquante.'); bad.add('date'); }
-  if(F.csapa===''||(F.csapa!=='libre'&&!dest())){ errs.push('Choisissez le CSAPA de suivi.'); bad.add('csapa'); }
+  /* chaque message garde la clé de son champ (keys) : la liste « À corriger » et la fenêtre « Il manque des informations » y mènent */
+  const errs=[],bad=new Set(),keys=[], no=(m,k)=>{ errs.push(m); keys.push(k); bad.add(k); };
+  if(!F.date){ no('Date du document manquante.','date'); }
+  if(F.csapa===''||(F.csapa!=='libre'&&!dest())){ no('Choisissez le CSAPA de suivi.','csapa'); }
   if(F.csapa==='libre'){
-    if(!F.libreNom.trim()){ errs.push('Indiquez le nom de la structure.'); bad.add('libreNom'); }
+    if(!F.libreNom.trim()){ no('Indiquez le nom de la structure.','libreNom'); }
     const m=splitMails(F.libreMail);
-    if(!m.length||m.some(x=>!MAIL.test(x))){ errs.push('Adresse mail du destinataire manquante ou incorrecte.'); bad.add('libreMail'); }
+    if(!m.length||m.some(x=>!MAIL.test(x))){ no('Adresse mail du destinataire manquante ou incorrecte.','libreMail'); }
   }
   F.patients.forEach((p,i)=>{
     const P=`Patient ${i+1} : `;
-    if(!p.civ){ errs.push(P+'choisissez M. ou Mme.'); bad.add(p.id+'civ'); }
-    if(!p.ini.trim()){ errs.push(P+'initiales manquantes.'); bad.add(p.id+'ini'); }
-    if(!parseDDN(p.ddn)){ errs.push(P+(p.ddn.trim()?'date de naissance incorrecte (JJ/MM/AAAA).':'date de naissance manquante.')); bad.add(p.id+'ddn'); }
-    if(!p.trt){ errs.push(P+'choisissez le traitement.'); bad.add(p.id+'trt'); }
+    if(!p.civ){ no(P+'choisissez M. ou Mme.',p.id+'civ'); }
+    if(!p.ini.trim()){ no(P+'initiales manquantes.',p.id+'ini'); }
+    if(!parseDDN(p.ddn)){ no(P+(p.ddn.trim()?'date de naissance incorrecte (JJ/MM/AAAA).':'date de naissance manquante.'),p.id+'ddn'); }
+    if(!p.trt){ no(P+'choisissez le traitement.',p.id+'trt'); }
     const seen=new Set();
     p.dates.forEach((d,j)=>{
-      if(!d.d){ errs.push(P+`date de délivrance n° ${j+1} manquante.`); bad.add(d.id+'d'); }
-      else if(seen.has(d.d)){ errs.push(P+`la date du ${frDate(d.d)} est en double.`); bad.add(d.id+'d'); }
+      if(!d.d){ no(P+`date de délivrance n° ${j+1} manquante.`,d.id+'d'); }
+      else if(seen.has(d.d)){ no(P+`la date du ${frDate(d.d)} est en double.`,d.id+'d'); }
       seen.add(d.d);
       const n=parseDose(d.mg);
-      if(!(n>0)||n>1000){ errs.push(P+`dose manquante pour le ${d.d?frDate(d.d):'n° '+(j+1)}.`); bad.add(d.id+'mg'); }
+      if(!(n>0)||n>1000){ no(P+`dose manquante pour le ${d.d?frDate(d.d):'n° '+(j+1)}.`,d.id+'mg'); }
     });
   });
-  return {errs,bad};
+  return {errs,bad,keys};
 }
 
 function renderDeliv(){
   const p=$('#p-deliv');
-  const {errs,bad}=showErrors?validate():{errs:[],bad:new Set()};
+  const {errs,bad,keys}=showErrors?validate():{errs:[],bad:new Set(),keys:[]};
   const B=k=>bad.has(k)?` bad" data-errk="${esc(k)}`:'';
   const d=F.csapa!==''?dest():null;
   const patients=F.patients.map((pt,i)=>{
@@ -1676,7 +1680,7 @@ function renderDeliv(){
         ${F.patients.length>1?`<button class="ghost danger" data-act="delpat">${ICON.trash}Retirer</button>`:''}</h3>
       <div class="grid2">
         <div class="field"><span>Civilité</span>
-          <div class="seg${bad.has(pt.id+'civ')?' bad':''}" role="group" aria-label="Civilité">
+          <div class="seg${B(pt.id+'civ')}" role="group" aria-label="Civilité">
             <button type="button" data-civ="M." aria-pressed="${pt.civ==='M.'}">M.</button>
             <button type="button" data-civ="Mme" aria-pressed="${pt.civ==='Mme'}">Mme</button></div></div>
         <label class="field"><span>Initiales</span>
@@ -1689,7 +1693,7 @@ function renderDeliv(){
           <input class="in" data-k="dossier" value="${esc(pt.dossier)}" placeholder="—" maxlength="20" autocomplete="off" spellcheck="false"></label>
       </div>
       <div class="field"><span>Traitement</span>
-        <div class="seg ${pt.trt==='metha'?'metha':''}${bad.has(pt.id+'trt')?' bad':''}" role="group" aria-label="Traitement">
+        <div class="seg ${pt.trt==='metha'?'metha':''}${B(pt.id+'trt')}" role="group" aria-label="Traitement">
           <button type="button" data-trt="metha" aria-pressed="${pt.trt==='metha'}">Méthadone</button>
           <button type="button" data-trt="bupre" aria-pressed="${pt.trt==='bupre'}">Buprénorphine</button></div></div>
       ${pt.trt?`<label class="field"><span>Forme <small>(facultatif)</small></span>
@@ -1709,7 +1713,7 @@ function renderDeliv(){
     <div class="card top">
       <h3>Pour qui ?</h3>
       <div class="field"><span>CSAPA de suivi</span>
-        <div class="dest-chips${bad.has('csapa')?' bad':''}" role="group" aria-label="CSAPA de suivi">
+        <div class="dest-chips${B('csapa')}" role="group" aria-label="CSAPA de suivi">
           ${dests.map(l=>`<button type="button" class="chip" data-dest="${esc(l.id)}" aria-pressed="${l.id===F.csapa}">${esc(l.nom)}</button>`).join('')}
           <button type="button" class="chip other" data-dest="libre" aria-pressed="${F.csapa==='libre'}">Autre…</button>
         </div>
@@ -1727,7 +1731,7 @@ function renderDeliv(){
     </div>
     ${patients}
     <button class="secondary wide" data-act="addpat">${ICON.plus}Ajouter un patient</button>
-    ${errs.length?`<ul class="errors">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${errs.length?`<ul class="errors">${errs.map((x,i)=>`<li${keys[i]?` data-errk="${esc(keys[i])}"`:''}>${esc(x)}</li>`).join('')}</ul>`:''}
     <div class="stickyfoot"><button class="primary big" data-act="prepare">${ICON.mail}Préparer l'envoi (${F.patients.length} PDF)</button></div>
     <div class="row end"><button class="ghost danger" data-act="clear">${ICON.trash}Tout effacer</button></div>`;
 }
@@ -2365,7 +2369,7 @@ function setTab(t){
   if(t==='admin'&&!isAdmin) t='docs';
   if(t!=='admin'&&tab==='admin'&&asub==='reg'&&isAdmin&&regDirty()){ regAsk(()=>setTab(t)); return; }
   tab=t;
-  document.querySelectorAll('nav.top [role=tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t||((t==='deliv'||t==='relais'||t==='cmi'||t==='att'||t==='mt'||t==='ordo'||t==='cl'||t==='urg'||t==='cp'||t==='el'||t==='ccas')&&b.dataset.tab==='forms'))));
+  navCurrent(t);
   document.querySelectorAll('main>section.panel').forEach(sec=>{ sec.hidden=sec.id!=='p-'+t; });
   history.replaceState(null,'',{docs:'#documents',forms:'#formulaires',deliv:'#delivrance',admin:'#admin',annu:'#annuaire',semaine:'#semaine',relais:'#relais',cmi:'#certificat',att:'#attestation',mt:'#courrier',ordo:'#ordonnance',cl:'#certificat-libre',urg:'#urgences',cp:'#courrier-partenaire',el:'#en-tete-libre',ccas:'#orientation-ccas'}[t]);
   const pt=$('#pagetitle'); if(pt){ pt.textContent={docs:'Documents',forms:'Formulaires',semaine:'Impression rapide',annu:'Annuaire',admin:'Administration'}[t]||'Formulaires'; pt.hidden=t==='docs'&&filter==='recent'&&!query; }
@@ -2392,15 +2396,24 @@ let grpN=0;
 function nameGroups(root){ (root||document).querySelectorAll('.field>.choice:not([role]),.field>.seg:not([role]),.field>div>.choice:not([role])').forEach(g=>{
   const f=g.closest('.field'), lab=f&&f.querySelector(':scope>span:first-child'); g.setAttribute('role','group'); if(lab){ if(!lab.id) lab.id='grp-l'+(++grpN); g.setAttribute('aria-labelledby',lab.id); } }); }
 new MutationObserver(ms=>{ if(ms.some(m=>m.addedNodes.length)) nameGroups(); }).observe(document.body,{subtree:true,childList:true});
-/* Onglets (menu et sections des réglages) : une seule tabulation par liste, puis les flèches */
+/* Menu principal : une navigation entre pages (pas des onglets). La page affichée porte aria-current="page" ;
+   chaque entrée est atteinte par Tab, et les flèches passent aussi d'une entrée à l'autre (sans ouvrir la page). */
+const FORM_TABS=['deliv','relais','cmi','att','mt','ordo','cl','urg','cp','el','ccas'];
+function navCurrent(t){ document.querySelectorAll('nav.top button[data-tab]').forEach(b=>{ const on=b.dataset.tab===t||(FORM_TABS.includes(t)&&b.dataset.tab==='forms');
+  if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }); }
+document.querySelector('nav.top').addEventListener('keydown',e=>{ const b=e.target.closest('button[data-tab]'); if(!b) return;
+  const all=[...e.currentTarget.querySelectorAll('button[data-tab]')].filter(x=>!x.hidden&&x.offsetParent), i=all.indexOf(b), k=e.key;
+  const n=k==='ArrowDown'||k==='ArrowRight'?i+1:k==='ArrowUp'||k==='ArrowLeft'?i-1:k==='Home'?0:k==='End'?all.length-1:null; if(n===null||i<0) return;
+  e.preventDefault(); all[(n+all.length)%all.length].focus(); });
+/* Onglets (sections des réglages) : une seule tabulation par liste, puis les flèches */
 function rovingTabs(list){ if(!list) return; const tabs=[...list.querySelectorAll('[role=tab]')].filter(b=>!b.hidden);
   const cur=tabs.find(b=>b.getAttribute('aria-selected')==='true')||tabs[0]; tabs.forEach(b=>b.tabIndex=b===cur?0:-1); }
 document.addEventListener('keydown',e=>{ const t=e.target.closest&&e.target.closest('[role=tab]'), list=t&&t.closest('[role=tablist]'); if(!list) return;
   const tabs=[...list.querySelectorAll('[role=tab]')].filter(b=>!b.hidden&&b.offsetParent), i=tabs.indexOf(t); if(i<0) return;
   const k=e.key, n=k==='ArrowDown'||k==='ArrowRight'?i+1:k==='ArrowUp'||k==='ArrowLeft'?i-1:k==='Home'?0:k==='End'?tabs.length-1:null; if(n===null) return;
   e.preventDefault(); const nx=tabs[(n+tabs.length)%tabs.length]; nx.click(); setTimeout(()=>{ const again=list.querySelector(`[role=tab][data-tab="${nx.dataset.tab}"],[role=tab][data-rsecgo="${nx.dataset.rsecgo}"]`)||nx; rovingTabs(list); again.focus(); },0); });
-new MutationObserver(()=>{ rovingTabs(document.querySelector('nav.top')); rovingTabs(document.querySelector('.rsec-nav')); }).observe(document.querySelector('.app'),{subtree:true,attributes:true,attributeFilter:['aria-selected','hidden'],childList:true});
-document.querySelector('nav.top').addEventListener('click',e=>{ const b=e.target.closest('[role=tab]'); if(b){ if(b.dataset.tab==='forms') formView=null; if(b.dataset.tab==='docs'){ filter='recent'; query=''; } setTab(b.dataset.tab); if(b.dataset.tab==='docs') renderDocs(); window.scrollTo({top:0}); } });
+new MutationObserver(()=>{ rovingTabs(document.querySelector('.rsec-nav')); }).observe(document.querySelector('.app'),{subtree:true,attributes:true,attributeFilter:['aria-selected','hidden'],childList:true});
+document.querySelector('nav.top').addEventListener('click',e=>{ const b=e.target.closest('button[data-tab]'); if(b){ if(b.dataset.tab==='forms') formView=null; if(b.dataset.tab==='docs'){ filter='recent'; query=''; } setTab(b.dataset.tab); if(b.dataset.tab==='docs') renderDocs(); window.scrollTo({top:0}); } });
 
 /* ======================================================================
    1. DOCUMENTS : recherche, impression, copie modifiable, envoi
@@ -2593,7 +2606,7 @@ function renderSide(){
         return `<span class="count" title="${t}"><span class="sr">${t}</span><span aria-hidden="true">${nd}${nf?`<span class="cf">+${nf}${ICON.pen}</span>`:''}</span></span>`; })()}</button>`
       +(open?sousOf(c).map(sub=>`<button class="catbtn sub" style="${catColVars(c.id)}" data-filter="${esc(c.id+'/'+sub)}" aria-pressed="${on(c.id+'/'+sub)}"><span class="name">${esc(sub)}</span><span class="count">${docs().filter(d=>d.categorie===c.id&&d.sous===sub).length}</span></button>`).join(''):''); }).join('');
   const home=document.querySelector('nav.top [data-tab=docs]');
-  if(home) home.setAttribute('aria-selected',String(tab==='docs'&&(filter==='recent'||searching)));
+  if(home){ if(tab==='docs'&&(filter==='recent'||searching)) home.setAttribute('aria-current','page'); else if(tab==='docs') home.removeAttribute('aria-current'); }
 }
 $('#sidecats').addEventListener('click',e=>{ const f=e.target.closest('[data-filter]'); if(!f) return;
   filter=f.dataset.filter; query=''; if(tab!=='docs') setTab('docs'); renderDocs(); window.scrollTo({top:0}); });
@@ -3504,8 +3517,8 @@ function mailBody(n){
   return `Bonjour,\n\nVeuillez trouver ci-joint ${n>1?`${n} attestations`:'une attestation'} de délivrance exceptionnelle de traitement de substitution, pour ${n>1?'des patients suivis':'un patient suivi'} par ${D.structure||'votre structure'}.\n\nN'hésitez pas à nous contacter pour toute information complémentaire.\n\nCordialement,\n${structure.signataire}`;
 }
 async function prepare(force){
-  const {errs}=validate();
-  if(errs.length&&!force){ showErrors=true; renderDeliv(); delivMissing(errs,()=>prepare(true)); return; }
+  const {errs,keys}=validate();
+  if(errs.length&&!force){ showErrors=true; renderDeliv(); delivMissing(errs,()=>prepare(true),keys); return; }
   showErrors=false; renderDeliv();
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
   revoke();
@@ -6748,8 +6761,9 @@ function previewUrl(u,name){
   const o=document.createElement('div'); o.id='pdfprev'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-label','Aperçu du document');
   o.innerHTML=`<div class="pv-bar"><b>${esc(name||'Aperçu')}</b><span class="grow"></span>
       <button type="button" class="primary sm" data-pvprint>${ICON.print}Imprimer</button>
-      <button type="button" class="secondary sm" data-pvclose>Fermer l’aperçu</button></div>
-    <iframe src="${u}" title="Aperçu du document"></iframe>`;
+      <button type="button" class="secondary sm" data-pvclose aria-describedby="pv-kbd">Fermer l’aperçu</button>
+      <small class="pv-kbd" id="pv-kbd">Clavier : <kbd>Échap</kbd> ferme l’aperçu. Dans le document, <kbd>Maj</kbd>+<kbd>Tab</kbd> revient ici.</small></div>
+    <iframe src="${u}" title="Aperçu du document (Maj+Tab pour revenir au bouton Fermer)"></iframe>`;
   const opener=document.activeElement; document.body.appendChild(o); layersSync(); pvOpener=opener;
   o.querySelector('[data-pvclose]').onclick=closePreview;
   o.querySelector('[data-pvprint]').onclick=()=>{ const fr=o.querySelector('iframe'); try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ toast('Ctrl+P pour imprimer'); } };
@@ -6758,6 +6772,9 @@ function previewUrl(u,name){
 let pvOpener=null;
 function closePreview(){ const o=document.getElementById('pdfprev'); if(o){ o.remove(); layersSync();
   const f=pvOpener; pvOpener=null; if(f&&f.isConnected&&f!==document.body&&!f.closest('[inert]')) f.focus(); } }
+// Menus déroulants « Outils », « Exporter » : Échap les replie et rend le focus à leur bouton
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const d=e.target.closest&&e.target.closest('details.ab-more[open]'); if(!d) return;
+  e.preventDefault(); e.stopImmediatePropagation(); d.open=false; const s=d.querySelector('summary'); s&&s.focus(); },true);
 // Échap ferme d'abord l'aperçu, sans fermer la fenêtre qui est dessous
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElementById('pdfprev')){ e.stopImmediatePropagation(); e.preventDefault(); closePreview(); } },true);
 // Tous les liens « Aperçu » vers un document créé dans Librejo
@@ -8479,13 +8496,18 @@ function pinnedAndUsed(){
 
 /* Délivrance : ce qui manque n'empêche plus de créer les PDF. Une fenêtre le liste :
    on revient compléter, ou on continue (les cases vides sont laissées en pointillés, à remplir à la main). */
-function delivMissing(errs,go){
+function delivMissing(errs,go,keys){
+  /* chaque message est un bouton qui ferme la fenêtre et mène au champ, comme la liste « À corriger » des autres formulaires */
   openModal(`<h3 id="modal-title">Il manque des informations</h3>
-    <ul class="errors dm-list">${errs.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <ul class="errors dm-list" aria-label="À corriger">${errs.map((x,i)=>`<li>${keys&&keys[i]?`<button type="button" class="errgo" data-dmgo="${esc(keys[i])}">${esc(x)}</button>`:esc(x)}</li>`).join('')}</ul>
     <p class="hint">Si vous continuez, les cases vides sont laissées en pointillés sur le PDF, à compléter à la main.</p>
     <div class="btns"><button class="primary" id="dm-back" data-autofocus>Revenir compléter</button><button class="secondary" id="dm-go">Continuer quand même</button></div>`);
   $('#dm-back').onclick=()=>{ closeModal(); const el=$('#p-deliv .bad'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); const f=el.matches('input,textarea,select')?el:el.querySelector('input,button'); f&&f.focus({preventScroll:true}); } };
   $('#dm-go').onclick=()=>{ closeModal(); go(); };
+  $('#modal-box').querySelectorAll('[data-dmgo]').forEach(b=>b.onclick=()=>{ const k=b.dataset.dmgo; closeModal();
+    const el=$('#p-deliv').querySelector(`[data-errk="${CSS.escape(k)}"]:not(li)`); if(!el) return;
+    const f=el.matches('input,select,textarea')?el:el.querySelector('input:not([type=hidden]),select,textarea,button:not(:disabled)')||el;
+    f.scrollIntoView({block:'center'}); f.focus({preventScroll:true}); });
 }
 
 /* Dr Vermersch (cabinet du 24 bd Clemenceau) ajouté aux destinataires de la délivrance,
@@ -8964,7 +8986,7 @@ const AIDE={
       '<b>Vérifier les Cerfa</b> : chercher une nouvelle version sur service-public.fr.']},
   pret:{
     but:'Le document est prêt, créé sur ce poste. Il reste à l’imprimer, l’envoyer ou le télécharger, puis à effacer le formulaire.',
-    etapes:['<b>Aperçu</b>, à côté du nom du fichier, pour le relire.',
+    etapes:['<b>Aperçu</b>, à côté du nom du fichier, pour le relire. <b>Fermer l’aperçu</b> ou <kbd>Échap</kbd> pour en sortir ; si le clavier est resté dans le document, <kbd>Maj</kbd>+<kbd>Tab</kbd> (plusieurs fois si besoin) ramène à ce bouton.',
       '<b>Imprimer</b> ouvre la fenêtre d’impression.',
       '<b>Envoyer par mail</b> prépare le mail avec le document joint : vous le relisez et l’envoyez vous-même.',
       '<b>Télécharger</b> l’enregistre dans Téléchargements : supprimez-le après usage.',
@@ -9252,7 +9274,7 @@ function aideHTML(c){
       <h3>Comment faire</h3><ol class="aide-steps">${(c.etapes||[]).map(x=>`<li><span>${x}</span></li>`).join('')}</ol>
       ${adm?`<section class="aide-adm" aria-labelledby="aide-adm-t"><h3 id="aide-adm-t">En mode admin</h3><p>Ce que vous pouvez régler ici :</p><ul>${c.admin.map(x=>`<li>${x}</li>`).join('')}</ul></section>`:''}
     </div>
-    <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer</small></div>`;
+    <div class="aide-f">${guide?'<button type="button" class="linkbtn" id="aide-guide">Ouvrir le mode d’emploi complet</button>':''}<small>Touche <kbd>F1</kbd> : ouvrir ou fermer l’aide · <kbd>Échap</kbd> : fermer l’aide, puis la fenêtre</small></div>`;
 }
 /* L'aide suit la fenêtre ouverte (assistant, fenêtre de dialogue) : elle y est rattachée pour rester atteignable au clavier */
 function aideHost(){
@@ -9305,7 +9327,11 @@ function aideInit(){
     if(e.key==='F1'){ e.preventDefault(); e.stopImmediatePropagation(); if(document.getElementById('pdfprev')||document.getElementById('cfdlg')) return; aideToggle(true); return; }
     if(e.key!=='Escape'||!aideOn) return;
     if(aidePan.contains(e.target)||e.target===aideBtn){ e.preventDefault(); e.stopImmediatePropagation(); aideHide(); return; }
-    aideEscOverlay=!$('#modal').hidden||!!document.getElementById('menu')||!!document.getElementById('pdfprev')||!!document.getElementById('cfdlg')||!!document.getElementById('mguard')||!!(e.target.closest&&e.target.closest('details[open]'));
+    /* Échap ferme une couche à la fois, celle du dessus d'abord : un menu ou une liste ouverts, l'aperçu d'un PDF,
+       la fenêtre de conflit ou une confirmation passent avant l'aide ; l'aide passe avant la page et les fenêtres
+       (« Document prêt », assistant…), qu'un second Échap ferme ensuite. */
+    aideEscOverlay=!!document.getElementById('menu')||!!document.getElementById('pdfprev')||!!document.getElementById('cfdlg')||!!document.getElementById('mguard')||!!(e.target.closest&&e.target.closest('details.ab-more[open]'));
+    if(!aideEscOverlay){ e.preventDefault(); e.stopImmediatePropagation(); aideHide(); }
   },true);
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&aideOn&&!aideEscOverlay&&!e.defaultPrevented) aideHide(); aideEscOverlay=false; });
   new MutationObserver(ms=>{
