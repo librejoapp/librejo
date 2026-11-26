@@ -9,12 +9,12 @@
   --color-error: oklch(52% 0.19 27); --color-success: oklch(50% 0.12 150);
   --container: 1440px; --gutter: 64px; --gap-columns: 32px; --section-gap-s: 120px; --section-gap: 144px; --section-gap-l: 176px;
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
-  --color-paper: oklch(97.6% 0.026 78); --color-paper-2: oklch(95% 0.04 72); --color-paper-3: oklch(92% 0.055 66);
-  --color-ink: oklch(27% 0.04 40); --color-ink-2: oklch(36% 0.04 42); --color-muted: oklch(46% 0.04 45);
-  --color-rule: oklch(86% 0.04 65); --color-rule-2: oklch(80% 0.05 62);
-  --color-accent: oklch(72% 0.17 38); --color-accent-ink: oklch(21% 0.012 38); --color-accent-2: oklch(56% 0.19 34); --color-focus: oklch(54% 0.17 30);
-  --color-cotton: oklch(99.2% 0.012 85); --color-desk: oklch(92% 0.075 62); --color-print: oklch(27% 0.04 40);
-  --color-board: oklch(40% 0.105 38); --color-board-type: oklch(98% 0.02 85); --color-sun: oklch(87% 0.14 85); --color-paid: oklch(58% 0.19 32);
+  --color-paper: #FBF6EC; --color-paper-2: #F7EEDD; --color-paper-3: #F2E4C8;
+  --color-ink: #17302F; --color-ink-2: #23443F; --color-muted: #4A5F5C;
+  --color-rule: #E2D7C2; --color-rule-2: #D6C8AE;
+  --color-accent: #E9A23B; --color-accent-ink: #17302F; --color-accent-2: #1F6F6B; --color-focus: #1F6F6B;
+  --color-cotton: oklch(99.2% 0.012 85); --color-desk: #F3E5C6; --color-print: #17302F;
+  --color-board: #1B5F5D; --color-board-type: #FBF6EC; --color-sun: #F2C46D; --color-paid: #1F6F6B;
   --tex-cotton: url("cotton.svg"); --tex-desk: url("felt.svg");
   --shade: 32% 0.03 50; --lit: 100% 0.005 80; --deep: 7% 0.01 40;
   --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif; --font-body: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;

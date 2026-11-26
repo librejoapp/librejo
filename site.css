@@ -2,7 +2,7 @@
  * hero: Settled · nav: slab · footer: index columns · imagery: screenshots 9 (captured from the product) · signature: the search finding the right document, played in real captures
  * axes: light/grotesk-sans/warm · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: V, the test folder is thin so captures show few documents; kept real rather than staged */
-/* waive: theme chroma raised and coral used on the primary action, at the user's request ("Coral, un peu moins terne") */
+/* Palette alignée sur le logo et l'application (bleu canard, ambre, crème), choix du 26/11/2026 */
 /* waive: Poppins and Atkinson Hyperlegible replace General Sans (Librejo's own faces), sections rise on scroll and the nav is light: the user asked for a warmer page with discreet animations */
 /* waive: capture loops repeat (theme asks for once): the user asked for animations; they pause off screen and stop under reduced motion */
 @import url("./fonts.css");
