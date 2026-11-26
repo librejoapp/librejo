@@ -118,6 +118,7 @@ h2.sec .o{color:var(--blue);font-weight:600}
 .hint{margin:0;color:var(--text-3);font-size:var(--fs-3)}
 .muted,.hint.muted{color:var(--text-muted)}
 .hint.pad{padding:var(--sp-3) var(--sp-4)}
+.reqnote{margin:0;color:var(--text-3);font-size:var(--fs-3)}
 .warn-text{color:var(--warn);font-weight:700}
 .ink{color:var(--text)}
 
@@ -3374,7 +3375,7 @@ function renderFill(){
       <div class="fieldgrid">
         ${(f.champs||[]).map(c=>{ const t=c.type==='equipe'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
         <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
-        <label class="field"><span>Date du document</span><input class="in" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
+        <label class="field"><span>Date du document</span><input class="in${bad.has('_date')?' bad" data-errk="_date':''}" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
     </div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x.k)}">${esc(x.m)}</li>`).join('')}</ul>`:''}
@@ -3386,6 +3387,7 @@ function validateFill(f){
   (f.champs||[]).forEach(c=>{ if(c.requis&&!String(FV[c.id]??'').trim()) errs.push({k:c.id,m:`« ${c.label} » est à remplir.`}); });
   const to=String(FV._to||'').split(/[\s,;]+/).filter(Boolean);
   if(to.some(a=>!MAIL.test(a))) errs.push({k:'_to',m:'Adresse mail incorrecte.'});
+  if(!FV._date) errs.push({k:'_date',m:'Date du document manquante.'});
   return errs;
 }
 $('#p-forms').addEventListener('change',e=>{ const q=e.target.dataset.eqi; if(!q) return; const st=FV['_eq'+q]; if(!st) return; const I=new Set(st.infos); e.target.checked?I.add(e.target.dataset.k):I.delete(e.target.dataset.k); st.infos=EQ_INFOS.map(x=>x[0]).filter(x=>I.has(x)); FV[q]=eqText(st); renderFill(); });
@@ -5617,6 +5619,7 @@ function asValidate(){
   if(!parseDDN(AS.ddn.trim())) e.push(['ddn','Date de naissance au format JJ/MM/AAAA.']);
   if(!AS.cadre) e.push(['cadre','Cadre du suivi à choisir.']);
   if(!AS.depuis) e.push(['depuis','Date de début du suivi manquante.']);
+  if(!AS.date) e.push(['date','Date de l’attestation manquante.']);
   if(AS.depuis&&AS.depuis>today()) e.push(['depuis','La date de début du suivi est dans le futur.']);
   return e;
 }
@@ -5712,6 +5715,7 @@ function mtValidate(){
   const e=[];
   if(!medChoice()) e.push(['med',meds().length?'Choisissez le médecin qui signe le courrier.':'Aucun médecin enregistré : un admin doit les ajouter dans Administration › Réglages.']);
   if(!MT.dest.trim()) e.push(['dest','Médecin destinataire manquant.']);
+  if(!MT.date) e.push(['date','Date du courrier manquante.']);
   if(!MT.objet) e.push(['objet','Objet du courrier à choisir.']);
   if(!MT.civ) e.push(['civ','Civilité manquante.']);
   if(!MT.nom.trim()) e.push(['nom','Nom manquant.']);
@@ -5737,7 +5741,7 @@ function renderMt(){
         <label class="field wide partpick"><span>Médecin destinataire <small>(choisir dans l'annuaire ou écrire)</small></span><input class="in${B('dest')}" data-m="dest" list="mt-parts" value="${esc(MT.dest)}" placeholder="ex. Dr Martin" autocomplete="off">
           <datalist id="mt-parts">${ANNU.partenaires.filter(x=>/medecin|generaliste|sante/.test(norm(x.type))).map(x=>`<option value="${esc(x.nom)}">${esc(x.type)}</option>`).join('')}</datalist></label>
         <label class="field wide"><span>Adresse <small>(facultatif, pour un envoi postal)</small></span>${area('adresse','ex. 12 rue …\n13000 Ville',2)}</label>
-        <label class="field"><span>Date du courrier</span><input class="in" type="date" data-m="date" value="${esc(MT.date)}"></label>
+        <label class="field"><span>Date du courrier</span><input class="in${B('date')}" type="date" data-m="date" value="${esc(MT.date)}"></label>
         <div>${medSelectHTML('mt-med').replace('class="in"','class="in'+B('med')+'"')}</div>
       </div>
       <div class="field"><span>Objet</span><div class="choice${B('objet')}">${MT_OBJETS.map(o=>`<button type="button" class="chip" data-mc="objet" data-v="${esc(o)}" aria-pressed="${MT.objet===o}">${esc(o)}</button>`).join('')}</div></div></div>
@@ -6479,6 +6483,7 @@ urReset();
 function urValidate(){
   const e=[];
   if(!UR.hopital.trim()) e.push(['hopital','Hôpital manquant.']);
+  if(!UR.date) e.push(['date','Date manquante.']);
   if(!UR.civ) e.push(['civ','Civilité manquante.']);
   if(!UR.nom.trim()) e.push(['nom','Nom manquant.']);
   if(!UR.prenom.trim()) e.push(['prenom','Prénom manquant.']);
@@ -6506,7 +6511,7 @@ function renderUrg(){
         <label class="field partpick"><span>Hôpital <small>(choisir dans l'annuaire ou écrire)</small></span><input class="in${B('hopital')}" data-u="hopital" list="ur-hop" value="${esc(UR.hopital)}" placeholder="ex. Hôpital Nord" autocomplete="off">
           <datalist id="ur-hop">${hop.map(x=>`<option value="${esc(x.nom)}">${esc(x.type)}</option>`).join('')}</datalist></label>
         <label class="field"><span>Service</span>${txt('service')}</label>
-        <label class="field"><span>Date</span><input class="in" type="date" data-u="date" value="${esc(UR.date)}"></label>
+        <label class="field"><span>Date</span><input class="in${B('date')}" type="date" data-u="date" value="${esc(UR.date)}"></label>
         <label class="field"><span>Heure</span><input class="in" type="time" data-u="heure" value="${esc(UR.heure)}"></label>
       </div></div>
     <div class="card top w-form"><h3>Personne orientée</h3>
@@ -6613,6 +6618,7 @@ cpReset();
 function cpValidate(){
   const e=[];
   if(!CP.dest.trim()) e.push(['dest','Destinataire manquant.']);
+  if(!CP.date) e.push(['date','Date du courrier manquante.']);
   if(!CP.objet.trim()) e.push(['objet','Objet du courrier manquant.']);
   if(!CP.message.trim()) e.push(['message','Texte du courrier manquant.']);
   if(CP.signe==='med'&&!medChoice()) e.push(['med',meds().length?'Choisissez le médecin qui signe le courrier.':'Aucun médecin enregistré : choisissez « Autre membre de l’équipe ».']);
@@ -6633,7 +6639,7 @@ function renderCp(){
         <label class="field wide partpick"><span>Destinataire <small>(choisir dans l'annuaire ou écrire)</small></span><input class="in${B('dest')}" data-c="dest" list="cp-parts" value="${esc(CP.dest)}" placeholder="ex. CHRS Forbin" autocomplete="off">
           <datalist id="cp-parts">${ANNU.partenaires.map(x=>`<option value="${esc(x.nom)}">${esc(x.type)}</option>`).join('')}</datalist></label>
         <label class="field"><span>À l'attention de <small>(facultatif)</small></span>${txt('attention','ex. Mme Martin, cheffe de service')}</label>
-        <label class="field"><span>Date du courrier</span><input class="in" type="date" data-c="date" value="${esc(CP.date)}"></label>
+        <label class="field"><span>Date du courrier</span><input class="in${B('date')}" type="date" data-c="date" value="${esc(CP.date)}"></label>
         <label class="field wide"><span>Adresse <small>(facultatif, pour un envoi postal)</small></span>${area('adresse','ex. 12 rue …\n13003 Marseille')}</label>
       </div></div>
     <div class="card top w-form"><h3>Courrier</h3>
@@ -8425,6 +8431,7 @@ ccReset();
 function ccValidate(){
   const e=[];
   if(!CC.dest.trim()) e.push(['dest','Service destinataire manquant.']);
+  if(!CC.date) e.push(['date','Date manquante.']);
   if(!CC.civ) e.push(['civ','Civilité manquante.']);
   if(!CC.nom.trim()) e.push(['nom','Nom manquant.']);
   if(!CC.prenom.trim()) e.push(['prenom','Prénom manquant.']);
@@ -8449,12 +8456,12 @@ function renderCcas(){
         <label class="field partpick"><span>CCAS ou antenne <small>(choisir dans l'annuaire ou écrire)</small></span><input class="in${B('dest')}" data-ck="dest" list="cc-list" value="${esc(CC.dest)}" autocomplete="off">
           <datalist id="cc-list">${ccas.map(x=>`<option value="${esc(x.nom)}">${esc(x.type)}</option>`).join('')}</datalist></label>
         <label class="field"><span>À l'attention de <small>(facultatif)</small></span>${txt('attention','ex. service domiciliation')}</label>
-        <label class="field"><span>Date</span><input class="in" type="date" data-ck="date" value="${esc(CC.date)}"></label>
+        <label class="field"><span>Date</span><input class="in${B('date')}" type="date" data-ck="date" value="${esc(CC.date)}"></label>
       </div></div>
     <div class="card top w-form"><h3>Personne orientée</h3>
       <div class="fieldgrid">
         <div class="field"><span>Civilité</span><div class="seg${B('civ')}">${['M.','Mme'].map(c=>`<button type="button" data-ckc="civ" data-v="${c}" aria-pressed="${CC.civ===c}">${c}</button>`).join('')}</div></div>
-        <label class="field"><span>Date de naissance <small>(si utile)</small></span>${txt('ddn','JJ/MM/AAAA','inputmode="numeric" maxlength="10"')}</label>
+        <label class="field"><span>Date de naissance <small>(facultatif)</small></span>${txt('ddn','JJ/MM/AAAA','inputmode="numeric" maxlength="10"')}</label>
         <label class="field"><span>Nom</span>${txt('nom')}</label>
         <label class="field"><span>Prénom</span>${txt('prenom')}</label>
         <label class="field"><span>Téléphone de la personne <small>(facultatif)</small></span>${txt('tel','','inputmode="tel"')}</label>
@@ -8633,7 +8640,43 @@ function errsA11y(panel){
   if(ul) ul.querySelectorAll(':scope>li[data-errk]').forEach(li=>{ if(li.querySelector('.errgo')||!panel.querySelector(`[data-errk="${CSS.escape(li.dataset.errk)}"]:not(li)`)) return;
     const b=document.createElement('button'); b.type='button'; b.className='errgo'; b.dataset.errgo=li.dataset.errk; b.append(...li.childNodes); li.append(b); });
 }
-function errsA11yAll(){ document.querySelectorAll('main>section.panel:not([hidden])').forEach(errsA11y); }
+function errsA11yAll(){ document.querySelectorAll('main>section.panel:not([hidden])').forEach(e=>{ errsA11y(e); reqA11y(e); }); }
+/* Champs obligatoires annoncés avant l'envoi (WCAG 3.3.2) : une phrase en tête du formulaire, et aria-required
+   sur chaque champ que la validation exige. Pour les formulaires intégrés, Librejo le déduit de leur propre
+   validation : un champ est obligatoire si le vider, les autres réponses restant les mêmes, crée une erreur
+   (« Dose » ne l'est qu'une fois le traitement choisi). Pour les formulaires de la structure : la case
+   « Obligatoire » de l'éditeur. */
+const REQ_FORMS={'p-relais':['data-r',()=>RL,v=>{RL=v;},rlValidate],'p-cmi':['data-c',()=>CM,v=>{CM=v;},cmValidate,()=>['med']],
+  'p-att':['data-a',()=>AS,v=>{AS=v;},asValidate,()=>medChoice()?[]:['signNom','signFonction']],
+  'p-mt':['data-m',()=>MT,v=>{MT=v;},mtValidate,()=>['med']],'p-cl':['data-cl',()=>CL,v=>{CL=v;},clValidate,()=>['med']],'p-ordo':['data-or',()=>OR,v=>{OR=v;},orValidate],
+  'p-urg':['data-u',()=>UR,v=>{UR=v;},urValidate,()=>UR.signe==='med'?['med']:[]],'p-cp':['data-c',()=>CP,v=>{CP=v;},cpValidate,()=>CP.signe==='med'?['med']:[]],
+  'p-el':['data-e',()=>EL,v=>{EL=v;},elValidate],'p-ccas':['data-ck',()=>CC,v=>{CC=v;},ccValidate]};
+const REQ_NOTE='Tous les champs sont obligatoires, sauf ceux marqués « facultatif ».';
+const blankOf=v=>typeof v==='string'?'':Array.isArray(v)?[]:typeof v==='boolean'?false:v;
+function reqKeys(get,set,val){
+  const S=get(), out=new Set();
+  for(const k of Object.keys(S)){ if(!(typeof S[k]==='string'||typeof S[k]==='boolean'||Array.isArray(S[k]))) continue;
+    set({...S,[k]:blankOf(S[k])}); try{ if(val().some(x=>x[0]===k)) out.add(k); }catch(e){} }
+  set(S); return out;
+}
+function reqA11y(panel){
+  let attr=null, keys=null;
+  const R=REQ_FORMS[panel.id];
+  if(R){ attr=R[0]; keys=reqKeys(R[1],R[2],R[3]); if(R[4]) R[4]().forEach(k=>keys.add(k)); }
+  else if(panel.id==='p-deliv'){ attr='data-k'; keys=new Set(['libreNom','libreMail','date','ini','ddn','d','mg']); }
+  else if(panel.id==='p-forms'){ const f=formView&&DATA.formulaires.find(x=>x.id===formView); if(f){ attr='data-f'; keys=new Set((f.champs||[]).filter(c=>c.requis).map(c=>c.id)); } }
+  if(!attr) return;
+  const isReq=el=>el.hasAttribute('data-med')?keys.has('med'):keys.has(el.getAttribute(attr));
+  panel.querySelectorAll(`[${attr}],select[data-med]`).forEach(el=>{ if(!el.matches('input,select,textarea')) return;
+    const on=isReq(el); if(on!==(el.getAttribute('aria-required')==='true')) on?el.setAttribute('aria-required','true'):el.removeAttribute('aria-required'); });
+  /* Un champ que la validation n'exige pas (ou plus, selon les autres réponses) le dit : « (facultatif) » */
+  panel.querySelectorAll('.field').forEach(f=>{ const c=[...f.querySelectorAll(`[${attr}],select[data-med]`)].filter(el=>el.matches('input,select,textarea'));
+    const sp=f.querySelector(':scope>span'); if(!c.length||!sp||c.some(isReq)) return;
+    const sm=sp.querySelector('small:not(.wd)'); if(/facultati/i.test(sp.textContent)||sp.querySelector('.reqopt')) return;
+    if(sm&&/^\(/.test(sm.textContent.trim())){ sm.textContent=sm.textContent.trim().replace(/^\(/,'(facultatif, '); sm.classList.add('reqopt'); }
+    else{ const n=document.createElement('small'); n.className='reqopt'; n.textContent='(facultatif)'; sp.append(' ',n); } });
+  if(!panel.querySelector('.reqnote')){ const pv=panel.querySelector(':scope>.privacy'); if(pv){ const n=document.createElement('p'); n.className='reqnote'; n.textContent=REQ_NOTE; pv.after(n); } }
+}
 /* Après « Créer » : le focus va sur la liste (lue par le lecteur d'écran), Tab mène au premier champ à corriger */
 function errsShow(sel){ const panel=$(sel); if(!panel) return; errsNearButton(); errsA11y(panel);
   const ul=panel.querySelector('ul.errors'); if(!ul) return; ul.scrollIntoView({block:'center'}); ul.focus({preventScroll:true}); }
