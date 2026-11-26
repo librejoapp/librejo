@@ -1,5 +1,5 @@
 // Librejo : met en cache le code du site pour fonctionner hors ligne. Les documents de la structure ne passent jamais par ici.
-const VERSION='librejo-proto3l';
+const VERSION='librejo-proto3m';
 /* Mise en cache en deux temps.
    1. À l'installation (~2,4 Mo) : ce qu'il faut pour ouvrir Librejo et produire un PDF hors ligne. */
 const BASE=['./','index.html','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',

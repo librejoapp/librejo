@@ -650,7 +650,8 @@ details.tp summary{cursor:pointer;font-weight:600}
 .cmpv-ocr{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0 12px}
 .ocr-bar{flex:1 1 200px;height:8px;border-radius:99px;background:var(--surface-3);overflow:hidden}
 .ocr-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
-@media (prefers-reduced-motion:reduce){.flash{outline:3px solid var(--accent-line)}}
+/* mouvement réduit : pas de pulsation, un contour fixe pendant 3 secondes marque l'endroit atteint */
+@media (prefers-reduced-motion:reduce){.flash{outline:3px solid var(--accent-line);outline-offset:3px}}
 .ad-scan{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-md);background:var(--accent-soft);font-size:var(--fs-3)}
 .jr-tools,.ar-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .jr-tools .in[type=search],.ar-tools .in[type=search]{flex:1 1 220px}
@@ -1491,6 +1492,8 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
    la page, pour être joints au mail puis supprimés.
    ====================================================================== */
 const $=s=>document.querySelector(s);
+/* Défilement vers un repère : animé, sauf si la personne a demandé de réduire les animations */
+const smooth=()=>matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const svg=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const ICON={
@@ -1799,7 +1802,7 @@ $('#p-deliv').addEventListener('click',e=>{
     const rows=document.querySelectorAll(`.daterow[data-p="${pt.id}"]`); const last=rows[rows.length-1]; last&&last.querySelector('[data-k=mg]').focus(); }
   if(a==='deldate'){ const row=b.closest('.daterow'); pt.dates=pt.dates.filter(x=>x.id!==+row.dataset.d); renderDeliv(); }
   if(a==='addpat'){ const np=newPatient(); const prev=F.patients[F.patients.length-1]; np.dates=[{...newDate(),d:prev.dates[0].d}]; F.patients.push(np); renderDeliv();
-    const c=document.querySelector(`.patient[data-p="${np.id}"]`); c&&c.scrollIntoView({behavior:'smooth',block:'start'}); }
+    const c=document.querySelector(`.patient[data-p="${np.id}"]`); c&&c.scrollIntoView({behavior:smooth(),block:'start'}); }
   if(a==='delpat') askConfirm('Retirer ce patient ?','Ses informations seront effacées.','Retirer',()=>{ F.patients=F.patients.filter(x=>x!==pt); renderDeliv(); });
   if(a==='clear') askConfirm('Tout effacer ?','Le formulaire sera vidé.','Tout effacer',()=>{ clearAll(); toast('C’est fait : le formulaire est vidé'); });
   if(a==='prepare') prepare();
@@ -2542,7 +2545,7 @@ const BUILTIN_FORMS=[
   {tab:'el',id:'__el',titre:'En-tête libre',sets:['entete']},
   {tab:'ccas',id:'__ccas',titre:'Bon d’orientation CCAS',sets:['annu','entete']}];
 const SETTINGS={dest:{l:'CSAPA destinataires et leurs adresses',h:'Destinataires de la délivrance'},med:{l:'Médecins et RPPS',h:'Médecins'},
-  envoi:{l:'Adresses d’envoi',h:'Envoi des mails'},structure:{l:'Infos de la structure',h:'Infos de la structure'},entete:{l:'En-tête et bas de page',h:'En-tête'},annu:{l:'Fiches de l’annuaire proposées',tab:'annu'},catalogue:{l:'Listes proposées',asub:'ordo'}};
+  envoi:{l:'Adresses d’envoi',h:'Envoi des mails'},structure:{l:'Infos de la structure',h:'Infos de la structure'},entete:{l:'En-tête et bas de page',h:'Papier à en-tête'},annu:{l:'Fiches de l’annuaire proposées',tab:'annu'},catalogue:{l:'Listes proposées',asub:'ordo'}};
 function gotoSetting(k){
   const S_=SETTINGS[k]||{};
   if(S_.tab){ formView=null; setTab(S_.tab); window.scrollTo({top:0}); return; }
@@ -2550,7 +2553,7 @@ function gotoSetting(k){
   formView=null; asub='reg'; fdraft=null; setTab('admin');
   setTimeout(()=>{ const h=[...document.querySelectorAll('#asub .card h3')].find(x=>x.textContent.trim().replace(/^\S+\s(?=[A-ZÀ-Ý])/u,'').startsWith(S_.h||k)||x.textContent.trim().startsWith(S_.h||k)); const c=h&&h.closest('.card');
     if(c&&c.dataset.rsec&&c.dataset.rsec!==rsec) rsecShow(c.dataset.rsec);
-    if(c){ c.scrollIntoView({behavior:'smooth',block:'start'}); c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),2200);
+    if(c){ c.scrollIntoView({behavior:smooth(),block:'start'}); c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),3000);
       if(k==='newdest'){ const b=c.querySelector('#add-dest'); b&&b.click(); } } },60);
 }
 function drawFormAdmin(t){
@@ -7749,8 +7752,8 @@ function comparer(init,opt){
         const go=(n,fromSum)=>{ lock=true; cols.forEach(c=>{ const el=c.querySelector(`[data-blk="${n}"]`); if(!el) return;
             c.scrollTop+=el.getBoundingClientRect().top-c.getBoundingClientRect().top-c.clientHeight/3; });
           o.querySelectorAll('.flash').forEach(x=>x.classList.remove('flash'));
-          o.querySelectorAll(`[data-blk="${n}"],[data-goto="${n}"]`).forEach(x=>{ void x.offsetWidth; x.classList.add('flash'); });
-          if(!fromSum){ const it=o.querySelector(`[data-goto="${n}"]`); it&&it.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+          o.querySelectorAll(`[data-blk="${n}"],[data-goto="${n}"]`).forEach(x=>{ void x.offsetWidth; x.classList.add('flash'); clearTimeout(x._fl); x._fl=setTimeout(()=>x.classList.remove('flash'),3000); });
+          if(!fromSum){ const it=o.querySelector(`[data-goto="${n}"]`); it&&it.scrollIntoView({block:'nearest',behavior:smooth()}); }
           setTimeout(()=>lock=false,120); };
         o.addEventListener('click',e=>{ const z=e.target.closest('[data-zoom]'); if(z){ cols.forEach(c=>c.style.setProperty('--pgw',z.dataset.zoom)); o.querySelectorAll('[data-zoom]').forEach(x=>x.setAttribute('aria-pressed',String(x===z))); return; }
           const g=e.target.closest('[data-goto]'); if(g){ go(g.dataset.goto,true); return; } const b=e.target.closest('[data-blk]'); if(b) go(b.dataset.blk,false); });
@@ -8051,7 +8054,7 @@ async function dashboard(){
     <details class="hint db-how"><summary>D’où viennent ces chiffres ?</summary>Chaque poste compte ses ouvertures, impressions, envois et formulaires remplis : seulement l’identifiant du document et un nombre, jamais de nom de personne ni de contenu. Un poste partage ses chiffres dans le dossier (app/statistiques) dès qu’il a le droit d’y écrire, c’est-à-dire après un passage en mode admin sur ce poste. Les recherches tapées ne sont pas enregistrées : elles pourraient contenir un nom.</details>
     <div class="row end mt"><button type="button" class="secondary" id="db-csv">Exporter les statistiques (tableur)</button><button type="button" class="ghost" data-close>Fermer</button></div>`;
   b.onclick=e=>{ const pe=e.target.closest('[data-dbper]'); if(pe){ dbPer=+pe.dataset.dbper; dashboard(); return; }
-    const sh=e.target.closest('[data-dbshow]'); if(sh){ const [t,L]=lists[sh.dataset.dbshow]; $('#db-list').innerHTML=`<div class="db-listbox"><h5>${t} (${L.length})</h5><ul>${L.slice(0,200).map(x=>`<li>${x}</li>`).join('')}</ul></div>`; $('#db-list').scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+    const sh=e.target.closest('[data-dbshow]'); if(sh){ const [t,L]=lists[sh.dataset.dbshow]; $('#db-list').innerHTML=`<div class="db-listbox"><h5>${t} (${L.length})</h5><ul>${L.slice(0,200).map(x=>`<li>${x}</li>`).join('')}</ul></div>`; $('#db-list').scrollIntoView({block:'nearest',behavior:smooth()}); return; }
     const go=e.target.closest('[data-dbgo]'); if(go){ const k=go.dataset.dbgo; closeModal(); if(k==='backup') backup(); else if(k==='has') hasPrep(); else if(k==='tx') txSetup(); else if(k==='cerfa'){ const f=window.cerfaCheck||(typeof cerfaCheck==='function'?cerfaCheck:null); f?f():setTab('forms'); } } };
   $('#db-csv').onclick=()=>{ const c=v=>`"${String(v??'').replace(/"/g,'""')}"`;
     const rows=[...D.map(d=>['Document',d.titre,catName(d.categorie),T['d:'+d.id]||{}]),...F.map(f=>['Formulaire',f.titre,'',T['f:'+f.id]||{}])];
@@ -8595,7 +8598,7 @@ function delivMissing(errs,go,keys){
     <ul class="errors dm-list" aria-label="À corriger">${errs.map((x,i)=>`<li>${keys&&keys[i]?`<button type="button" class="errgo" data-dmgo="${esc(keys[i])}">${esc(x)}</button>`:esc(x)}</li>`).join('')}</ul>
     <p class="hint">Si vous continuez, les cases vides sont laissées en pointillés sur le PDF, à compléter à la main.</p>
     <div class="btns"><button class="primary" id="dm-back" data-autofocus>Revenir compléter</button><button class="secondary" id="dm-go">Continuer quand même</button></div>`);
-  $('#dm-back').onclick=()=>{ closeModal(); const el=$('#p-deliv .bad'); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); const f=el.matches('input,textarea,select')?el:el.querySelector('input,button'); f&&f.focus({preventScroll:true}); } };
+  $('#dm-back').onclick=()=>{ closeModal(); const el=$('#p-deliv .bad'); if(el){ el.scrollIntoView({behavior:smooth(),block:'center'}); const f=el.matches('input,textarea,select')?el:el.querySelector('input,button'); f&&f.focus({preventScroll:true}); } };
   $('#dm-go').onclick=()=>{ closeModal(); go(); };
   $('#modal-box').querySelectorAll('[data-dmgo]').forEach(b=>b.onclick=()=>{ const k=b.dataset.dmgo; closeModal();
     const el=$('#p-deliv').querySelector(`[data-errk="${CSS.escape(k)}"]:not(li)`); if(!el) return;
