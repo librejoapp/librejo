@@ -12,15 +12,10 @@ var MIME = {pdf:'application/pdf',png:'image/png',jpg:'image/jpeg',jpeg:'image/j
   doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',odt:'application/vnd.oasis.opendocument.text'};
 
-/* Bibliothèques PDF : chargées seulement une fois le dossier choisi (l'écran d'accueil reste léger).
-   Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
-var LIBS = ['app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js'];
-function loadLib(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=function(){ rej(new Error(src)); }; document.head.appendChild(s); }); }
-var libsP = null;
-function loadLibs(){ if(!libsP) libsP = Promise.all(LIBS.map(loadLib)).catch(function(e){ libsP=null; throw e; }); return libsP; }
+/* Bibliothèques PDF (jsPDF, pdf-lib, JSZip, police de repli : ~1,3 Mo) : l'application les charge elle-même
+   à la première demande (ouverture d'un formulaire, de l'administration…), pas au choix du dossier : l'accueil
+   arrive plus vite. Elles restent dans le cache du service worker : Librejo marche aussi hors ligne. */
 async function startMain(){
-  try { await loadLibs(); }
-  catch(e){ if (WEB) { show('<h1>Librejo n’a pas pu se charger entièrement</h1><p>Un fichier de l’application manque ('+esc(e.message||'')+'). Vérifiez la connexion, puis rechargez la page.</p><button class="lj-btn" id="lj-re">Recharger</button>'); document.getElementById('lj-re').onclick=function(){ location.reload(); }; return false; } }
   var src = document.getElementById('docubus-main');
   var s = document.createElement('script'); s.textContent = src.textContent; document.body.appendChild(s);
   return true;
@@ -68,7 +63,10 @@ function cover(on){
   if (!on && window.LJ_LAYERS_SYNC) window.LJ_LAYERS_SYNC();
 }
 cover(true);
-function done(){ ui.hidden = true; cover(false); }
+function done(){ ui.hidden = true; cover(false); cacheSuite(); }
+/* Service worker : second temps de la mise en cache (aperçus, polices arabe et géorgienne), une fois l'application ouverte */
+function cacheSuite(){ if (!('serviceWorker' in navigator)) return;
+  setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (r.active) r.active.postMessage('librejo-cache-suite'); }).catch(function(){}); }, 4000); }
 function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
   var h=ui.querySelector('.lj-in h1'); if (h) h.id='lj-t'; }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }

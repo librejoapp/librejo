@@ -1,9 +1,16 @@
 // Librejo : met en cache le code du site pour fonctionner hors ligne. Les documents de la structure ne passent jamais par ici.
-const VERSION='librejo-proto3k';
+const VERSION='librejo-proto3l';
+/* Mise en cache en deux temps.
+   1. À l'installation (~2,4 Mo) : ce qu'il faut pour ouvrir Librejo et produire un PDF hors ligne. */
 const BASE=['./','index.html','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
  'app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js', // PDF : créer, assembler, remplir
- 'app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-preview.min.js','app/polices-pdf/repli.js', // aperçus, impression, caractères des PDF
- 'app/polices-pdf/arabe.js','app/polices-pdf/georgien.js','app/lib/bidi.min.js']; // arabe et géorgien : chargés par la page seulement si un texte en a besoin
+ 'app/polices-pdf/repli.js']; // caractères des PDF (latin étendu, vietnamien, grec, cyrillique)
+/* 2. Ensuite (~1,9 Mo), quand la page le demande, quelques secondes après l'ouverture de l'application : aperçus et
+   impression (pdf.js), documents Word, polices arabe et géorgienne. La page ne les charge elle-même que si
+   besoin ; ce second temps les garde pour le travail hors ligne. Tout fichier de l'application chargé en ligne
+   est aussi gardé au passage (voir « fetch »). */
+const SUITE=['app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-preview.min.js',
+ 'app/polices-pdf/arabe.js','app/polices-pdf/georgien.js','app/lib/bidi.min.js'];
 /* Seuls les fichiers de l'application vont au cache : la page, ses scripts, ses icônes, ses bibliothèques
    et ses polices. Tout le reste du site (dossier de test, documents d'exemple, robot des Cerfa…) n'y va
    jamais, et les réglages d'une structure non plus. */
@@ -18,6 +25,8 @@ function appFile(u){
   return APP_FILES.has(p)||APP_DIRS.some(d=>p.startsWith(d));
 }
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(BASE)).then(()=>self.skipWaiting())));
+self.addEventListener('message',e=>{ if(e.data!=='librejo-cache-suite') return;
+  e.waitUntil(caches.open(VERSION).then(c=>Promise.all(SUITE.map(u=>c.match(u).then(r=>r||c.add(u)).catch(()=>{}))))); });
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
   const u=new URL(e.request.url);

@@ -1456,7 +1456,7 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
 <div class="toast" id="toast" role="status" hidden></div>
 <div id="dropveil" aria-hidden="true"><div id="drophint">Déposez les fichiers</div></div>
 
-<!-- Les bibliothèques PDF (jspdf, jszip, pdf-lib : ~1 Mo) sont chargées par boot.js après le choix du dossier -->
+<!-- Les bibliothèques PDF (jspdf, jszip, pdf-lib : ~1 Mo) sont chargées par l'application à la première demande (pdfReady, needLib) -->
 <script>if(location.protocol==='file:')document.write('<script src="app/logo-association.js"><\/script>\n<script src="app/parametres.js"><\/script>\n<script src="app/donnees.js"><\/script>\n<script src="app/annuaire.js"><\/script>');</script>
 <script type="text/plain" id="docubus-main">
 (function(){
@@ -1970,7 +1970,8 @@ function registerPdfFont(k){
   LJ_FONT_OK.add(k);
 }
 function loadPdfFont(k){
-  if(!k||k==='moderne'||k==='classique'||!window.jspdf) return Promise.resolve();
+  if(!k||k==='moderne'||k==='classique') return Promise.resolve();
+  if(!window.jspdf) return LJ_PDF_P?LJ_PDF_P.then(()=>loadPdfFont(k)):Promise.resolve();   // pdfReady() la chargera
   if(LJ_FONT_OK.has(k)&&(window.LJ_PDF_FONTS||{})[k]) return Promise.resolve();
   if(!LJ_FONT_LOAD[k]) LJ_FONT_LOAD[k]=(async()=>{
     if(k==='perso'){ const f=await readRel('app/polices-pdf/perso.json'); (window.LJ_PDF_FONTS=window.LJ_PDF_FONTS||{}).perso=JSON.parse(await f.text()); }
@@ -1984,7 +1985,7 @@ const TS=()=>({petit:.88,normal:1,grand:1.15}[MISE().taille]||1);
 /* Taille du texte des documents : chaque PDF créé applique le coefficient à toutes ses tailles de police.
    Les retours à la ligne suivent (ils dépendent de la taille réelle) ; les interlignes fixes laissent assez de marge pour ±8 %. */
 const BS=()=>({petit:.93,normal:1,grand:1.08}[MISE().corps]||1);
-if(window.jspdf&&!window.__ljBS){ window.__ljBS=true; window.jspdf.jsPDF.API.events.push(['initialized',function(){ const k=BS(); if(k===1) return;
+function ljHookBS(){ if(!window.jspdf||window.__ljBS) return; window.__ljBS=true; window.jspdf.jsPDF.API.events.push(['initialized',function(){ const k=BS(); if(k===1) return;
   const set=this.setFontSize, get=this.getFontSize; let cur=get.call(this)/k;
   this.setFontSize=function(v){ cur=v; return set.call(this,v*k); }; this.getFontSize=function(){ return cur; }; this.setFontSize(cur); }]); }
 /* ---------- Caractères des PDF ----------
@@ -2064,7 +2065,7 @@ function ljVisual(s,lvl){
 const ljParaLevel=p=>{ try{ return LJ_BIDI.getEmbeddingLevels(p).paragraphs[0].level&1; }catch(e){ return 0; } };
 /* Caractères qu'aucune police n'a su dessiner pendant la dernière production de PDF */
 const LJ_PDF_MISS=new Set(); let LJ_PDF_T0=0;
-if(window.jspdf&&!window.__ljTxt){ window.__ljTxt=true;
+function ljHookTxt(){ if(!window.jspdf||window.__ljTxt) return; window.__ljTxt=true;
   /* jsPDF met en forme l'arabe et réordonne chaque texte lui-même, mais sa mise en forme refait des ligatures
      lam-alif sur un texte déjà réordonné (« سالم » deviendrait « سلام ») : Librejo s'en charge ci-dessus. */
   const API=window.jspdf.jsPDF.API, E=API.events;
@@ -2170,8 +2171,30 @@ function pdfMarge(doc,pg,fy){
     doc.splitTextToSize(s.txt,w-1).forEach(l=>{ if(y>bot) return; doc.text(l,x,y); y+=3.4*k*(s.title?1.1:1); }); if(s.title) y+=.6; });
   doc.setTextColor(93,103,121);
 }
-if(MISE().police!=='perso') loadPdfFont(MISE().police).catch(()=>{});
-loadPdfRepli().catch(()=>{});
+/* ---------- Bibliothèques PDF : chargées à la première demande ----------
+   jsPDF (créer un PDF), pdf-lib (assembler, tamponner, remplir un Cerfa) et JSZip (Word, sauvegardes) pèsent
+   ~1 Mo : elles ne sont plus chargées au choix du dossier, mais à la première ouverture d'un formulaire, de
+   l'administration, ou d'une fonction qui en a besoin. Une seule promesse par bibliothèque : jamais deux
+   chargements. Elles restent dans le cache du service worker : Librejo marche aussi hors ligne.
+   pdfReady() = jsPDF + ses réglages Librejo (taille du texte, caractères) + la police de repli et la police
+   choisie : ce dont pdfCharsOk() a besoin pour savoir quels caractères s'impriment. */
+const LJ_LIB={jspdf:['app/lib/jspdf.umd.min.js',()=>window.jspdf],pdflib:['app/lib/pdf-lib.min.js',()=>window.PDFLib],jszip:['app/lib/jszip.min.js',()=>window.JSZip]}, LJ_LIB_P={};
+function needLib(k){ const [src,ok]=LJ_LIB[k]; if(ok()) return Promise.resolve();
+  if(!LJ_LIB_P[k]) LJ_LIB_P[k]=loadScript(src).catch(e=>{ delete LJ_LIB_P[k]; toast('Un module de Librejo n’a pas pu se charger : vérifiez la connexion, puis rechargez la page.'); throw e; });
+  return LJ_LIB_P[k]; }
+let LJ_PDF_P=null, LJ_PDF_OK=false;
+function pdfReady(){
+  if(!LJ_PDF_P) LJ_PDF_P=needLib('jspdf').then(()=>{ ljHookBS(); ljHookTxt();
+      return Promise.all([loadPdfRepli().catch(()=>{}),loadPdfFont(MISE().police).catch(()=>{})]); })
+    .then(()=>{ LJ_PDF_OK=true; liveSoon(0); })
+    .catch(e=>{ LJ_PDF_P=null; throw e; });
+  return LJ_PDF_P; }
+/* Filet de sécurité : un bouton qui fabrique un PDF, cliqué avant la fin du chargement, attend la bibliothèque
+   puis reprend son clic (rien n'est perdu, pas de message d'erreur). */
+const PDF_GO='[data-rgo],[data-cgo],[data-ago],[data-mgo],[data-clgo],[data-orgo],[data-ugo],[data-ego],[data-ckgo],[data-lpzoom],[data-act=prepare]';
+document.addEventListener('click',e=>{ if(LJ_PDF_OK) return; const b=e.target.closest&&e.target.closest(PDF_GO); if(!b) return;
+  e.preventDefault(); e.stopImmediatePropagation(); b.setAttribute('aria-busy','true');
+  pdfReady().then(()=>{ b.removeAttribute('aria-busy'); if(b.isConnected) b.click(); },()=>b.removeAttribute('aria-busy')); },true);
 /* Couleurs du papier à en-tête (Réglages › Papier à en-tête), corrigées comme celles de l'application :
    c1 écrit les titres, il reste à 4,5:1 au moins sur le papier blanc ; c2 trace les traits et filets,
    il reste visible à l'impression (2:1 au moins, l'ambre de la charte y est déjà). */
@@ -2317,7 +2340,7 @@ function fsErr(e){
 async function updateConn(){
   const b=$('#conn'); if(!FSA){ b.hidden=true; return; }
   const h=dirH||await idb.get('dossier'); const st=h?await permState(h,'read'):'none';
-  if(st==='granted'&&MISE().police==='perso') loadPdfFont('perso').catch(()=>{});
+  if(st==='granted'&&MISE().police==='perso'&&LJ_PDF_P) loadPdfFont('perso').catch(()=>{});
   if(st==='granted') cfBaseline();
   b.className='conn'+(st==='granted'?' ok status':h&&!isAdmin?' status quiet':'');
   b.title=st==='granted'?'Librejo peut lire son dossier':'Autoriser Librejo à lire son dossier (impression en un clic, pièces jointes)';
@@ -2370,6 +2393,7 @@ function setTab(t){
   if(t!=='admin'&&tab==='admin'&&asub==='reg'&&isAdmin&&regDirty()){ regAsk(()=>setTab(t)); return; }
   tab=t;
   navCurrent(t);
+  if(t==='forms'||t==='admin'||FORM_TABS.includes(t)) pdfReady().catch(()=>{});   // formulaires, administration : bibliothèques PDF
   document.querySelectorAll('main>section.panel').forEach(sec=>{ sec.hidden=sec.id!=='p-'+t; });
   history.replaceState(null,'',{docs:'#documents',forms:'#formulaires',deliv:'#delivrance',admin:'#admin',annu:'#annuaire',semaine:'#semaine',relais:'#relais',cmi:'#certificat',att:'#attestation',mt:'#courrier',ordo:'#ordonnance',cl:'#certificat-libre',urg:'#urgences',cp:'#courrier-partenaire',el:'#en-tete-libre',ccas:'#orientation-ccas'}[t]);
   const pt=$('#pagetitle'); if(pt){ pt.textContent={docs:'Documents',forms:'Formulaires',semaine:'Impression rapide',annu:'Annuaire',admin:'Administration'}[t]||'Formulaires'; pt.hidden=t==='docs'&&filter==='recent'&&!query; }
@@ -2997,7 +3021,7 @@ async function tpDetect(file){
   try{
     if(ext==='pdf'){
       const buf=await file.arrayBuffer();
-      try{ const pd=await PDFLib.PDFDocument.load(buf.slice(0),{ignoreEncryption:true}); D.form=pd.getForm().getFields().length>0; }catch(e){}
+      try{ await needLib('pdflib'); const pd=await PDFLib.PDFDocument.load(buf.slice(0),{ignoreEncryption:true}); D.form=pd.getForm().getFields().length>0; }catch(e){}
       const lib=await getPdfjs(), pdf=await lib.getDocument({data:new Uint8Array(buf),isEvalSupported:false}).promise;
       try{ for(let n=1;n<=Math.min(pdf.numPages,4);n++){
         const pg=await pdf.getPage(n), vp=pg.getViewport({scale:1}), H=vp.height, W=vp.width, tc=await pg.getTextContent(); let all='';
@@ -3013,7 +3037,7 @@ async function tpDetect(file){
         if(n===1&&nomS.length>3&&norm(all).includes(nomS)) D.asso=true; nch+=all.trim().length;
       } D.scan=nch<20; }finally{ pdf.destroy(); }
     }else if(ext==='docx'){
-      const zip=await JSZip.loadAsync(file); let all='';
+      await needLib('jszip'); const zip=await JSZip.loadAsync(file); let all='';
       for(const n of Object.keys(zip.files)){ const m=n.match(/^word\/(header|footer)[^/]*\.xml$/); if(!m) continue; const x=await zip.file(n).async('string');
         const sans=x.replace(/<w:p\b(?:(?!<\/w:p>)[\s\S])*?LibrejoTampon[\s\S]*?<\/w:p>/g,'');
         if(/PAGE/.test(sans)&&/(instrText|fldSimple)/.test(sans)) D.num=true; if(/LibrejoTampon/.test(x)) D.old=true;
@@ -3050,6 +3074,7 @@ async function stampFile(file,o,info){
   return file;
 }
 async function stampPdf(file,o,info){
+  await Promise.all([pdfReady(),needLib('pdflib')]);
   const D=info.det||await tpDetect(file);
   const src=await PDFLib.PDFDocument.load(await file.arrayBuffer(),{ignoreEncryption:true});
   const pages=src.getPages(), N=pages.length, logo=window.DOCUBUS_LOGO_ASSO, pied=tpPied(), txt=tpText(info);
@@ -3077,7 +3102,7 @@ async function stampPdf(file,o,info){
   return new File([await src.save()],file.name,{type:'application/pdf'});
 }
 async function stampDocx(file,o,info){
-  const zip=await JSZip.loadAsync(file), X=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  await needLib('jszip'); const zip=await JSZip.loadAsync(file), X=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const RNS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
   let doc=await zip.file('word/document.xml').async('string');
   const relP='word/_rels/document.xml.rels'; let rels=await zip.file(relP).async('string');
@@ -3355,6 +3380,7 @@ async function makeFormPdf(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f) return;
   fShowErr=true; if(validateFill(f).length){ renderFill(); errsShow('#p-forms'); return; } fShowErr=false;
   let tp=null; try{ tp=await loadTampon(); }catch(e){}
+  try{ await pdfReady(); }catch(e){ return; }
   const blob=formBlob(f,tp);
   const file=new File([blob],`${fileSafe(f.titre)}_${FV._date||today()}.pdf`,{type:'application/pdf'});
   const to=String(FV._to||'').split(/[\s,;]+/).filter(Boolean);
@@ -3480,7 +3506,7 @@ function deliver({files,title,steps,mail,sensitive,onDone,sante}){
   const grouped=()=>N>1&&box.querySelector('input[name=dv-mode]:checked').value==='grp';
   let merged=null;
   const mergedFile=async()=>{ if(merged) return merged;
-    const out=await PDFLib.PDFDocument.create();
+    await needLib('pdflib'); const out=await PDFLib.PDFDocument.create();
     for(const f of files){ const src=await PDFLib.PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); }
     return merged=new File([await out.save()],'Documents-groupes_'+today()+'.pdf',{type:'application/pdf'}); };
   const pick=async()=>{ if(!grouped()) return files; try{ return [await mergedFile()]; }catch(e){ toast('Regroupement impossible : fichiers séparés'); return files; } };
@@ -3520,7 +3546,7 @@ async function prepare(force){
   const {errs,keys}=validate();
   if(errs.length&&!force){ showErrors=true; renderDeliv(); delivMissing(errs,()=>prepare(true),keys); return; }
   showErrors=false; renderDeliv();
-  if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
+  try{ await pdfReady(); }catch(e){ return; }
   revoke();
   try{
     const logo=await loadLogo(), N=F.patients.length;
@@ -3556,7 +3582,7 @@ async function kitPrint(k){
   if(!pr.length){ kitOthers(other,true); return; }
   try{
     toast('Préparation du kit…');
-    const out=await PDFLib.PDFDocument.create();
+    await needLib('pdflib'); const out=await PDFLib.PDFDocument.create();
     for(const d of pr){
       const buf=await (await readRel(d.chemin)).arrayBuffer();
       if(d.ext==='pdf'){ const src=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); }
@@ -3659,7 +3685,7 @@ function medSelectHTML(id){ const c=medChoice(); return meds().length?`<label cl
 document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('[data-med]')){ try{ localStorage.setItem(MED_KEY,e.target.value); }catch(_){} } });
 async function docxParts(zip){ return Object.keys(zip.files).filter(n=>/^word\/(document|header\d*|footer\d*)\.xml$/.test(n)); }
 async function docxFields(blob){
-  const zip=await JSZip.loadAsync(blob); const seen=new Map();
+  await needLib('jszip'); const zip=await JSZip.loadAsync(blob); const seen=new Map();
   for(const n of await docxParts(zip)){
     const x=new DOMParser().parseFromString(await zip.file(n).async('string'),'application/xml');
     for(const p of x.getElementsByTagNameNS(WNS,'p')){
@@ -3671,7 +3697,7 @@ async function docxFields(blob){
 }
 /* Remplace {Champ} même si Word a coupé le texte en plusieurs morceaux */
 async function docxFill(blob,vals){
-  const zip=await JSZip.loadAsync(blob);
+  await needLib('jszip'); const zip=await JSZip.loadAsync(blob);
   for(const n of await docxParts(zip)){
     const x=new DOMParser().parseFromString(await zip.file(n).async('string'),'application/xml'); let changed=false;
     for(const p of [...x.getElementsByTagNameNS(WNS,'p')]){
@@ -3834,7 +3860,7 @@ async function thumbImage(file){
   const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(bmp,0,0,c.width,c.height); return c;
 }
 async function thumbDocx(file){
-  const zip=await JSZip.loadAsync(file);
+  await needLib('jszip'); const zip=await JSZip.loadAsync(file);
   const emb=Object.keys(zip.files).find(n=>/^docProps\/thumbnail\.(jpe?g|png)$/i.test(n));
   if(emb){ try{ return await thumbImage(await zip.file(emb).async('blob')); }catch(e){} }
   // Aperçu de la première page : paragraphes et tableaux dans l'ordre du document
@@ -4065,6 +4091,7 @@ async function feRender(){
   }
   const vals={}; f.champs.forEach(c=>vals[c.id]=c.type==='date'?today():`[${c.label}]`);
   let tp=null; try{ tp=await loadTampon(); }catch(_){}
+  try{ await pdfReady(); }catch(_){ return; }
   try{
     const blob=makeLetter({titre:f.titre||'Titre du formulaire',confidentiel:f.confidentiel&&(f.groupe==='med'||!f.groupe?true:'CONFIDENTIEL'),date:today(),paras:fillTemplate(f,vals),signataire:f.signataire||structure.signataire||'',tp});
     if(fePdfUrl) URL.revokeObjectURL(fePdfUrl); fePdfUrl=URL.createObjectURL(blob);
@@ -4131,6 +4158,7 @@ function drawFormEditor(){
     if(b.hasAttribute('data-fprev')){
       const vals={}; f.champs.forEach(c=>vals[c.id]=c.type==='date'?today():`[${c.label}]`);
       let tp=null; try{ tp=await loadTampon(); }catch(_){}
+      try{ await pdfReady(); }catch(_){ return; }
       const blob=makeLetter({titre:f.titre||'Titre du formulaire',confidentiel:f.confidentiel&&(f.groupe==='med'||!f.groupe?true:'CONFIDENTIEL'),date:today(),paras:fillTemplate(f,vals),signataire:f.signataire||structure.signataire,tp});
       previewUrl(URL.createObjectURL(blob),'Aperçu du formulaire'); return;
     }
@@ -4176,6 +4204,7 @@ let ppTimer=null, ppUrl=null;
 function ppSchedule(ms=450){ clearTimeout(ppTimer); ppTimer=setTimeout(ppRender,ms); }
 async function ppRender(){
   const box=document.getElementById('pp-prev'); if(!box||!rdraft) return;
+  try{ await pdfReady(); }catch(e){ return; }
   try{ if(rdraft.mise.police!=='perso'||!rdraft.persoFont) await loadPdfFont(rdraft.mise.police); }catch(e){}
   const S=structure, M=PAR.mise;
   try{
@@ -4556,7 +4585,7 @@ function anCSV(text){
   return rows.filter(r=>r.some(x=>String(x).trim())).map(r=>{ const o={}; h.forEach((k,i)=>{ if(k) o[k]=(o[k]?o[k]+' ':'')+String(r[i]??'').trim(); }); return o; });
 }
 async function anXLSX(buf){
-  const zip=await JSZip.loadAsync(buf), X=s=>new DOMParser().parseFromString(s,'application/xml');
+  await needLib('jszip'); const zip=await JSZip.loadAsync(buf), X=s=>new DOMParser().parseFromString(s,'application/xml');
   const ssF=zip.file('xl/sharedStrings.xml'), ss=ssF?[...X(await ssF.async('string')).getElementsByTagName('si')].map(si=>[...si.getElementsByTagName('t')].map(t=>t.textContent).join('')):[];
   const sh=zip.file(/xl\/worksheets\/sheet\d+\.xml$/).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}))[0]; if(!sh) return [];
   const col=r=>{ let n=0; for(const ch of r.replace(/\d+/g,'')) n=n*26+ch.charCodeAt(0)-64; return n-1; };
@@ -5339,6 +5368,7 @@ async function cmPhotoJpeg(x,n){
 }
 
 async function cmiPdf(){
+  try{ await pdfReady(); }catch(e){ return; }
   const errs=LIVE_DRY?[]:(cmErr=true,cmValidate());
   if(errs.length){ renderCmi(); errsShow('#p-cmi'); return; }
   if(!window.jspdf){ toast("Le module PDF n'est pas chargé."); return; }
@@ -6852,7 +6882,7 @@ elBind();
    enregistré, rien n'est envoyé. Le document est fabriqué par la même
    fonction que le bouton « Créer », sans la vérification des champs.
    ====================================================================== */
-const LIVE={timer:0,seq:0,tp:undefined,url:null,off:false,peek:false};
+const LIVE={timer:0,idle:0,seq:0,tp:undefined,url:null,off:false,peek:false};
 /* Fenêtre étroite (moins de 1000 px de large, ou zoom fort : 200 % sur 1366 px) : l'aperçu est replié derrière
    son bouton et le formulaire garde toute la largeur ; ouvert à la demande, il passe par-dessus et se referme
    sans changer le choix enregistré sur ce poste. */
@@ -6867,7 +6897,7 @@ function liveActive(){
   return tab==='forms'&&!String(formView).startsWith('__')&&DATA.formulaires.some(x=>x.id===formView);
 }
 function liveBuild(){
-  if(!window.jspdf) return null;
+  if(!LJ_PDF_OK){ pdfReady().catch(()=>{}); return null; }   // l'aperçu se redessine dès que les bibliothèques sont là
   if(LIVE_FN[formView]){
     LIVE_DRY=true; LIVE_OUT=null;
     try{ LIVE_FN[formView](); }catch(e){ LIVE_OUT=null; } finally{ LIVE_DRY=false; }
@@ -6898,7 +6928,12 @@ function liveTab(){
   document.body.appendChild(t); return t;
 }
 function liveSet(off){ LIVE.off=off; try{ localStorage.setItem('librejo-miniature',off?'0':'1'); }catch(e){} liveSoon(0); }
-function liveSoon(ms){ clearTimeout(LIVE.timer); LIVE.timer=setTimeout(liveRefresh,ms==null?350:ms); }
+/* Mise à jour espacée : pendant la frappe, l'aperçu attend une pause (LIVE_TYPE_MS) au lieu de se refaire à chaque
+   mot, puis il est dessiné quand le navigateur est libre (requestIdleCallback, 500 ms au plus) : la saisie reste fluide
+   sur un PC ancien. Un clic sur un choix (pastille, case) le met à jour plus vite. */
+const LIVE_TYPE_MS=700;
+function liveSoon(ms){ clearTimeout(LIVE.timer); if(LIVE.idle&&window.cancelIdleCallback) cancelIdleCallback(LIVE.idle); LIVE.idle=0;
+  LIVE.timer=setTimeout(()=>{ if(window.requestIdleCallback) LIVE.idle=requestIdleCallback(()=>{ LIVE.idle=0; liveRefresh(); },{timeout:500}); else liveRefresh(); },ms==null?LIVE_TYPE_MS:ms); }
 async function liveRefresh(){
   const on=liveActive(), box=document.getElementById('livepv'), tb=document.getElementById('livepv-tab');
   const narrow=LIVE_NARROW.matches, off=narrow?!LIVE.peek:LIVE.off;
@@ -6915,6 +6950,7 @@ async function liveRefresh(){
   const seq=++LIVE.seq;
   if(LIVE.tp===undefined){ try{ LIVE.tp=await loadTampon(); }catch(e){ LIVE.tp=null; } if(seq!==LIVE.seq) return; }
   const file=liveBuild(), cv=b.querySelector('canvas'), wait=b.querySelector('.lp-wait');
+  if(file){ await new Promise(r=>setTimeout(r)); if(seq!==LIVE.seq) return; }   // rend la main entre la fabrication du PDF et son dessin
   if(!file){ wait.hidden=false; wait.textContent='L’aperçu apparaîtra dès que le formulaire sera commencé.'; cv.hidden=true; b.querySelector('.lp-pg').textContent=''; return; }
   try{
     const lib=await getPdfjs(); if(seq!==LIVE.seq) return;
@@ -6933,7 +6969,8 @@ async function liveRefresh(){
   }catch(e){ wait.hidden=false; wait.textContent='Aperçu indisponible.'; cv.hidden=true; }
 }
 document.addEventListener('input',e=>{ if(formView&&e.target.closest('main')) liveSoon(); },true);
-document.addEventListener('click',()=>{ liveSoon(200); },true);
+/* un clic dans le formulaire ne change le document que s'il porte sur un choix ; ailleurs (fenêtre qui se ferme, menu) l'aperçu revient */
+document.addEventListener('click',e=>{ const t=e.target; if(formView&&t.closest&&t.closest('main')&&!t.closest('button,[role=button],label,input[type=checkbox],input[type=radio],select')) return; liveSoon(200); },true);
 document.addEventListener('change',e=>{ if(formView&&e.target.closest('main')) liveSoon(150); },true);
 
 
@@ -7012,7 +7049,7 @@ const cerfaDocs=()=>DATA.documents.filter(d=>d.cerfa&&!d.cerfa.off&&d.ext==='pdf
 /* Les champs du PDF, avec leur page et leur position (pour les montrer à l'admin) */
 async function czFields(buf){
   const lib=await getPdfjs(), pdf=await lib.getDocument({data:new Uint8Array(buf.slice(0)),isEvalSupported:false}).promise, out=[], seen=new Set();
-  const TU={}; try{ const doc=await PDFLib.PDFDocument.load(buf.slice(0),{ignoreEncryption:true}); doc.getForm().getFields().forEach(f=>{ const t=f.acroField.dict.lookup(PDFLib.PDFName.of('TU')); if(t&&t.decodeText) TU[f.getName()]=t.decodeText().trim(); }); }catch(e){}
+  const TU={}; try{ await needLib('pdflib'); const doc=await PDFLib.PDFDocument.load(buf.slice(0),{ignoreEncryption:true}); doc.getForm().getFields().forEach(f=>{ const t=f.acroField.dict.lookup(PDFLib.PDFName.of('TU')); if(t&&t.decodeText) TU[f.getName()]=t.decodeText().trim(); }); }catch(e){}
   for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i), anns=await pg.getAnnotations(); let txt=null;
     for(const a of anns){ if(a.subtype!=='Widget'||!a.fieldName||seen.has(a.fieldName)||a.readOnly) continue;
       if(a.fieldType!=='Tx'&&!(a.fieldType==='Btn'&&a.checkBox)) continue; seen.add(a.fieldName);
@@ -7026,7 +7063,7 @@ async function czFields(buf){
 }
 async function czFill(d){
   const buf=await (await readRel(d.chemin)).arrayBuffer();
-  const doc=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true}); const form=doc.getForm(); try{ form.deleteXFA(); }catch(e){}
+  await needLib('pdflib'); const doc=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true}); const form=doc.getForm(); try{ form.deleteXFA(); }catch(e){}
   let n=0; Object.entries(d.cerfa.champs||{}).forEach(([name,c])=>{ if(!c||!c.src) return; try{ const f=form.getField(name);
     if(c.src==='coche'){ f.check(); n++; return; } const v=czClean(czVal(c.src,c.fixe)||''); if(v.trim()){ f.setText(v); n++; } }catch(e){ console.warn('Cerfa : case',name,e); } });
   try{ form.acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'),PDFLib.PDFBool.True); }catch(e){}
@@ -7335,7 +7372,7 @@ function wizDraw(){
   if(s===0) checksInto(document.getElementById('wz-ck')).catch(e=>console.warn('vérifications',e));
 }
 let wzT=0;
-async function wizPrev(){ clearTimeout(wzT); wzT=setTimeout(async()=>{ const cv=document.getElementById('wz-cv'); if(!cv||!window.jspdf) return;
+async function wizPrev(){ clearTimeout(wzT); wzT=setTimeout(async()=>{ if(!document.getElementById('wz-cv')) return; try{ await pdfReady(); }catch(e){ return; } const cv=document.getElementById('wz-cv'); if(!cv) return;
   const old=structure, oldL=window.DOCUBUS_LOGO_ASSO;
   try{ structure={...DEFAULT_STRUCT,...wizEntete()}; window.DOCUBUS_LOGO_ASSO=WZ.logo?await logoForPdf(WZ.logo):null;
     const blob=makeLetter({titre:'Courrier',date:today(),paras:['Madame, Monsieur,','Voici à quoi ressembleront vos documents : votre logo, votre en-tête, puis votre bas de page.','Cordialement,'],signataire:structure.signataire,tp:null});
@@ -7361,7 +7398,7 @@ document.addEventListener('click',async e=>{ if(!WZ||!e.target.closest('#wiz')) 
   if(t.id==='wz-catadd'){ W.cats.push(''); wizDraw(); const l=[...document.querySelectorAll('[data-cat]')].pop(); l&&l.focus(); return; }
   if(t.dataset.catdel!=null){ W.cats.splice(+t.dataset.catdel,1); wizSave(); wizDraw(); return; }
   if(t.id==='wz-test'){ const to=W.envoi.split(/[\s,;]+/).filter(m=>MAIL.test(m)); const o1=PAR.mail, o2=webmail; PAR.mail=W.mailmode==='web'?'web':'outlook'; webmail=W.webmail;
-    try{ const f=new File([makeLetter({titre:'Essai',date:today(),paras:['Ceci est un mail d’essai préparé par Librejo. Il ne contient aucune donnée.'],signataire:W.signataire||W.nom,tp:null})],'Essai-Librejo.pdf',{type:'application/pdf'});
+    try{ await pdfReady(); const f=new File([makeLetter({titre:'Essai',date:today(),paras:['Ceci est un mail d’essai préparé par Librejo. Il ne contient aucune donnée.'],signataire:W.signataire||W.nom,tp:null})],'Essai-Librejo.pdf',{type:'application/pdf'});
       await mailCompose({to:to.length?to:[W.mail||'adresse@exemple.org'],subject:'Essai Librejo',body:'Bonjour,\n\nCeci est un essai : le document joint ne contient aucune donnée.\n\n'+(W.signataire||W.nom),files:[f]}); }
     finally{ PAR.mail=o1; webmail=o2; } return; }
   if(t.id==='wz-later'){ wizSave(); wizClose(); toast('L’assistant reprendra au prochain lancement, là où vous en étiez. Ou : Documents › Outils › Assistant de démarrage.'); return; }
@@ -7444,7 +7481,7 @@ async function cmpLines(file){
     } return {lines:L,pages:pdf.numPages,sizes,pdf:true}; }finally{ pdf.destroy(); }
   }
   if(ext==='docx'||ext==='odt'){
-    const zip=await JSZip.loadAsync(file);
+    await needLib('jszip'); const zip=await JSZip.loadAsync(file);
     if(ext==='docx'){ for(const n of await docxParts(zip)){
       const x=new DOMParser().parseFromString(await zip.file(n).async('string'),'application/xml');
       for(const p of x.getElementsByTagNameNS(WNS,'p')) push([...p.getElementsByTagNameNS(WNS,'t')].map(t=>t.textContent).join(''),0); } }
@@ -7969,7 +8006,7 @@ async function dashboard(){
 
 /* ---------- Sauvegarde complète et restauration (admin) ---------- */
 async function backupZip(withDocs,prog){
-  const zip=new JSZip(), root=await getDir('read'); let n=0, size=0;
+  await needLib('jszip'); const zip=new JSZip(), root=await getDir('read'); let n=0, size=0;
   const walk=async(dir,pre,filter)=>{ for await (const [nm,h] of dir.entries()){ const rel=pre+nm;
     if(h.kind==='directory'){ if(rel==='app/lib'||rel==='app/miniatures'||rel.startsWith('app/_sauvegardes')) continue; await walk(h,rel+'/',filter); continue; }
     if(!filter(rel)) continue; const f=await h.getFile(); zip.file(rel,f,{date:new Date(f.lastModified)}); n++; size+=f.size; prog&&prog(n,rel); } };
@@ -8000,7 +8037,7 @@ async function backup(){
   $('#bk-file').onchange=e=>{ const f=e.target.files[0]; if(f) restoreBackup(f); };
 }
 async function restoreBackup(file){
-  let zip; try{ zip=await JSZip.loadAsync(file); }catch(e){ toast('Ce fichier n’est pas une sauvegarde lisible.'); return; }
+  let zip; try{ await needLib('jszip'); zip=await JSZip.loadAsync(file); }catch(e){ toast('Ce fichier n’est pas une sauvegarde lisible.'); return; }
   const names=Object.keys(zip.files).filter(n=>!zip.files[n].dir&&/^(app|Documents)\//.test(n)&&!n.split('/').includes('..'));
   if(!names.includes('app/donnees.js')&&!names.includes('app/parametres.js')){ toast('Ce zip ne ressemble pas à une sauvegarde Librejo.'); return; }
   const info=zip.file('LIBREJO-SAUVEGARDE.txt')?await zip.file('LIBREJO-SAUVEGARDE.txt').async('string'):'';
@@ -8101,7 +8138,7 @@ async function hasPrep(){
       P.forEach(p=>L.push([cr.id,cr.imp?'oui':'',cr.txt,s,p.it.titre,p.k==='d'?'Document':'Formulaire',p.k==='d'?p.it.version||'1':'',p.k==='d'?docDate(p.it.date):'',p.it.relire?frDate(p.it.relire):'',p.k==='d'?(p.it.chemin||p.it.url||''):'Librejo › Formulaires'].map(c).join(';'))); });
     downloadBlob(new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}),`Dossier-de-preuves-HAS_${fileSafe(structure.nom||'structure')}_${today()}.csv`); toast('Dossier de preuves téléchargé'); jlog('Preuve HAS','','dossier de preuves exporté'); };
   $('#hs-zip').onclick=async()=>{ const D=DATA.documents.filter(d=>!isLink(d)&&hasOf(d).length); if(!D.length){ toast('Aucun document relié pour l’instant.'); return; }
-    const z=new JSZip(); for(const d of D){ try{ const f=await readRel(d.chemin); hasOf(d).forEach(cr=>z.file(`${cr} - ${(HAS_CRIT.find(x=>x.id===cr)||{}).imp?'imperatif - ':''}${fileSafe(d.titre)}/${d.fichier}`,f)); }catch(e){} }
+    await needLib('jszip'); const z=new JSZip(); for(const d of D){ try{ const f=await readRel(d.chemin); hasOf(d).forEach(cr=>z.file(`${cr} - ${(HAS_CRIT.find(x=>x.id===cr)||{}).imp?'imperatif - ':''}${fileSafe(d.titre)}/${d.fichier}`,f)); }catch(e){} }
     downloadBlob(await z.generateAsync({type:'blob'}),`Preuves-HAS_${fileSafe(structure.nom||'structure')}_${today()}.zip`); toast('Documents de preuve téléchargés'); };
 }
 
@@ -8180,7 +8217,7 @@ function inventaire(){
   const base=`Inventaire-Librejo_${fileSafe(structure.nom||'structure')}_${today()}`;
   $('#inv-xls').onclick=()=>{ const H=INV_COLS.map(c=>c[1]).join(';'), L=R.map(r=>INV_COLS.map(([k])=>anCell(r[k])).join(';'));
     downloadBlob(new Blob(['﻿'+[H,...L].join('\r\n')],{type:'text/csv;charset=utf-8'}),base+'.csv'); toast('Inventaire téléchargé'); };
-  $('#inv-pdf').onclick=()=>{ downloadBlob(invPdf(R),base+'.pdf'); toast('Inventaire téléchargé'); };
+  $('#inv-pdf').onclick=async()=>{ try{ await pdfReady(); }catch(e){ return; } downloadBlob(invPdf(R),base+'.pdf'); toast('Inventaire téléchargé'); };
 }
 function invPdf(R){
   const {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm',format:'a4',orientation:'landscape'}), F=PF(), NAVY=pdfRGB('--navy'), INK=[30,36,48], MUTED=[93,103,121];
