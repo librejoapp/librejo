@@ -77,7 +77,7 @@ Librejo prépare un brouillon (.eml) ; Outlook y ajoute la signature automatique
 
 ## Signaler un problème
 
-Dans l'aide (« ? ») et dans les vérifications du poste, **Signaler un problème** prépare un mail avec la version de Librejo, le navigateur, l'adresse d'ouverture et le résultat des vérifications, jamais de données sur les personnes. L'adresse se règle dans Réglages › Mail (facultatif). Rien n'est envoyé par Librejo.
+Dans l'aide (« ? ») et dans les vérifications du poste, **Signaler un problème** prépare un mail avec la version de Librejo, le navigateur, l'adresse d'ouverture et le résultat des vérifications, jamais de données sur les personnes. Il part par défaut à l'équipe Librejo, **librejo@proton.me** ; une structure peut mettre une autre adresse dans Réglages › Mail. Rien n'est envoyé par Librejo.
 
 ## Deux postes qui modifient en même temps
 

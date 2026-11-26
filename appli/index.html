@@ -4349,8 +4349,8 @@ function drawReg(){
       <div class="choice">${[['outlook','Application Outlook (mail prêt avec pièces jointes)'],['web','Outlook dans le navigateur']].map(([v,l])=>`<button type="button" class="chip" data-mail="${v}" aria-pressed="${rdraft.mail===v}">${l}</button>`).join('')}</div>
       <label class="field"><span>Adresses proposées pour les documents (une par ligne)</span><textarea class="in" id="r-envoi" rows="3" spellcheck="false">${esc(rdraft.envoi.join('\n'))}</textarea></label>
       <label class="field"><span>Adresse d'Outlook dans le navigateur</span><input class="in" id="r-webmail" value="${esc(rdraft.webmail)}" spellcheck="false"></label>
-      <label class="field"><span>Adresse pour « Signaler un problème » <small>(facultatif)</small></span><input class="in" id="r-support" type="email" value="${esc(rdraft.support)}" spellcheck="false" placeholder="ex. la personne qui a installé Librejo" aria-describedby="r-support-h"></label>
-      <p class="hint muted" id="r-support-h">Le bouton des vérifications du poste prépare un mail à cette adresse, avec la version, le navigateur et les vérifications ; jamais de données sur les personnes.</p></div>
+      <label class="field"><span>Adresse pour « Signaler un problème » <small>(facultatif)</small></span><input class="in" id="r-support" type="email" value="${esc(rdraft.support)}" spellcheck="false" placeholder="librejo@proton.me (par défaut)" aria-describedby="r-support-h"></label>
+      <p class="hint muted" id="r-support-h">Par défaut, le mail part à l’équipe Librejo (librejo@proton.me). Mettez une autre adresse si quelqu’un s’en occupe dans votre structure. Le mail contient la version, le navigateur et les vérifications du poste ; jamais de données sur les personnes.</p></div>
     <div class="card top" data-rsec="mail"><h3>Destinataires de la délivrance</h3>
       <p class="muted m-0">Reliez chaque destinataire à sa fiche de l'annuaire : ses adresses mail sont alors celles de l’Annuaire, à corriger à un seul endroit.</p>
       <datalist id="r-parts">${ANNU.partenaires.map(x=>`<option value="${esc(x.nom)}">${esc(x.type||'')}</option>`).join('')}</datalist>
@@ -8976,15 +8976,16 @@ async function checksInto(box,opt={}){ if(!box) return null; box.innerHTML=`<p c
   box.querySelector('[data-cknas]').onclick=()=>openNas();
   const w=box.querySelector('[data-ckwrite]'); if(w) w.onclick=()=>checksInto(box,{...opt,askWrite:true});
   return L; }
+const LJ_SUPPORT='librejo@proton.me'; // l'équipe Librejo : destinataire par défaut de « Signaler un problème »
 /* « Signaler un problème » : un brouillon de mail avec le rapport du poste (version, navigateur, adresse, vérifications).
    Rien sur les personnes ; rien n'est envoyé par Librejo : la personne relit, décrit le problème et envoie elle-même. */
 function reportProblem(L){
-  const to=String(PAR.support||'').split(/[\s,;]+/).filter(a=>MAIL.test(a));
+  const to=String(PAR.support||LJ_SUPPORT).split(/[\s,;]+/).filter(a=>MAIL.test(a));
   const subject=`Librejo : un problème sur un poste${structure&&structure.nom?' – '+structure.nom:''}`;
   const body=`Bonjour,\n\nCe qui ne marche pas (ce que vous faisiez, ce qui s’est affiché) :\n\n\n\n---- Rapport préparé par Librejo ----\n${checksText(L)}\n`;
   if((PAR.mail||'outlook')==='web') window.open(composeUrl(to,subject,body),'_blank','noopener');
   else openMailto(mailtoUrl({to,subject,body}));
-  toast(to.length?'Mail préparé : décrivez le problème, puis envoyez':'Mail préparé : ajoutez le destinataire, décrivez le problème, puis envoyez');
+  toast('Mail préparé : décrivez le problème, puis envoyez');
 }
 /* Lecteur réseau qui disparaît au démarrage : le programme de réparation (préparé par boot.js, window.LJ_NAS) */
 function openNas(){
@@ -9414,7 +9415,7 @@ const AIDE_REGLAGES={
     etapes:['<b>Envoi des mails</b> : l’application Outlook du poste, ou Outlook dans le navigateur.',
       '<b>Adresses proposées pour les documents</b> : une par ligne.',
       '<b>Destinataires de la délivrance</b> (si ce formulaire est proposé) : les CSAPA et leurs adresses.',
-      '<b>Adresse pour « Signaler un problème »</b> (facultatif) : la personne qui s’occupe de Librejo. Le mail préparé contient la version, le navigateur et les vérifications du poste, jamais de données sur les personnes.',
+      '<b>Adresse pour « Signaler un problème »</b> (facultatif) : par défaut, l’équipe Librejo (librejo@proton.me). Mettez une autre adresse si quelqu’un s’en occupe dans votre structure. Le mail préparé contient la version, le navigateur et les vérifications du poste, jamais de données sur les personnes.',
       'Cliquez sur <b>Enregistrer les réglages</b>.',
       '<b>Signature Outlook au-dessus du texte</b> : c’est Outlook qui l’ajoute en ouvrant le mail préparé, Librejo ne peut pas l’empêcher. Dans Outlook : Fichier › Options › Courrier › Signatures, et pour <b>Nouveaux messages</b>, choisissez <b>(aucune)</b>. À faire sur chaque poste.']},
   equipe:{titre:'Réglages : Équipe',
