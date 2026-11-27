@@ -1466,9 +1466,37 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
   .menu button:focus-visible,:is(.seg,.viewtoggle) button:focus-visible{outline-offset:-3px}
   .menu button:hover{outline:1px solid Highlight;outline-offset:-1px}
 }
+
+/* Écran de chargement : les livres se rangent sur l'étagère, puis respirent doucement, le temps que l'application
+   s'ouvre avec les couleurs de la structure (gardées sur le poste depuis la dernière ouverture). */
+#lj-load{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;background:var(--ll-bg,#FBF6EC);transition:opacity .35s ease,visibility 0s .35s}
+#lj-load.out{opacity:0;visibility:hidden}
+#lj-load .ll{display:grid;justify-items:center;gap:18px}
+#lj-load .ll-books{width:150px;height:auto;overflow:visible}
+#lj-load .ll-shelf{fill:var(--ll-a,#1F6F6B);transform-origin:115px 167px;animation:ll-shelf .45s cubic-bezier(.2,.8,.2,1) both}
+#lj-load .b{fill:var(--ll-a,#1F6F6B);transform-box:fill-box;transform-origin:50% 100%;animation:ll-up .5s cubic-bezier(.3,1.4,.5,1) both,ll-breathe 2.4s ease-in-out infinite}
+#lj-load .b1{animation-delay:.15s,1.1s}#lj-load .b2{animation-delay:.27s,1.25s}#lj-load .b3{animation-delay:.39s,1.4s}
+#lj-load .b4{fill:var(--ll-b,#E9A23B);animation:ll-up .5s cubic-bezier(.3,1.4,.5,1) .51s both,ll-lean 2.4s ease-in-out 1.05s infinite;transform-origin:0% 100%;transform-box:fill-box}
+#lj-load p{margin:0;font:600 1rem/1.4 "Asap",system-ui,sans-serif;color:var(--ll-a,#1F6F6B);opacity:0;animation:ll-fade .5s ease .35s both}
+@keyframes ll-shelf{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes ll-up{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes ll-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes ll-lean{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(-6deg)}}
+@keyframes ll-fade{to{opacity:.85}}
+@media (prefers-reduced-motion:reduce){#lj-load *{animation:none!important;opacity:1!important}#lj-load .b4{transform:rotate(-10deg)}}
 </style>
 </head>
 <body>
+<div id="lj-load" aria-hidden="true"><div class="ll">
+  <svg class="ll-books" viewBox="0 0 230 180" aria-hidden="true">
+    <rect class="ll-shelf" x="8" y="160" width="214" height="14" rx="7"/>
+    <rect class="b b1" x="22" y="26" width="34" height="128" rx="8"/>
+    <rect class="b b2" x="64" y="50" width="34" height="104" rx="8"/>
+    <rect class="b b3" x="106" y="38" width="34" height="116" rx="8"/>
+    <rect class="b b4" x="162" y="26" width="34" height="128" rx="8"/>
+  </svg>
+  <p>On ouvre vos dossiers…</p></div></div>
+<script src="chargement.js"></script>
 <a class="skip" href="#contenu">Aller au contenu</a>
 <div class="app">
   <aside class="sidebar" aria-label="Menu">

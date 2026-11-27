@@ -2,10 +2,10 @@
 /* Nom du cache : toujours « librejo-appli-… » (incrémenter le numéro à chaque mise à jour du code).
    À l'activation, seuls les anciens caches « librejo-appli-* » sont supprimés : jamais ceux du site ni d'autres. */
 const PREFIX='librejo-appli-';
-const VERSION=PREFIX+'v16';
+const VERSION=PREFIX+'v17';
 /* Mise en cache en deux temps.
    1. À l'installation (~2,4 Mo) : ce qu'il faut pour ouvrir Librejo et produire un PDF hors ligne. */
-const BASE=['./','index.html','app.js','fichier.js','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
+const BASE=['./','index.html','chargement.js','app.js','fichier.js','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
  'app/lib/jspdf.umd.min.js','app/lib/jszip.min.js','app/lib/pdf-lib.min.js', // PDF : créer, assembler, remplir
  'app/polices-pdf/repli.js']; // caractères des PDF (latin étendu, vietnamien, grec, cyrillique)
 /* 2. Ensuite (~1,9 Mo), quand la page le demande, quelques secondes après l'ouverture de l'application : aperçus et
@@ -21,7 +21,7 @@ const SUITE=['app/lib/pdf.min.js','app/lib/pdf.worker.min.js','app/lib/docx-prev
    (appli/?demo) copie dans le navigateur. Il est hors de appli/ mais sur le même site : gardé à la demande de la
    démo (message « librejo-cache-demo »), il permet de « Remettre à zéro » la démo hors ligne. Il n'est jamais
    téléchargé hors de la démo. */
-const APP_FILES=new Set(['','index.html','app.js','fichier.js','boot.js','boot.css','sw.js','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg',
+const APP_FILES=new Set(['','index.html','chargement.js','app.js','fichier.js','boot.js','boot.css','sw.js','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg',
  'apple-touch-icon.png','icon-192.png','icon-512.png','icon-maskable-512.png','app/polices.css','app/favicon.png','app/favicon.svg']);
 const APP_DIRS=['app/lib/','app/polices-pdf/'];
 const SCOPE=new URL('./',self.location).pathname;

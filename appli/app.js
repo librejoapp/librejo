@@ -516,6 +516,7 @@ function applyTheme(t0){
   Object.entries(th.vars).forEach(([k,v])=>st.setProperty(k,v));
   const clair=t.menuStyle==='clair'; document.documentElement.classList.toggle('menu-clair',clair);
   const meta=document.querySelector('meta[name=theme-color]'); if(meta) meta.content=t.menuStyle==='clair'?th.vars['--menu-bg']:th.vars['--navy'];
+  if(window.LJ_THEME_KEEP) LJ_THEME_KEEP(th.vars,clair); // le chargement suivant s'ouvre directement aux bonnes couleurs
   const b=document.querySelector('.lj-brand'), own=ownLogo(t);
   if(b){ const lj=small=>`<img class="lj-lib${small?' small':''}" src="${clair?'logo.svg':'logo-blanc.svg'}" alt="Librejo">`,
       ow=own?`<span class="lj-own"><img src="${own}" alt="${esc(structure.nom||'Logo de la structure')}"></span>`:'';
@@ -7964,6 +7965,7 @@ renderDeliv();
 updateConn();
 aideInit();
 titleSync();
+if(window.LJ_LOADED) requestAnimationFrame(()=>LJ_LOADED());
 if(window.LJ_CHOIX==='dossier'&&!wizNeeded()) setTimeout(()=>checksAfterPick().catch(e=>console.warn('vérifications',e)),700);
 else setTimeout(()=>cfStartup().catch(e=>console.warn('modifications simultanées',e)),900);
 })();

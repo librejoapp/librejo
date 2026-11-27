@@ -253,7 +253,7 @@ var ui = document.getElementById('lj-boot');
    ni lecteur d'écran. Le premier arrêt de Tab est le premier bouton de l'écran d'ouverture. */
 function cover(on){
   for (var i=0, k=document.body.children; i<k.length; i++){ var el=k[i];
-    if (el===ui || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName)) continue;
+    if (el===ui || el.id==='lj-load' || /^(SCRIPT|STYLE|LINK)$/.test(el.tagName)) continue;
     if (on && !el.inert){ el.inert=true; el.setAttribute('data-lj-boot-inert',''); }
     else if (!on && el.hasAttribute('data-lj-boot-inert')){ el.inert=false; el.removeAttribute('data-lj-boot-inert'); } }
   if (!on && window.LJ_LAYERS_SYNC) window.LJ_LAYERS_SYNC();
@@ -264,7 +264,7 @@ function done(){ ui.hidden = true; cover(false); cacheSuite(); }
 function cacheSuite(){ if (!('serviceWorker' in navigator)) return;
   setTimeout(function(){ navigator.serviceWorker.ready.then(function(r){ if (!r.active) return; r.active.postMessage('librejo-cache-suite');
     if (DEMO) r.active.postMessage('librejo-cache-demo'); /* le zip de la démo : « Remettre à zéro » marche aussi hors ligne */ }).catch(function(){}); }, 4000); }
-function show(html){ ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
+function show(html){ if (window.LJ_LOADED) LJ_LOADED(); ui.hidden=false; cover(true); ui.querySelector('.lj-in').innerHTML = html;
   var h=ui.querySelector('.lj-in h1'); if (h) { h.id='lj-t';
     /* titre de l'onglet : l'écran affiché (« Accès au dossier refusé – Librejo ») ; l'application prend ensuite le relais */
     var t=h.textContent.trim(); document.title = /Librejo/.test(t) ? t : t+' – Librejo'; } }
