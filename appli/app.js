@@ -785,12 +785,13 @@ const cats=()=>DATA.categories.slice().sort((a,b)=>(a.ordre||99)-(b.ordre||99)||
 const ST_LAB={brouillon:'📝 Brouillon',avalider:'⏳ À valider'};
 const isPub=d=>!d.statut||d.statut==='valide';
 const docs=()=>isAdmin?DATA.documents:DATA.documents.filter(isPub);
-const stBadge=d=>isPub(d)?'':`<span class="badge ${d.statut==='avalider'?'rel-soon':'st-draft'}" title="Invisible pour l’équipe tant qu’il n’est pas publié">${ST_LAB[d.statut]}</span>`;
+const stBadge=d=>(isAdmin&&SG_PENDING.has('d:'+d.id)?'<span class="badge warn" title="Signalé par l’équipe : voir le tableau de bord">🚩 signalé</span>':'')+(isPub(d)?'':`<span class="badge ${d.statut==='avalider'?'rel-soon':'st-draft'}" title="Invisible pour l’équipe tant qu’il n’est pas publié">${ST_LAB[d.statut]}</span>`);
 const loaded=true;
 const today=()=>{ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 const month=()=>today().slice(0,7);
 const nowStr=()=>{ const d=new Date(); return today()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); };
 const rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let SG_PENDING=new Set();   // documents signalés par l'équipe (badge en mode admin)
 DATA.kits=DATA.kits||[]; DATA.documents.forEach(d=>{ if(!d.id) d.id='d'+rid(); });
 const baseDir=(()=>{ try{ let p=decodeURIComponent(location.pathname).replace(/\/[^/]*$/,''); if(/^\/[A-Za-z]:/.test(p)) p=p.slice(1); return location.protocol==='file:'?(location.host?'\\\\'+location.host:'')+p.replace(/\//g,'\\'):p; }catch(e){ return ''; } })();
 const winPath=rel=>baseDir+(location.protocol==='file:'?'\\'+rel.replace(/\//g,'\\'):'/'+rel);
@@ -955,6 +956,7 @@ function setAdmin(v){
   renderDocs(); renderForms(); if(typeof renderAnnu==='function'){ renderAnnu(); renderSemaine(); }
   if(typeof drawFormAdmin==='function') drawFormAdmin(tab);
   showAdminFlag();
+  if(v) setTimeout(()=>{ if(typeof sgNotify==='function') sgNotify(); },600); else SG_PENDING=new Set();
 }
 $('#adminbtn').addEventListener('click',()=>{
   if(isAdmin){ const out=()=>{ setAdmin(false); toast('Vous avez quitté le mode admin'); }; if(regDirty()) regAsk(()=>{ regReset(); out(); }); else out(); return; }
@@ -1885,7 +1887,7 @@ let formView=null, FV={}, fShowErr=false;
 function renderForms(){
   const p=$('#p-forms');
   if(formView&&formView!=='__deliv'){ return renderFill(); }
-  p.innerHTML=`<h2 class="sec">Formulaires</h2>
+  p.innerHTML=`<div class="stickhead"><h2 class="sec">Formulaires</h2></div>
     <p class="hint">Remplissez, Librejo crée le PDF à l'en-tête de la structure, puis prépare le mail. Rien n'est enregistré.</p>
     ${SANS?sdEnteteHTML():''}
     ${formsByGroupHTML()}${SANS?sdPacksHTML():''}
@@ -1931,18 +1933,18 @@ function renderFill(){
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface après l'envoi ou si vous fermez la page.</span></div>
     <div class="card top w-form">
       <div class="fieldgrid">
-        ${(f.champs||[]).map(c=>{ const t=c.type==='equipe'||c.type==='cases'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
+        ${fieldsShown(f).map(c=>{ const t=c.type==='equipe'||c.type==='cases'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
         <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
         <label class="field"><span>Date du document</span><input class="in${bad.has('_date')?' bad" data-errk="_date':''}" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
     </div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x.k)}">${esc(x.m)}</li>`).join('')}</ul>`:''}
     <div class="row w-form"><button class="primary big" data-mkpdf>${ICON.mail}Créer le PDF et préparer l'envoi</button></div>
-    <div class="row w-form end"><button class="ghost danger" data-fclear>${ICON.trash}Tout effacer</button></div>`;
+    <div class="row w-form end"><button class="ghost" data-signal="f:${esc(f.id)}">🚩 Signaler un problème</button><button class="ghost danger" data-fclear>${ICON.trash}Tout effacer</button></div>`;
 }
 function validateFill(f){
   const errs=[];
-  (f.champs||[]).forEach(c=>{ if(c.requis&&!String(FV[c.id]??'').trim()) errs.push({k:c.id,m:`« ${c.label} » est à remplir.`}); });
+  fieldsShown(f).forEach(c=>{ if(c.requis&&!String(FV[c.id]??'').trim()) errs.push({k:c.id,m:`« ${c.label} » est à remplir.`}); });
   const to=String(FV._to||'').split(/[\s,;]+/).filter(Boolean);
   if(to.some(a=>!MAIL.test(a))) errs.push({k:'_to',m:'Adresse mail incorrecte.'});
   if(!FV._date) errs.push({k:'_date',m:'Date du document manquante.'});
@@ -1961,9 +1963,22 @@ $('#p-forms').addEventListener('click',e=>{
   if(e.target.closest('[data-fclear]')){ askConfirm('Tout effacer ?','Le formulaire sera vidé.','Tout effacer',()=>{ const f=DATA.formulaires.find(x=>x.id===formView); FV={_date:today(),_to:(f&&f.destinataires)||''}; renderFill(); }); return; }
   if(e.target.closest('[data-mkpdf]')) makeFormPdf();
 });
+/* Blocs conditionnels du modèle : « [[si Champ]] … [[sinon]] … [[fin]] » ne s'imprime que si le champ est rempli
+   (une case cochée, un choix fait, un texte saisi) ; « [[si non Champ]] » fait l'inverse. Les blocs peuvent s'imbriquer.
+   Ex. : une seule ordonnance avec une case « Bizone (ALD) » qui fait apparaître les deux zones. */
+const COND_RE=/\[\[\s*si\s+(non\s+)?([^\]]+?)\s*\]\]((?:(?!\[\[\s*si\s)[\s\S])*?)\[\[\s*fin\s*\]\]/i;
+function tplCond(txt,truthy){ let t=String(txt||''), g=0, m;
+  while((m=t.match(COND_RE))&&g++<200){ const [yes,no='']=m[3].split(/\[\[\s*sinon\s*\]\]/i), on=!!truthy(m[2])!==!!m[1];
+    t=t.slice(0,m.index)+(on?yes:no)+t.slice(m.index+m[0].length); }
+  return t; }
+const fvTruthy=f=>k=>{ const c=(f.champs||[]).find(x=>norm(x.label)===norm(k)); return !!(c&&String(FV[c.id]??'').trim()); };
+/* Les champs qui ne servent que dans un bloc masqué ne sont pas proposés (ex. la zone « hors ALD » tant que « Bizone » n'est pas cochée) */
+function fieldsShown(f){ const raw=String(f.modele||''); if(!/\[\[\s*si\s/i.test(raw)) return f.champs||[];
+  const live=new Set([...tplCond(raw,fvTruthy(f)).matchAll(/\{([^{}]+)\}/g)].map(m=>norm(m[1].trim()))), all=new Set([...raw.matchAll(/\{([^{}]+)\}/g)].map(m=>norm(m[1].trim())));
+  return (f.champs||[]).filter(c=>{ const n=norm(c.label); return live.has(n)||!all.has(n); }); }
 function fillTemplate(f,vals){
   const map={}; Object.entries(AUTO_FIELDS).forEach(([k,fn])=>{ map[norm(k)]=fn()||''; }); (f.champs||[]).forEach(c=>{ let v=String(vals[c.id]??'').trim(); if(c.type==='date'&&v) v=frDate(v); map[norm(c.label)]=v; });
-  return String(f.modele||'').replace(/\{([^{}]+)\}/g,(m,k)=>{ const n=norm(k.trim()); return n in map?map[n]:m; })
+  return tplCond(f.modele,k=>!!map[norm(String(k).trim())]).replace(/\{([^{}]+)\}/g,(m,k)=>{ const n=norm(k.trim()); return n in map?map[n]:m; })
     .split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
 }
 function formBlob(f,tp){
@@ -2385,12 +2400,14 @@ function menuWire(m,btn){
     if(k==='Escape'){ e.preventDefault(); closeMenu(); btn.focus(); return; }
     if(k==='Tab'){ closeMenu(); btn.focus(); } });
 }
+let MENU_T=0;
 function menuOutside(e){ if(!e.target.closest('#menu')&&!e.target.closest('[data-more]')) closeMenu(); }
 function moreMenu(btn,d){
   if(document.getElementById('menu')){ closeMenu(); return; }
   const items=[
     ['Modifier une copie (l’original reste intact)',ICON.pen,()=>copyDoc(d)],
     ['Copier l’emplacement du fichier',ICON.copy,()=>copyText(winPath(d.chemin)).then(ok=>toast(ok?'Emplacement copié':'Copie impossible'))],
+    ['Signaler un problème (plus à jour, erreur…)',svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),()=>signaler('d:'+d.id)],
   ];
   if(isAdmin&&tpOK(d.ext)) items.unshift(['Marquer : nom, version, n° de page, logo, pied de page',ICON.pen,()=>markDoc(d)]);
   if(isAdmin) items.unshift(['Modifier ce document (admin : nouvelle version ou correction)',ICON.pen,()=>modifyDoc(d)]);
@@ -2399,13 +2416,15 @@ function moreMenu(btn,d){
   m.innerHTML=items.map((it,i)=>`<button role="menuitem" data-i="${i}">${it[1]}<span>${esc(it[0])}</span></button>`).join('');
   document.body.appendChild(m);
   const r=btn.getBoundingClientRect(), w=m.offsetWidth;
-  m.style.top=(window.scrollY+r.bottom+6)+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
-  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus(); items[+b.dataset.i][2](); });
-  menuWire(m,btn);
-  m.querySelector('button').focus();
+  /* pas assez de place en dessous : le menu s'ouvre au-dessus du bouton (sinon il sortait de l'écran et se refermait) */
+  const h=m.offsetHeight, up=r.bottom+6+h>innerHeight-8&&r.top-6-h>8;
+  m.style.top=(window.scrollY+(up?r.top-6-h:r.bottom+6))+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
+  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus({preventScroll:true}); items[+b.dataset.i][2](); });
+  menuWire(m,btn); MENU_T=Date.now();
+  m.querySelector('button').focus({preventScroll:true});
   setTimeout(()=>document.addEventListener('mousedown',menuOutside,true),0);
 }
-window.addEventListener('resize',closeMenu); window.addEventListener('scroll',()=>{ if(document.getElementById('menu')) closeMenu(); },{passive:true});
+window.addEventListener('resize',closeMenu); window.addEventListener('scroll',()=>{ if(document.getElementById('menu')&&Date.now()-MENU_T>400) closeMenu(); },{passive:true});
 
 /* ---------- Glisser-déposer (mode admin) ----------
    - sur la page ou une catégorie : ajoute les fichiers (dans la catégorie visée)
@@ -2713,9 +2732,11 @@ async function formsImport(file){
   let j; try{ if(file.size>2e6) throw 0; j=JSON.parse(await file.text()); }catch(e){ toast('Ce fichier n’est pas un formulaire Librejo.'); return; }
   const list=(Array.isArray(j)?j:Array.isArray(j&&j.formulaires)?j.formulaires:[j]).slice(0,50).map(formFromJson).filter(Boolean);
   if(!list.length){ toast('Aucun formulaire lisible dans ce fichier.'); return; }
-  askConfirm(list.length>1?`Ajouter ${list.length} formulaires ?`:'Ajouter ce formulaire ?',
-    `<ul class="m-0">${list.map(f=>`<li><b>${esc(f.titre)}</b> (${f.champs.length} champ${f.champs.length>1?'s':''})</li>`).join('')}</ul>Ils rejoignent les formulaires de la structure : relisez-les avant de les proposer à l’équipe.`,
-    'Ajouter',async()=>{ const keep=DATA.formulaires.slice(); DATA.formulaires.push(...list);
+  /* un formulaire du même titre est remplacé (mise à jour d'un fichier déjà importé), pas ajouté en double */
+  const same=f=>DATA.formulaires.findIndex(x=>norm(x.titre)===norm(f.titre)), nRep=list.filter(f=>same(f)>=0).length;
+  askConfirm(list.length>1?`Importer ${list.length} formulaires ?`:'Importer ce formulaire ?',
+    `<ul class="m-0">${list.map(f=>`<li><b>${esc(f.titre)}</b> (${f.champs.length} champ${f.champs.length>1?'s':''})${same(f)>=0?' · <i>remplace celui du même nom</i>':''}</li>`).join('')}</ul>${nRep?'Les formulaires du même nom sont mis à jour. ':''}Ils rejoignent les formulaires de la structure : relisez-les avant de les proposer à l’équipe.`,
+    'Importer',async()=>{ const keep=DATA.formulaires.slice(); list.forEach(f=>{ const i=same(f); if(i>=0){ f.id=DATA.formulaires[i].id; DATA.formulaires[i]=f; } else DATA.formulaires.push(f); });
       if(!await run(saveData,list.length>1?`${list.length} formulaires ajoutés`:'Formulaire ajouté')) DATA.formulaires=keep;
       else { list.forEach(f=>{ jlog('Formulaire importé',f.titre); FL_OPEN.add('own:'+f.groupe); }); }
       drawFormList(); renderForms(); },false);
@@ -2823,7 +2844,7 @@ function drawFormEditor(){
     </div>`).join('')}</div>
     <div><button class="secondary" data-cadd>${ICON.plus}Ajouter un champ</button></div>
     <h3 class="mt-s">Texte du document</h3>
-    <p class="hint muted">Écrivez le texte du PDF. Mettez le nom d'un champ entre accolades pour l'insérer, par ex. {Initiales}. Laissez une ligne vide entre deux paragraphes. Une ligne avec seulement <code>---</code> trace un trait sur toute la largeur ; <code>&gt;&gt; texte &lt;&lt;</code> centre le texte, en gras.</p>
+    <p class="hint muted">Écrivez le texte du PDF. Mettez le nom d'un champ entre accolades pour l'insérer, par ex. {Initiales}. Laissez une ligne vide entre deux paragraphes. Une ligne avec seulement <code>---</code> trace un trait sur toute la largeur ; <code>&gt;&gt; texte &lt;&lt;</code> centre le texte, en gras. <code>[[si Champ]] … [[fin]]</code> n’imprime ce passage que si le champ est rempli (une case cochée, par ex.) ; les champs qui ne servent que là n’apparaissent qu’à ce moment.</p>
     <div class="tokens">${f.champs.map(c=>`<button type="button" data-tok="${esc(c.label)}">{${esc(c.label)}}</button>`).join('')}</div>
     <textarea class="in" id="fe-modele" rows="9">${esc(f.modele)}</textarea>
     <div class="row between"><button class="secondary" data-fprev>${ICON.file}Aperçu du PDF</button>
@@ -3475,19 +3496,20 @@ function renderAnnu(){
   list.sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
   const mails=[...new Set(list.flatMap(x=>x.emails))], shown=list.slice(0,300), nd=isAdmin?annuDups().length:0;
   const who=(x,m)=>{ const c=anPers(x).find(y=>String(y.mail).toLowerCase()===m.toLowerCase()); return c?` <small>${esc(c.nom)}</small>`:''; };
-  p.innerHTML=`<div class="listhead"><h2 class="sec">Annuaire</h2>
+  p.innerHTML=`<div class="stickhead"><div class="listhead"><h2 class="sec">Annuaire</h2>
       <div class="row">${!isAdmin?`<button class="secondary" data-an="import" title="Demande le mot de passe admin">${ICON.up}Importer des contacts</button>`:''}${isAdmin?`<button class="primary" data-an="new">${ICON.plus}Ajouter</button><button class="secondary" data-an="import">${ICON.up}Importer</button>${nd?`<button class="secondary warnbtn" data-an="dups">Doublons (${nd})</button>`:''}`:''}
       <details class="ab-more an-exp"><summary class="secondary">${ICON.dl}Exporter</summary><div class="ab-menu">
         <button data-ex="xls"><b>Tableur (Excel)</b><small>pour le relire ou le corriger</small></button>
         <button data-ex="outlook"><b>Carnet d’adresses</b><small>à importer dans Outlook ou Gmail</small></button>
         <button data-ex="vcf"><b>vCard (.vcf)</b><small>téléphone, Thunderbird, Apple</small></button>
         <p class="hint">${list.length===ANNU.partenaires.length?'Tout l’annuaire':`Les ${list.length} fiches affichées`}.</p></div></details></div></div>
-    <p class="hint">Structures partenaires et leurs contacts, utilisés pour préparer les mails et remplir les courriers. ${ANNU.partenaires.length} fiches${ANNU.maj?' · mis à jour le '+esc(frDate(ANNU.maj))+(String(ANNU.maj).length>10?' à '+esc(String(ANNU.maj).slice(11,16).replace(':',' h ')):''):''}.${isAdmin?'':' Une erreur ou un contact manquant ? Signalez-le à un admin.'}</p>
     <div class="annu-tools">
       <div class="bigsearch">${ICON.search}<input class="in" id="an-q" type="search" placeholder="Chercher : nom, contact, ville, mail, téléphone…" value="${esc(aq)}" autocomplete="off" aria-label="Chercher dans l'annuaire"></div>
       <select class="in" id="an-type" aria-label="Type de partenaire"><option value="">Tous les types</option>${annuTypes().map(t=>`<option value="${esc(t)}" ${t===atype?'selected':''}>${esc(t)} (${ANNU.partenaires.filter(x=>x.type===t).length})</option>`).join('')}</select>
       <label class="check nowrap"><input type="checkbox" id="an-mail" ${aOnlyMail?'checked':''}> Avec un mail</label>
     </div>
+    </div>
+    <p class="hint annu-desc">Structures partenaires et leurs contacts, utilisés pour préparer les mails et remplir les courriers. ${ANNU.partenaires.length} fiches${ANNU.maj?' · mis à jour le '+esc(frDate(ANNU.maj))+(String(ANNU.maj).length>10?' à '+esc(String(ANNU.maj).slice(11,16).replace(':',' h ')):''):''}.${isAdmin?'':' Une erreur ou un contact manquant ? Signalez-le à un admin.'}</p>
     ${(atype||words.length)&&mails.length?`<div class="annu-bar"><span><b>${list.length}</b> fiche${list.length>1?'s':''} · <b>${mails.length}</b> adresse${mails.length>1?'s':''} mail</span>
       <button class="primary" data-an="mailall">${ICON.mail}Écrire à tous</button><button class="secondary" data-an="copyall">${ICON_COPY}Copier les adresses</button>
       ${isAdmin&&atype?`<button class="ghost" data-an="renametype">Renommer ce type</button>`:''}</div>`:''}
@@ -4690,10 +4712,12 @@ function linkMenu(btn,d){
   m.innerHTML=items.map((it,i)=>`<button role="menuitem" data-i="${i}">${it[1]}<span>${esc(it[0])}</span></button>`).join('');
   document.body.appendChild(m);
   const r=btn.getBoundingClientRect(), w=m.offsetWidth;
-  m.style.top=(window.scrollY+r.bottom+6)+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
-  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus(); items[+b.dataset.i][2](); });
-  menuWire(m,btn);
-  m.querySelector('button').focus();
+  /* pas assez de place en dessous : le menu s'ouvre au-dessus du bouton (sinon il sortait de l'écran et se refermait) */
+  const h=m.offsetHeight, up=r.bottom+6+h>innerHeight-8&&r.top-6-h>8;
+  m.style.top=(window.scrollY+(up?r.top-6-h:r.bottom+6))+'px'; m.style.left=Math.max(8,window.scrollX+r.right-w)+'px';
+  m.addEventListener('click',e=>{ const b=e.target.closest('[data-i]'); if(!b) return; closeMenu(); btn.focus({preventScroll:true}); items[+b.dataset.i][2](); });
+  menuWire(m,btn); MENU_T=Date.now();
+  m.querySelector('button').focus({preventScroll:true});
   setTimeout(()=>document.addEventListener('mousedown',linkMenuOutside,true),0);
 }
 function linkMenuOutside(e){ if(!e.target.closest('#menu')&&!e.target.closest('[data-lmore]')){ closeMenu(); document.removeEventListener('mousedown',linkMenuOutside,true); } }
@@ -5333,8 +5357,8 @@ function liveBuild(){
 function liveBox(){
   let b=document.getElementById('livepv'); if(b) return b;
   b=document.createElement('aside'); b.id='livepv'; b.setAttribute('aria-label','Aperçu du document en cours');
-  b.innerHTML=`<div class="lp-head"><b>Aperçu</b><span class="lp-pg"></span><button type="button" class="lp-big" data-lpbig aria-pressed="false">Agrandir</button><button type="button" class="lp-x" data-lpoff title="Masquer l’aperçu" aria-label="Masquer l’aperçu">×</button></div>
-    <button type="button" class="lp-page" data-lpzoom title="Ouvrir le PDF en grand" aria-label="Ouvrir le PDF de l’aperçu en grand"><canvas role="img" aria-label="Première page du document (son texte est sous l’image)"></canvas><span class="lp-wait">L’aperçu apparaît ici.</span></button>
+  b.innerHTML=`<div class="lp-head"><b>Aperçu</b><span class="lp-pg"></span><button type="button" class="lp-big" data-lpbig aria-pressed="false">Agrandir</button><button type="button" class="lp-big" data-lppdf title="Ouvrir le PDF tel qu’il sera envoyé">PDF</button><button type="button" class="lp-x" data-lpoff title="Masquer l’aperçu" aria-label="Masquer l’aperçu">×</button></div>
+    <button type="button" class="lp-page" data-lpzoom title="Voir la page en grand" aria-label="Voir l’aperçu en grand"><canvas role="img" aria-label="Première page du document (son texte est sous l’image)"></canvas><span class="lp-wait">L’aperçu apparaît ici.</span></button>
     <details class="lp-txt"><summary>Lire le texte de la page</summary><div class="lp-tx" aria-live="off"></div></details>
     <p class="lp-note">Se met à jour pendant la saisie. Rien n’est enregistré.</p>`;
   try{ if(localStorage.getItem('librejo-apercu-grand')==='1'){ b.classList.add('big'); b.querySelector('[data-lpbig]').setAttribute('aria-pressed','true'); b.querySelector('[data-lpbig]').textContent='Réduire'; } }catch(e){}
@@ -5342,9 +5366,25 @@ function liveBox(){
   b.addEventListener('click',e=>{
     if(e.target.closest('[data-lpoff]')){ if(LIVE_NARROW.matches){ LIVE.peek=false; liveSoon(0); setTimeout(()=>{ const t=document.getElementById('livepv-tab'); t&&!t.hidden&&t.focus(); },20); } else liveSet(true); return; }
     const bg=e.target.closest('[data-lpbig]'); if(bg){ const on=b.classList.toggle('big'); bg.setAttribute('aria-pressed',String(on)); bg.textContent=on?'Réduire':'Agrandir'; try{ localStorage.setItem('librejo-apercu-grand',on?'1':'0'); }catch(err){} return; }
-    if(e.target.closest('[data-lpzoom]')){ const file=liveBuild(); if(!file) return; if(LIVE.url) URL.revokeObjectURL(LIVE.url); LIVE.url=URL.createObjectURL(file); previewUrl(LIVE.url,'Aperçu (document non terminé)'); }
+    if(e.target.closest('[data-lppdf]')) return livePdf();
+    if(e.target.closest('[data-lpzoom]')) liveZoom();
   });
   return b;
+}
+function livePdf(){ const file=liveBuild(); if(!file) return; if(LIVE.url) URL.revokeObjectURL(LIVE.url); LIVE.url=URL.createObjectURL(file); previewUrl(LIVE.url,'Aperçu (document non terminé)'); }
+/* La loupe : les pages en grand, en image (sans ouvrir le PDF) ; « Aperçu PDF » reste à côté */
+async function liveZoom(){
+  const file=liveBuild(); if(!file) return;
+  openModal(`<div class="pz-head"><h3 id="modal-title" class="m-0">Aperçu en grand</h3><span class="pz-n muted"></span><button class="secondary" id="pz-pdf">${ICON.file}Aperçu PDF</button><button class="secondary" data-close>Fermer</button></div>
+    <div class="pz-pages"><p class="hint">Préparation de l’aperçu…</p></div><p class="hint m-0">Document non terminé : rien n’est enregistré.</p>`,'pgzoom');
+  $('#pz-pdf').onclick=()=>{ closeModal(); livePdf(); };
+  try{ const lib=await getPdfjs(), pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise, box=$('#modal-box .pz-pages'); if(!box) return;
+    const W=Math.min(1400,Math.round(Math.min(innerWidth-80,1000)*(devicePixelRatio||1))), out=[];
+    for(let n=1;n<=Math.min(pdf.numPages,10);n++){ const pg=await pdf.getPage(n), v0=pg.getViewport({scale:1}), vp=pg.getViewport({scale:W/v0.width}), c=document.createElement('canvas');
+      c.width=Math.round(vp.width); c.height=Math.round(vp.height); c.setAttribute('role','img'); c.setAttribute('aria-label',`Page ${n}`); await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; out.push(c); }
+    const np=pdf.numPages; pdf.destroy(); if(!$('#modal-box .pz-pages')) return;
+    box.replaceChildren(...out); const nn=$('#modal-box .pz-n'); if(nn) nn.textContent=np>1?`${np} pages`:''; }
+  catch(e){ const box=$('#modal-box .pz-pages'); if(box) box.innerHTML='<p class="hint">Aperçu impossible ici : essayez « Aperçu PDF ».</p>'; }
 }
 function liveTab(){
   let t=document.getElementById('livepv-tab'); if(t) return t;
@@ -6352,6 +6392,47 @@ async function stFlush(force){
     await writeRel(`app/statistiques/${stPoste()}.json`,new Blob([JSON.stringify({poste:stPoste(),qui:jrWho()||'',maj:new Date().toISOString(),mois:stRead()})],{type:'application/json'})); return true; }
   catch(e){ return false; }
 }
+/* ---------- Signalements de l'équipe (« ce document n'est plus à jour »…) ----------
+   Chaque poste écrit ses signalements dans son propre fichier (app/signalements/<poste>.json) : pas de conflit
+   entre postes. L'admin les lit tous dans le tableau de bord et marque ceux qui sont traités (_traites.json).
+   Seulement le document visé, un motif et un mot libre : jamais de donnée de personne accompagnée. */
+const SG_DIR='app/signalements', SG_DONE=SG_DIR+'/_traites.json';
+const SG_MOTIFS=[['ajour','N’est plus à jour'],['erreur','Erreur dans le contenu'],['ouvre','Ne s’ouvre pas, ne s’imprime pas'],['autre','Autre chose']];
+const SG_WHO='librejo-signal-nom';
+async function sgReadJson(rel,def){ try{ const j=JSON.parse(await (await readRel(rel)).text()); return j??def; }catch(e){ return def; } }
+async function sgAll(){
+  const done=new Set(await sgReadJson(SG_DONE,[])), out=[];
+  try{ const dir=await dirAt(SG_DIR.split('/'),'read',false);
+    for await (const [n,h] of dir.entries()){ if(h.kind!=='file'||!n.endsWith('.json')||n.startsWith('_')) continue;
+      try{ const a=JSON.parse(await (await h.getFile()).text()); if(Array.isArray(a)) a.forEach(x=>{ if(x&&x.id&&!done.has(x.id)) out.push(x); }); }catch(e){} } }catch(e){}
+  return out.sort((a,b)=>String(b.quand).localeCompare(String(a.quand)));
+}
+const sgItem=k=>{ const [t,id]=[k.slice(0,1),k.slice(2)]; if(t==='d'){ const d=DATA.documents.find(x=>x.id===id); return d?{titre:d.titre,ic:'📄',d}:null; }
+  const f=(formItems?formItems():[]).find(x=>x.id===id)||DATA.formulaires.find(x=>x.id===id); return f?{titre:f.titre,ic:'🧩',f}:null; };
+function signaler(k){
+  const it=sgItem(k); if(!it) return;
+  if(!FSA||SANS){ toast('Signalement impossible sans le dossier de la structure : prévenez l’admin directement.'); return; }
+  let who=''; try{ who=localStorage.getItem(SG_WHO)||jrWho()||''; }catch(e){}
+  openModal(`<h3 id="modal-title">🚩 Signaler un problème</h3>
+    <p class="m-0"><b>${it.ic} ${esc(it.titre)}</b></p>
+    <div class="field"><span>Le problème</span><div class="choice" id="sg-m">${SG_MOTIFS.map(([v,l],i)=>`<button type="button" class="chip" data-sgm="${v}" aria-pressed="${i===0}">${esc(l)}</button>`).join('')}</div></div>
+    <label class="field"><span>Précisez <small>(facultatif)</small></span><textarea class="in" id="sg-n" rows="3" maxlength="500" placeholder="Ex. : les horaires ont changé, la nouvelle adresse est…"></textarea></label>
+    <p class="hint m-0">🔒 Jamais de nom ni d’information sur une personne accompagnée.</p>
+    <label class="field"><span>Votre prénom <small>(facultatif, pour que l’admin puisse vous répondre)</small></span><input class="in" id="sg-w" value="${esc(who)}" maxlength="60"></label>
+    <div class="btns"><button class="primary" id="sg-ok">Envoyer à l’admin</button><button class="secondary" data-close>Annuler</button></div>`);
+  $('#sg-m').onclick=e=>{ const b=e.target.closest('[data-sgm]'); if(!b) return; $('#sg-m').querySelectorAll('[data-sgm]').forEach(x=>x.setAttribute('aria-pressed',x===b)); };
+  $('#sg-ok').onclick=async()=>{ const m=($('#sg-m [aria-pressed="true"]')||{}).dataset, w=$('#sg-w').value.trim();
+    const e={id:'s'+rid(),quand:new Date().toISOString(),k,titre:it.titre,motif:(m&&m.sgm)||'autre',note:$('#sg-n').value.trim().slice(0,500),qui:w,poste:stPoste()};
+    try{ localStorage.setItem(SG_WHO,w); }catch(_){}
+    try{ await getDir('readwrite'); const rel=`${SG_DIR}/${stPoste()}.json`, L=await sgReadJson(rel,[]); L.push(e); while(L.length>200) L.shift();
+      await writeRel(rel,new Blob([JSON.stringify(L)],{type:'application/json'})); closeModal(); toast('Merci : l’admin verra ce signalement dans son tableau de bord.'); }
+    catch(err){ toast('Signalement impossible : le dossier n’est pas accessible en écriture sur ce poste.'); } };
+}
+async function sgTraite(ids){ const done=new Set(await sgReadJson(SG_DONE,[])); ids.forEach(i=>done.add(i));
+  await writeRel(SG_DONE,new Blob([JSON.stringify([...done].slice(-2000))],{type:'application/json'})); }
+/* À l'entrée en mode admin : un mot s'il y a des signalements en attente */
+async function sgNotify(){ try{ const L=await sgAll(); SG_PENDING=new Set(L.map(x=>x.k)); renderDocs(); if(L.length) toast(`🚩 ${L.length} signalement${L.length>1?'s':''} de l’équipe à voir dans le tableau de bord (Outils)`); }catch(e){} }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-signal]'); if(!b) return; e.preventDefault(); signaler(b.dataset.signal); });
 document.addEventListener('click',e=>{ const t=e.target; if(!t||!t.closest) return; let el;
   if((el=t.closest('[data-fill]'))){ stLastForm={k:'f:'+el.dataset.fill,t:Date.now()}; return stBump('f:'+el.dataset.fill,'o'); }
   if((el=t.closest('[data-fillword]'))){ stLastForm={k:'d:'+el.dataset.fillword,t:Date.now()}; return stBump('d:'+el.dataset.fillword,'o'); }
@@ -6377,7 +6458,7 @@ const monthsBack=n=>{ const r=[], d=new Date(); d.setDate(1); for(let i=0;i<n;i+
 let dbPer=3;
 async function dashboard(){
   openModal(`<h3 id="modal-title">📊 Tableau de bord</h3><div id="db-b"><p class="hint">Calcul…</p></div>`,'wide dbdlg');
-  await stFlush(); const [P]=await Promise.all([stAll(),txLoad().catch(()=>null)]); const b=$('#db-b'); if(!b) return;
+  await stFlush(); const [P,,SG]=await Promise.all([stAll(),txLoad().catch(()=>null),sgAll().catch(()=>[])]); const b=$('#db-b'); if(!b) return; SG_PENDING=new Set(SG.map(x=>x.k));
   const D=DATA.documents.filter(d=>!isLink(d)), F=formItems?formItems():[], now=Date.now(), age=s=>s?(now-new Date(s).getTime())/864e5:9999;
   const months=dbPer?monthsBack(dbPer):null, T=stSum(P,months);
   const nm=k=>{ const [t,id]=k.split(':'); if(t==='d'){ const d=docById(id)||DATA.documents.find(x=>x.id===id); return d?{t:d.titre,ic:isLink(d)?'🔗':'📄',it:d}:null; }
@@ -6425,7 +6506,12 @@ async function dashboard(){
   const ms=monthsBack(12).reverse(), perM=ms.map(m=>P.reduce((s,p)=>s+Object.values((p.mois||{})[m]||{}).reduce((a,u)=>a+tot(u),0),0)), mx=Math.max(1,...perM);
   const totAll=Object.values(T).reduce((s,u)=>s+tot(u),0), totP=Object.values(T).reduce((s,u)=>s+(u.p||0)+(u.q||0),0), totG=Object.values(T).reduce((s,u)=>s+(u.g||0),0);
   const postes=P.length, perLab={1:'ce mois-ci',3:'3 derniers mois',12:'12 derniers mois',0:'depuis le début'};
-  b.innerHTML=`<h4 class="db-h">À surveiller</h4><div class="db-cards">${todo}</div>
+  const sgMot=v=>(SG_MOTIFS.find(m=>m[0]===v)||[,v])[1], sgHtml=SG.length?`<h4 class="db-h">🚩 Signalements de l’équipe <span class="badge warn">${SG.length}</span></h4>
+    <ul class="db-sg">${SG.map(x=>{ const it=sgItem(x.k); return `<li><div><b>${it?it.ic:'❔'} ${esc(it?it.titre:x.titre+' (supprimé)')}</b><span class="badge ${x.motif==='ajour'?'warn':''}">${esc(sgMot(x.motif))}</span>
+      ${x.note?`<p class="m-0">« ${esc(x.note)} »</p>`:''}<small class="muted">${x.qui?esc(x.qui)+' · ':''}${frDate(String(x.quand).slice(0,10))}</small></div>
+      <div class="db-sga">${it&&it.d?`<button type="button" class="linkbtn" data-sgopen="${esc(x.k)}">Ouvrir</button>`:''}${it&&it.f&&DATA.formulaires.some(z=>z.id===it.f.id)?`<button type="button" class="linkbtn" data-sgopen="${esc(x.k)}">Modifier</button>`:''}<button type="button" class="secondary" data-sgdone="${esc(x.id)}">✓ Traité</button></div></li>`; }).join('')}</ul>
+    ${SG.length>1?`<p class="m-0"><button type="button" class="linkbtn" data-sgdone="*">Tout marquer comme traité</button></p>`:''}`:'';
+  b.innerHTML=`${sgHtml}<h4 class="db-h">À surveiller</h4><div class="db-cards">${todo}</div>
     <div class="db-sh"><h4 class="db-h">📈 Statistiques d’utilisation</h4><div class="choice" role="group" aria-label="Période">${[1,3,12,0].map(n=>`<button type="button" class="chip" data-dbper="${n}" aria-pressed="${dbPer===n}">${perLab[n]}</button>`).join('')}</div></div>
     <div class="db-kpis"><div><b>${totAll}</b><span>utilisations</span></div><div><b>${totP}</b><span>impressions</span></div><div><b>${totG}</b><span>documents produits par les formulaires</span></div><div><b>${postes}</b><span>poste${postes>1?'s':''} compté${postes>1?'s':''}</span></div></div>
     <div class="db-trend" aria-label="Utilisations par mois">${ms.map((m,i)=>`<span title="${m} : ${perM[i]}"><i style="height:${Math.round(perM[i]/mx*100)}%"></i><small>${['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][+m.slice(5)-1]}</small></span>`).join('')}</div>
@@ -6441,6 +6527,10 @@ async function dashboard(){
     <details class="hint db-how"><summary>D’où viennent ces chiffres ?</summary>Chaque poste compte ses ouvertures, impressions, envois et formulaires remplis : seulement l’identifiant du document et un nombre, jamais de nom de personne ni de contenu. Un poste partage ses chiffres dans le dossier (app/statistiques) dès qu’il a le droit d’y écrire, c’est-à-dire après un passage en mode admin sur ce poste. Les recherches tapées ne sont pas enregistrées : elles pourraient contenir un nom.</details>
     <div class="row end mt"><button type="button" class="secondary" id="db-csv">Exporter les statistiques (tableur)</button><button type="button" class="ghost" data-close>Fermer</button></div>`;
   b.onclick=e=>{ const pe=e.target.closest('[data-dbper]'); if(pe){ dbPer=+pe.dataset.dbper; dashboard(); return; }
+    const sd=e.target.closest('[data-sgdone]'); if(sd){ const ids=sd.dataset.sgdone==='*'?SG.map(x=>x.id):[sd.dataset.sgdone]; sd.disabled=true;
+      sgTraite(ids).then(()=>{ jlog('Signalement traité',ids.length>1?ids.length+' signalements':(SG.find(x=>x.id===ids[0])||{}).titre||''); toast(ids.length>1?'Signalements marqués comme traités':'Signalement marqué comme traité'); dashboard(); renderDocs(); }).catch(()=>{ sd.disabled=false; toast('Enregistrement impossible'); }); return; }
+    const so=e.target.closest('[data-sgopen]'); if(so){ const it=sgItem(so.dataset.sgopen); if(!it) return; closeModal();
+      if(it.d) window.open(isLink(it.d)?it.d.url:hrefOf(it.d.chemin),'_blank','noopener'); else if(it.f){ setTab('forms'); if(typeof editForm==='function') editForm(it.f.id); } return; }
     const sh=e.target.closest('[data-dbshow]'); if(sh){ const [t,L]=lists[sh.dataset.dbshow]; $('#db-list').innerHTML=`<div class="db-listbox"><h5>${t} (${L.length})</h5><ul>${L.slice(0,200).map(x=>`<li>${x}</li>`).join('')}</ul></div>`; $('#db-list').scrollIntoView({block:'nearest',behavior:smooth()}); return; }
     const go=e.target.closest('[data-dbgo]'); if(go){ const k=go.dataset.dbgo; closeModal(); if(k==='backup') backup(); else if(k==='has') hasPrep(); else if(k==='tx') txSetup(); else if(k==='cerfa'){ const f=window.cerfaCheck||(typeof cerfaCheck==='function'?cerfaCheck:null); f?f():setTab('forms'); } } };
   $('#db-csv').onclick=()=>{ const c=v=>`"${String(v??'').replace(/"/g,'""')}"`;
