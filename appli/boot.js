@@ -218,7 +218,17 @@ if (DEMO) {
   };
 }
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(function(){});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', {scope:'./', updateViaCache:'none'}).then(function(r){ r.update().catch(function(){}); }).catch(function(){});
+  /* Une nouvelle version vient de s'installer pendant que Librejo est ouvert : on le propose, sans recharger
+     de force (un formulaire peut être en cours). */
+  var hadSw = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if (!hadSw || document.getElementById('lj-maj')) return;
+    var b=document.createElement('button'); b.id='lj-maj'; b.type='button'; b.textContent='Nouvelle version de Librejo : recharger';
+    b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:80;padding:10px 16px;border:0;border-radius:999px;background:#E9A23B;color:#2b1d05;font:700 14px/1.2 Asap,system-ui,sans-serif;box-shadow:0 8px 24px rgba(70,45,12,.3);cursor:pointer';
+    b.onclick=function(){ location.reload(); }; document.body.appendChild(b); });
+}
 
 /* même base que le reste de l'application : la poignée du dossier est partagée */
 function idbOpen(){ return new Promise(function(res,rej){ var r=indexedDB.open('docubus',1); r.onupgradeneeded=function(){ r.result.createObjectStore('h'); }; r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }

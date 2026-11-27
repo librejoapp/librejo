@@ -2,7 +2,7 @@
 /* Nom du cache : toujours « librejo-appli-… » (incrémenter le numéro à chaque mise à jour du code).
    À l'activation, seuls les anciens caches « librejo-appli-* » sont supprimés : jamais ceux du site ni d'autres. */
 const PREFIX='librejo-appli-';
-const VERSION=PREFIX+'v19';
+const VERSION=PREFIX+'v20';
 /* Mise en cache en deux temps.
    1. À l'installation (~2,4 Mo) : ce qu'il faut pour ouvrir Librejo et produire un PDF hors ligne. */
 const BASE=['./','index.html','chargement.js','app.js','fichier.js','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
@@ -42,6 +42,9 @@ self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.a
 self.addEventListener('fetch',e=>{
   const u=new URL(e.request.url);
   if(e.request.method!=='GET'||!appFile(u)) return; // hors de l'application : le navigateur s'en charge, rien n'est gardé
-  e.respondWith(fetch(e.request).then(r=>{ if(r.ok&&r.type==='basic'){ const c=r.clone(); caches.open(VERSION).then(x=>x.put(e.request,c)); } return r; })
+  /* « no-cache » : le navigateur redemande toujours au site si le fichier a changé (réponse courte s'il n'a pas changé).
+     Sans cela, le cache HTTP de GitHub Pages (10 min) servait l'ancienne version après une mise à jour. */
+  const req=e.request.mode==='navigate'?fetch(u.href,{cache:'no-cache',credentials:'same-origin'}):fetch(new Request(e.request,{cache:'no-cache'}));
+  e.respondWith(req.then(r=>{ if(r.ok&&r.type==='basic'){ const c=r.clone(); caches.open(VERSION).then(x=>x.put(e.request,c)); } return r; })
     .catch(()=>caches.match(e.request,{ignoreSearch:true}).then(r=>r||(e.request.mode==='navigate'?caches.match('index.html'):Response.error()))));
 });
