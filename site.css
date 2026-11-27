@@ -79,9 +79,9 @@ h1, h2, h3 { font-weight: var(--display-weight); color: var(--color-ink); }
 
 /* le tableau : rien ne sort de chez vous */
 .board { margin-block: var(--section-gap-s) 0; padding-block: var(--section-gap-s); background: var(--color-board); color: var(--color-board-type); }
-.board h2 { color: var(--color-board-type); font-size: var(--text-display-s); max-width: 12ch; line-height: 1.1; }
+.board h2 { color: var(--color-board-type); font-size: var(--text-display-s); max-width: 15ch; line-height: 1.1; margin: 0; }
 h2 { line-height: 1.12; }
-.board .container { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2xl); align-items: end; }
+.board .container { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2xl); align-items: center; }
 .board .facts { border-color: color-mix(in oklab, var(--color-board-type) 28%, transparent); font-size: var(--text-lead); }
 .board .facts li { border-color: color-mix(in oklab, var(--color-board-type) 28%, transparent); padding: var(--space-md) 0; }
 
@@ -231,3 +231,4 @@ h2 { line-height: 1.12; }
 .legal { display: grid; gap: var(--space-lg); }
 .legal > * { max-width: 60rem; }
 .note a { color: inherit; }
+.dl #librejo { grid-column: 1 / -1; }
