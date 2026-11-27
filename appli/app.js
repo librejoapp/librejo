@@ -207,7 +207,7 @@ function validate(){
   F.patients.forEach((p,i)=>{
     const P=`Patient ${i+1} : `;
     if(!p.civ){ no(P+'choisissez M. ou Mme.',p.id+'civ'); }
-    if(!p.ini.trim()){ no(P+'initiales manquantes.',p.id+'ini'); }
+    if(!p.ini.trim()){ no(P+'nom et prénom (ou initiales) manquants.',p.id+'ini'); }
     if(!parseDDN(p.ddn)){ no(P+(p.ddn.trim()?'date de naissance incorrecte (JJ/MM/AAAA).':'date de naissance manquante.'),p.id+'ddn'); }
     if(!p.trt){ no(P+'choisissez le traitement.',p.id+'trt'); }
     const seen=new Set();
@@ -246,8 +246,8 @@ function renderDeliv(){
           <div class="seg${B(pt.id+'civ')}" role="group" aria-label="Civilité">
             <button type="button" data-civ="M." aria-pressed="${pt.civ==='M.'}">M.</button>
             <button type="button" data-civ="Mme" aria-pressed="${pt.civ==='Mme'}">Mme</button></div></div>
-        <label class="field"><span>Initiales</span>
-          <input class="in${B(pt.id+'ini')}" data-k="ini" value="${esc(pt.ini)}" placeholder="ex. J.D." maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+        <label class="field"><span>Nom et prénom <small>(ou initiales)</small></span>
+          <input class="in${B(pt.id+'ini')}" data-k="ini" value="${esc(pt.ini)}" placeholder="ex. DUPONT Jean, ou J.D." maxlength="60" autocomplete="off" spellcheck="false"></label>
       </div>
       <div class="grid2">
         <label class="field"><span>Né(e) le</span>
@@ -314,7 +314,7 @@ $('#p-deliv').addEventListener('input',e=>{
     dd[k]=el.value; return; }
   const pt=findP(el);
   if(pt){
-    if(k==='ini'){ const v=el.value.toUpperCase().replace(/[^A-ZÀ-Ÿ.\- ]/g,''); if(v!==el.value) el.value=v; }
+    if(k==='ini'){ const v=el.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿŒœ.'’\- ]/g,''); if(v!==el.value) el.value=v; }   // nom complet accepté (avant : 8 caractères, le nom était coupé)
     if(k==='ddn'){ const dg=el.value.replace(/\D/g,'').slice(0,8); let v=dg;
       if(dg.length>4) v=dg.slice(0,2)+'/'+dg.slice(2,4)+'/'+dg.slice(4); else if(dg.length>2) v=dg.slice(0,2)+'/'+dg.slice(2);
       if(v!==el.value) el.value=v; }
