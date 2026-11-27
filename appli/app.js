@@ -1081,7 +1081,7 @@ function sortDocs(list){
 /* Emoji de chaque formulaire : se repérer d'un coup d'œil (formulaires de l'admin : champ « Emoji », sinon 📝) */
 const FORM_EMOJI={__ccas:'🏛️',__el:'📄',__cp:'📨',__urg:'🚑',__cl:'🖊️',__deliv:'💊',__relais:'🔁',__cmi:'🩺',__att:'📋',__mt:'✉️'};
 const formEmoji=f=>FORM_EMOJI[f.id]||(f.emoji||'').trim()||'📝';
-const DOCUBUS_VERSION='2026-11-26';
+const DOCUBUS_VERSION='2026-11-27';
 /* Ce que chaque formulaire intégré utilise, et où cela se règle */
 const BUILTIN_FORMS=[
   {tab:'cl',id:'__cl',titre:'Certificat libre',sets:['med','entete']},
@@ -7954,6 +7954,7 @@ function aideInit(){
 
 /* ---------- Démarrage ---------- */
 $('#gen-ver').textContent='Version du '+frDate(DOCUBUS_VERSION.slice(0,10));
+{ const sv=$('#sidever'); if(sv) sv.textContent='Librejo · version du '+frDate(DOCUBUS_VERSION.slice(0,10)); }
 $('#gen-info').textContent=DATA.maj?`Liste des documents mise à jour le ${frDate(DATA.maj)}${String(DATA.maj).length>10?' à '+String(DATA.maj).slice(11).replace(':',' h '):''}`:'';
 if(!FSA&&!SANS){ $('#gen-info').textContent='Pour imprimer en un clic et administrer, ouvrez Librejo avec Microsoft Edge ou Google Chrome.'; $('#gen-info').hidden=false; }
 if(SANS) sdStart();
