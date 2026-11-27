@@ -1133,6 +1133,7 @@ function formsOffBase(){ return Array.isArray(PAR.formsOff)?PAR.formsOff.filter(
 function formsOff(){ const on=new Set(PAR.formsOn||[]), off=new Set(formsOffBase());
   BUILTIN_FORMS.forEach(f=>{ if(!on.has(f.id)&&formsAuto(f.id)) off.add(f.id); }); return [...off]; }
 const tsoOn=()=>TSO_FORMS.some(id=>!formsOff().includes(id)); // traitement de substitution proposé dans les courriers
+const BIG_LIST=24;
 function renderDocs(){
   if(!viewChosen) view=isAdmin?'liste':'vignettes';
   const p=$('#p-docs');
@@ -1144,6 +1145,9 @@ function renderDocs(){
   }else if(filter==='recent'){ list=sortDocs(docs().slice()).slice(0,20); title='Derniers documents'; }
   else if(filter==='kits'){ list=[]; title='Kits de documents'; }
   else{ const [fc,fs]=splitDest(filter); list=sortDocs(docs().filter(d=>d.categorie===fc&&(!fs||d.sous===fs))).concat(fs?[]:formItems().filter(f=>f.categorie===fc)); title=esc(catName(fc))+(fs?` <span class="o">› ${esc(fs)}</span>`:''); showCat=false; }
+  /* beaucoup de documents à l'écran : la liste (dense) par défaut, sauf si la personne a choisi les vignettes */
+  const nDocs=list.filter(x=>!x.kind).length; if(!viewChosen&&nDocs>BIG_LIST) view='liste';
+  const bigCat=isAdmin&&!ts.length&&isDest(filter)&&!filter.includes('/')&&docs().filter(d=>d.categorie===filter&&!d.sous).length>BIG_LIST;
   const th=(k,l)=>ts.length?`<th scope="col">${l}</th>`:`<th scope="col"><button data-sort="${k}" aria-label="Trier par ${l}">${l}${sortKey===k?(sortDir>0?' ▲':' ▼'):''}</button></th>`;
   const rowOf=d=>{
     if(isLink(d)) return linkRow(d,ts,showCat);
@@ -1197,6 +1201,7 @@ function renderDocs(){
     ${home?startHTML()+renderFavs()+renderPinned()+renderHome():''}
     <div class="panel"${home?' hidden':''}>
       <div class="listhead"><h2 class="sec">${title}</h2>${filter!=='kits'||ts.length?`<div class="viewtoggle" role="group" aria-label="Affichage"><button data-view="liste" aria-pressed="${view==='liste'}">${svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}Liste</button><button data-view="vignettes" aria-pressed="${view==='vignettes'}">${svg('<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="9"/><rect x="3" y="15" width="7" height="6"/><rect x="14" y="15" width="7" height="6"/>')}Vignettes</button></div>`:''}</div>
+      ${bigCat?`<p class="bigcat">📂 <span><b>${docs().filter(d=>d.categorie===filter&&!d.sous).length} documents en vrac dans cette catégorie.</b> Au-delà d’une vingtaine, l’équipe doit beaucoup faire défiler : des sous-dossiers (2 à 4 suffisent) la rendent plus facile à parcourir. Bouton « Nouveau sous-dossier » ci-dessous, puis « Gérer » sur chaque document pour le ranger.</span></p>`:''}
       ${!ts.length&&filter!=='recent'&&filter!=='kits'&&isAdmin?(filter.includes('/')?`<div class="row"><button class="ghost danger" data-a="delsous">Supprimer le sous-dossier</button></div>`:`<div class="row"><button class="ghost" data-a="addsous">${ICON.plus}Nouveau sous-dossier</button><button class="ghost" data-a="renamecat">Renommer la catégorie</button><button class="ghost" data-a="emojicat">Changer l’emoji</button><button class="ghost danger" data-a="delcat">Supprimer la catégorie</button></div>`):''}
       ${!ts.length&&filter==='kits'?renderKits():view==='vignettes'&&list.some(x=>!x.kind)?`<div class="grid">${list.filter(x=>!x.kind).map(d=>gridCard(d,ts,showCat)).join('')}</div>${list.some(x=>x.kind)?`<div class="tablebox mt-m"><table class="docs"><tbody>${list.filter(x=>x.kind).map(rowOf).join('')}</tbody></table></div>`:''}`:`<div class="tablebox">${list.length?`<table class="docs"><thead><tr><th scope="col"><span class="sr">Type</span></th>${th('titre','Document')}${th('version','Version')}${th('date','Date')}<th class="right" scope="col">Actions</th></tr></thead><tbody>${rows}</tbody></table>`
         :(ts.length?illu('search','Rien trouvé pour cette recherche','Essayez un autre mot, ou moins de mots. La recherche regarde aussi les descriptions et les mots-clés.')
@@ -1423,6 +1428,19 @@ async function createSous(c,nom){
   return ok?c.id+'/'+s:null;
 }
 
+/* « On remplace, on n'ajoute pas » : à l'ajout, on repère un document qui ressemble à celui déposé
+   (même titre une fois retirés version, année, « copie », « final »… ; ou presque les mêmes mots ; ou même nom de fichier). */
+const simKey=s=>norm(String(s||'').replace(/\.[a-z0-9]{2,5}$/i,'')).replace(/\b(v|version)\s*\d+([.,]\d+)?\b/g,' ').replace(/\b(19|20)\d{2}\b/g,' ').replace(/\b\d{1,2}[-_/.]\d{1,2}([-_/.]\d{2,4})?\b/g,' ')
+  .replace(/\b(copie|copy|final|finale|definitif|definitive|nouveau|nouvelle|new|ok|maj|modifie|modifiee|corrige|corrigee|bis|ter)\b/g,' ').replace(/\(\d+\)/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+const SIM_STOP=new Set(['de','du','des','la','le','les','l','d','un','une','et','a','au','aux','en','pour','sur']);
+function docSimilar(titre,fichier){
+  const k=simKey(titre), kf=simKey(fichier), tk=new Set(k.split(' ').filter(w=>w&&!SIM_STOP.has(w))); if(!k) return null;
+  let best=null;
+  for(const d of DATA.documents){ if(isLink(d)) continue; const dk=simKey(d.titre), df=simKey(d.fichier||'');
+    let sc=0; if(dk===k||(kf&&(dk===kf||df===kf))||(df&&df===k)) sc=1;
+    else if(tk.size>=2){ const dt=new Set(dk.split(' ').filter(w=>w&&!SIM_STOP.has(w))); if(dt.size>=2){ let c=0; tk.forEach(w=>{ if(dt.has(w)) c++; }); const j=c/(tk.size+dt.size-c); if(j>=.75) sc=j; } }
+    if(sc&&(!best||sc>best.sc)) best={d,sc}; }
+  return best&&best.d; }
 function addDocs(initFiles,initDest){
   if(!cats().length){ toast("Créez d'abord une catégorie."); return; }
   let explicit=!!(initDest&&isDest(initDest))||isDest(filter);
@@ -1442,6 +1460,9 @@ function addDocs(initFiles,initDest){
     $('#ad-all').hidden=n<2; if(n>1) $('#ad-allsel').innerHTML=`<option value="">— choisir —</option>`+destOptions('');
     $('#ad-list').innerHTML=picked.map((p,i)=>`<div class="card addcard" data-i="${i}">
       <div class="ad-file"><span>📄 ${esc(p.file.name)} · ${sizeTxt(p.file.size)}${p.modifie?' · <b>✓ version modifiée</b>':''}</span><span class="row gap-s"><button type="button" class="ghost sm" data-modif>${ICON.pen}Modifier avant d’ajouter</button><button type="button" class="ghost sm" data-rm aria-label="Retirer ce fichier">Retirer</button></span></div>
+      ${(p.sim=p.simNo?null:docSimilar(p.titre,p.file.name))?`<div class="ad-sim" role="alert"><span>⚠️ Ressemble à <b>${esc(p.sim.titre)}</b> (${esc(destName(p.sim.categorie+(p.sim.sous?'/'+p.sim.sous:'')))} · v${esc(p.sim.version||'1')}), déjà dans Librejo.</span>
+        <span class="row gap-s"><button type="button" class="primary sm" data-simv>C’est sa nouvelle version</button><button type="button" class="ghost sm" data-simno>Non, c’est un autre document</button></span>
+        <small>Nouvelle version : le fichier remplace l’actuel pour l’équipe, l’ancien est archivé (rien n’est perdu).</small></div>`:''}
       ${p.edit?`<div class="ad-modif" data-redz><p>Une copie est dans vos <b>Téléchargements</b>. Ouvrez-la dans ${editorOf(extFor(p))}, modifiez, enregistrez, puis déposez-la ici.</p>
         <label class="secondary sm self-start">${ICON.up}Choisir le fichier modifié<input type="file" data-refile hidden></label></div>`:''}
       <div class="fieldgrid"><label class="field"><span>Titre affiché</span><input class="in" data-k="titre" value="${esc(p.titre)}"></label>
@@ -1478,6 +1499,10 @@ function addDocs(initFiles,initDest){
   const list=$('#ad-list');
   list.addEventListener('click',async e=>{ const c=e.target.closest('[data-i]'); if(!c) return; const i=+c.dataset.i;
     if(e.target.closest('[data-rm]')){ picked.splice(i,1); draw(); return; }
+    if(e.target.closest('[data-simno]')){ picked[i].simNo=true; draw(); return; }
+    if(e.target.closest('[data-simv]')){ const p=picked[i], d=p.sim; if(!d) return; e.target.closest('[data-simv]').disabled=true;
+      newVersion(d,p.file).then(ok=>{ if(!ok){ draw(); return; } const k=picked.indexOf(p); if(k>=0) picked.splice(k,1); renderDocs();
+        if(picked.length){ if($('#ad-list')) draw(); toast(`Nouvelle version de « ${d.titre} » en place`); } else { modalGuard=null; closeModal(); toast(`Nouvelle version de « ${d.titre} » en place pour l’équipe`); } }); return; }
     if(e.target.closest('[data-ocr]')){ const p=picked[i]; p.ocring=true; draw();
       try{ const r=await ocrPdf(p.file); const txt=r.lines.map(l=>l.t).join(' ').replace(/\s+/g,' ').trim();
         if(!txt) toast('Aucun texte lisible trouvé'); else { if(!p.description.trim()) p.description=txt.slice(0,280).replace(/\s\S*$/,'')+(txt.length>280?'…':''); p.ocrDone=true; p.tpOpen=p.tpOpen; toast('Texte lu : description proposée, à relire'); } }

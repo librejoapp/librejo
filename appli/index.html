@@ -303,6 +303,10 @@ input.in.w-num{width:84px}
 /* bandeau « formulaires seulement » au-dessus : la teinte du titre ne remonte pas dessus */
 body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearch:first-child{border-image-outset:0 100vmax}
 #sdbar{position:relative;z-index:5}
+.ad-sim{display:flex;flex-direction:column;gap:6px;padding:var(--sp-3);border:1px solid var(--accent-line);border-left:4px solid var(--accent);border-radius:10px;background:var(--accent-soft);margin-bottom:var(--sp-2)}
+.ad-sim small{color:var(--text-3)}
+.bigcat{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;padding:var(--sp-3);border:1px dashed var(--accent-line);border-radius:10px;background:var(--accent-soft);margin:0 0 var(--sp-3)}
+.bigcat span{flex:1 1 320px}
 .btnlink{display:inline-flex;align-items:center;text-decoration:none;border-radius:var(--r-sm);padding:6px 12px;font-weight:600}
 .installbtn{border-color:var(--accent)!important}
 .installbtn svg{width:16px;height:16px;flex:none}
