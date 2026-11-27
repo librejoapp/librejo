@@ -506,8 +506,10 @@ async function fixImg(img){
   if (!src || !/^app\/miniatures\//.test(src) || !dir) return;
   img.removeAttribute('src');
   try {
-    var key = src.split('?')[0];
-    if (!thumbs[key]) { var p=key.split('/'), n=p.pop(); var d=await sub(p); thumbs[key] = URL.createObjectURL(await (await d.getFileHandle(n)).getFile()); }
+    /* le nom est encodé dans l'adresse (accents, espaces : « h%C3%A9bergement… ») : on le décode avant de le chercher
+       dans le dossier. La clé garde le ?v= pour qu'une miniature refaite remplace l'ancienne. */
+    var key = src, path = decodeURIComponent(src.split('?')[0]);
+    if (!thumbs[key]) { var p=path.split('/'), n=p.pop(); var d=await sub(p); thumbs[key] = URL.createObjectURL(await (await d.getFileHandle(n)).getFile()); }
     img.src = thumbs[key];
   } catch(e) { img.dispatchEvent(new Event('error')); }
 }

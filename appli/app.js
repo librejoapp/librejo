@@ -1346,6 +1346,8 @@ async function sendDoc(d){
 const ARCH='_Archives';
 function catSelect(sel,id='f-cat'){ return `<select class="in" id="${id}">${cats().map(c=>`<option value="${esc(c.id)}" ${c.id===sel?'selected':''}>${esc(c.nom)}</option>`).join('')}</select>`; }
 const kwParse=s=>String(s||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);
+/* « Cases à cocher » : un choix par ligne (une ligne peut contenir des virgules : « Paracétamol 1 g, 3 fois par jour »). */
+const caseOpts=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
 
 /* ---------- Nommage et rangement automatiques ----------
    Nom du fichier : Titre-court_vN_AAAA-MM.ext (sans accents, espaces ni petits mots).
@@ -1920,6 +1922,7 @@ function renderFill(){
     if(c.type==='nombre') return `<input class="in num${B}" inputmode="decimal" data-f="${c.id}" value="${esc(v)}">`;
     if(c.type==='equipe') return eqField(c,B);
     if(c.type==='choix') return `<div class="choice${B}">${kwParse(c.options).map(o=>`<button type="button" class="chip" data-choice="${c.id}" data-v="${esc(o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join('')}</div>`;
+    if(c.type==='cases'){ const sel=new Set(String(v).split('\n')); return `<div class="choice cases${B}">${caseOpts(c.options).map(o=>`<button type="button" class="chip" data-case="${c.id}" data-v="${esc(o)}" aria-pressed="${sel.has(o)}">${esc(o)}</button>`).join('')}</div>`; }
     return `<input class="in${B}" data-f="${c.id}" value="${esc(v)}" autocomplete="off">`; };
   $('#p-forms').innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">${esc(formEmoji(f))}</span>${esc(f.titre)}</h2>
@@ -1927,7 +1930,7 @@ function renderFill(){
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface après l'envoi ou si vous fermez la page.</span></div>
     <div class="card top w-form">
       <div class="fieldgrid">
-        ${(f.champs||[]).map(c=>{ const t=c.type==='equipe'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
+        ${(f.champs||[]).map(c=>{ const t=c.type==='equipe'||c.type==='cases'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
         <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
         <label class="field"><span>Date du document</span><input class="in${bad.has('_date')?' bad" data-errk="_date':''}" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
@@ -1948,6 +1951,9 @@ $('#p-forms').addEventListener('change',e=>{ const q=e.target.dataset.eqi; if(!q
 $('#p-forms').addEventListener('input',e=>{ const k=e.target.dataset.f; if(!k) return; FV[k]=e.target.value; });
 $('#p-forms').addEventListener('click',e=>{
   if(e.target.closest('[data-back]')){ formView=null; renderForms(); return; }
+  const cs=e.target.closest('[data-case]'); if(cs){ const f=DATA.formulaires.find(x=>x.id===formView), c=f&&f.champs.find(x=>x.id===cs.dataset.case); if(!c) return;
+    const sel=new Set(String(FV[c.id]||'').split('\n')); sel.has(cs.dataset.v)?sel.delete(cs.dataset.v):sel.add(cs.dataset.v);
+    FV[c.id]=caseOpts(c.options).filter(o=>sel.has(o)).join('\n'); renderFill(); return; }
   const ch=e.target.closest('[data-choice]'); if(ch){ FV[ch.dataset.choice]=FV[ch.dataset.choice]===ch.dataset.v?'':ch.dataset.v; renderFill(); return; }
   const eq=e.target.closest('[data-eqc]'); if(eq){ const f=DATA.formulaires.find(x=>x.id===formView), c=f&&f.champs.find(x=>x.id===eq.dataset.eqc); if(!c) return; const st=FV['_eq'+c.id];
     const id=eq.dataset.id; st.ids=st.ids.includes(id)?st.ids.filter(x=>x!==id):(c.multi?[...st.ids,id]:[id]); FV[c.id]=eqText(st); renderFill(); return; }
@@ -2684,7 +2690,7 @@ function drawFormList(){
       askConfirm('Supprimer ce formulaire ?',`« ${esc(f.titre)} » ne sera plus proposé.`,'Supprimer',async()=>{ const keep=DATA.formulaires; DATA.formulaires=keep.filter(x=>x!==f); if(!await run(saveData,'Formulaire supprimé')) DATA.formulaires=keep; else jlog('Formulaire supprimé',f.titre); drawFormList(); renderForms(); }); }
   };
 }
-const TYPES=[['texte','Texte court'],['long','Texte long'],['date','Date'],['nombre','Nombre'],['choix','Choix'],['equipe','Professionnel(s) de l’équipe']];
+const TYPES=[['texte','Texte court'],['long','Texte long'],['date','Date'],['nombre','Nombre'],['choix','Choix'],['equipe','Professionnel(s) de l’équipe'],['cases','Cases à cocher']];
 function editForm(id){
   const f=id?DATA.formulaires.find(x=>x.id===id):null;
   fdraft=f?JSON.parse(JSON.stringify(f)):{id:'f'+rid(),titre:'',description:'',categorie:(cats()[0]||{}).id||'',confidentiel:false,destinataires:'',objet:'',signataire:'',
@@ -2701,6 +2707,7 @@ async function feRender(){
   if(fePv==='form'){
     const fld=c=>{ const lab=`<span>${esc(c.label||'Sans nom')}${c.requis?' <b class="req" aria-hidden="true">*</b>':''}</span>`;
       if(c.type==='choix') return `<div class="field">${lab}<div class="choice">${kwParse(c.options).map(o=>`<span class="chip">${esc(o)}</span>`).join('')||'<small class="hint">indiquez les choix</small>'}</div></div>`;
+      if(c.type==='cases') return `<div class="field">${lab}<div class="choice">${caseOpts(c.options).map(o=>`<span class="chip">☐ ${esc(o)}</span>`).join('')||'<small class="hint">indiquez les cases, une par ligne</small>'}</div></div>`;
       if(c.type==='equipe') return `<div class="field">${lab}<div class="choice">${(equipe().length?equipe().slice(0,4).map(p=>p.nom):['(liste de l’équipe)']).map(n=>`<span class="chip">${esc(n)}</span>`).join('')}</div></div>`;
       if(c.type==='long') return `<label class="field">${lab}<textarea class="in" rows="2" disabled></textarea></label>`;
       return `<label class="field">${lab}<input class="in" type="${c.type==='date'?'date':c.type==='nombre'?'number':'text'}" disabled></label>`; };
@@ -2744,6 +2751,7 @@ function drawFormEditor(){
       <label class="field"><span class="mini-lbl">Type</span><select class="in" data-ck="type">${TYPES.map(([v,l])=>`<option value="${v}" ${c.type===v?'selected':''}>${l}</option>`).join('')}</select></label>
       ${c.type==='equipe'?`<div class="field"><span class="mini-lbl">Réglages</span><label class="chk"><input type="checkbox" data-ck="multi" ${c.multi?'checked':''}> Plusieurs personnes possibles</label>
         <div class="choice">${EQ_INFOS.map(([i,l])=>`<button type="button" class="chip sm" data-cinfo="${i}" data-cidx="${i}" aria-pressed="${(c.infos||['fonction','tel']).includes(i)}">${l}</button>`).join('')}</div><small class="hint">Coché = proposé par défaut ; l’équipe peut changer.</small></div>`
+      :c.type==='cases'?`<label class="field"><span class="mini-lbl">Cases proposées <small>(une par ligne ; l’équipe en coche une ou plusieurs)</small></span><textarea class="in" data-ck="options" rows="4">${esc(c.options||'')}</textarea></label>`
       :`<label class="field"><span class="mini-lbl">Choix possibles <small>(si « Choix », séparés par des virgules)</small></span><input class="in" data-ck="options" value="${esc(c.options||'')}" ${c.type==='choix'?'':'disabled'}></label>`}
       <label class="chk"><input type="checkbox" data-ck="requis" ${c.requis?'checked':''}> Obligatoire</label>
       <div class="row gap-xs h-input"><button class="iconbtn" data-cup="${i}" aria-label="Monter le champ « ${esc(c.label||i+1)} »" ${i?'':'disabled'}>${ICON.upA}</button><button class="iconbtn" data-cdel="${i}" aria-label="Supprimer le champ « ${esc(c.label||i+1)} »">${ICON.trash}</button></div>
@@ -2789,7 +2797,7 @@ function drawFormEditor(){
       if(!f.champs.length) errs.push('Ajoutez au moins un champ.');
       const labels=f.champs.map(c=>norm(c.label.trim())); if(labels.some(l=>!l)) errs.push('Chaque champ doit avoir un nom.');
       if(new Set(labels).size!==labels.length) errs.push('Deux champs ont le même nom.');
-      f.champs.forEach(c=>{ if(c.type==='choix'&&kwParse(c.options).length<2) errs.push(`« ${c.label} » : indiquez au moins deux choix.`); });
+      f.champs.forEach(c=>{ if(c.type==='choix'&&kwParse(c.options).length<2) errs.push(`« ${c.label} » : indiquez au moins deux choix.`); if(c.type==='cases'&&!caseOpts(c.options).length) errs.push(`« ${c.label} » : indiquez au moins une case.`); });
       String(f.destinataires||'').split(/[\s,;]+/).filter(Boolean).forEach(a=>{ if(!MAIL.test(a)) errs.push(`Adresse incorrecte : ${a}`); });
       if(!String(f.modele||'').trim()) errs.push('Le texte du document est vide.');
       const unknown=[...String(f.modele).matchAll(/\{([^{}]+)\}/g)].map(m=>m[1]).filter(k=>!labels.includes(norm(k.trim()))&&!Object.keys(AUTO_FIELDS).map(norm).includes(norm(k.trim())));
