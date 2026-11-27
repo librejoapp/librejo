@@ -5099,6 +5099,8 @@ cpBind();
 const CAT_EMOJI=[[/info/,'ℹ️'],[/orient/,'🧭'],[/inclusion/,'🗂️'],[/delivr/,'💊'],[/classeur/,'📒'],[/medic/,'🩺'],[/permanence/,'🚐'],
   [/heberg|precar/,'🏠'],[/cure|sevrage/,'🌿'],[/protocole/,'📋'],[/social|droit/,'🤝'],[/rdr|reduction|prevention/,'🧪'],[/admin|rh|equipe/,'🗄️'],[/formation/,'🎓']];
 const catEmoji=c=>c.emoji||(CAT_EMOJI.find(([re])=>re.test(norm(c.nom)))||[0,'📁'])[1];
+const clockNow=()=>{ const d=new Date(); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2,'0')}`; };
+setInterval(()=>{ const t=clockNow(); document.querySelectorAll('[data-clock]').forEach(x=>{ x.textContent='· '+t; }); },15000);
 function todayLong(){ const s=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); }
 DATA.formsEpingles=DATA.formsEpingles||[];
 /* Accueil : chaque bloc se déroule sur place en liste courte (formulaires, puis une ligne par catégorie) */
@@ -5207,7 +5209,7 @@ function homeHead(){
   const [,emo]=saison(), f=fete(), hr=new Date().getHours();
   const hello=hr>=5&&hr<12?'Bonjour':hr>=12&&hr<18?'Bon après-midi':'Bonsoir';
   const nom=(structure&&structure.nom)||'';
-  return `<div class="todayrow"><div><h1 class="hello">${hello}</h1><p class="today"><span class="saison" aria-hidden="true">${emo}</span>${todayLong()}${nom?` <span class="who">· ${esc(nom)}</span>`:''}</p></div>${f?`<span class="fete">${esc(f)}</span>`:''}</div>`;
+  return `<div class="todayrow"><div><h1 class="hello">${hello}</h1><p class="today"><span class="saison" aria-hidden="true">${emo}</span>${todayLong()} <span class="clock" data-clock>· ${clockNow()}</span>${nom?` <span class="who">· ${esc(nom)}</span>`:''}</p></div>${f?`<span class="fete">${esc(f)}</span>`:''}</div>`;
 }
 
 /* Emoji d'une catégorie (admin) */

@@ -303,9 +303,15 @@ input.in.w-num{width:84px}
 .sidever{margin:6px 0 0;text-align:center;font-size:10.5px;line-height:1.2;color:var(--text-on-dark-2);opacity:.85}
 html.menu-clair .sidever{color:var(--menu-muted)}
 /* La recherche (accueil, catégories, annuaire) et l'en-tête de l'administration restent en haut quand on descend */
-.bigsearch:has(> #q),.annu-tools,.stickhead{position:sticky;top:0;z-index:4;--tb:color-mix(in srgb,var(--blue) 14%,#fff);background:var(--tb);
+body{--tb:color-mix(in srgb,var(--blue) 14%,#fff);--tbl:color-mix(in srgb,var(--blue) 35%,#fff)}
+.bigsearch:has(> #q),.annu-tools,.stickhead{position:sticky;top:0;z-index:4;background:var(--tb);
   /* teinte prolongée sur toute la largeur par border-image (débordement « visuel » seulement : pas de barre de défilement horizontale) */
-  border-image:linear-gradient(to top,color-mix(in srgb,var(--blue) 35%,#fff) 1px,var(--tb) 1px) fill 0/0/0 100vmax}
+  border-image:linear-gradient(to top,var(--tbl) 1px,var(--tb) 1px) fill 0/0/0 100vmax}
+/* en haut de page, la teinte remonte jusqu'au bord de la fenêtre (plus de liseré clair au-dessus) */
+.panel>.stickhead:first-child,.panel>.bigsearch:first-child,#p-annu>.stickhead:first-child{border-image-outset:30px 100vmax 0}
+/* accueil : la ligne « Bonsoir » est dans la même teinte, jusqu'à la barre de recherche */
+.todayrow{border-bottom:0!important;border-image:linear-gradient(var(--tb),var(--tb)) fill 0/0/30px 100vmax 48px 100vmax}
+@media (max-width:900px){ .panel>.stickhead:first-child,.panel>.bigsearch:first-child{border-image-outset:20px 100vmax 0} .todayrow{border-image-outset:20px 100vmax 48px 100vmax} }
 .annu-tools,.stickhead{position:sticky}
 .bigsearch:has(> #q){padding:var(--sp-3) 0;margin-top:calc(-1 * var(--sp-3))}
 .annu-tools{padding-top:var(--sp-3);padding-bottom:var(--sp-3)}
@@ -1263,6 +1269,7 @@ html.menu-clair .catbtn svg{color:var(--cc,currentColor)}
 .todayrow{align-items:flex-end}
 .todayrow .today{margin:0;font-size:var(--fs-4);color:var(--text-3);font-weight:500}
 .todayrow .today .who{color:var(--text-3)}
+.todayrow .today .clock{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Mode admin apaisé */
 body.is-admin::before{height:3px;opacity:.9}
 #adminflag{background:var(--surface);color:var(--accent-text);border:1.5px solid var(--accent);padding:5px 5px 5px 12px;box-shadow:var(--shadow-card)}
