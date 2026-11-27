@@ -2604,6 +2604,103 @@ async function toWord(d){
     const st=$('#dx-st'); if(st){ $('#dx-bar').firstElementChild.style.width='100%'; st.innerHTML=`✅ <b>${esc(name)}</b> est dans vos Téléchargements (${r.pages} page${r.pages>1?'s':''}${r.ocr?', lu par l’OCR : relisez bien le texte':''}).${isAdmin?' Une fois corrigé, déposez-le sur la ligne du document pour en faire la nouvelle version.':''}`; } }
   catch(e){ console.error(e); const st=$('#dx-st'); if(st) st.textContent='Conversion impossible : '+(e.message||e); } }
 
+
+/* ======================================================================
+   Word → PDF, sans passer par l'impression.
+   Le navigateur met le Word en page (docx-preview, déjà utilisé pour l'aperçu et l'impression) ; on relit ensuite
+   cette page élément par élément (texte ligne par ligne avec sa police, sa taille, sa couleur ; fonds, bordures de
+   tableaux, images) et on la redessine dans un vrai PDF : le texte reste du texte (sélectionnable, cherchable).
+   ====================================================================== */
+const DP_SWAP={' ':' ',' ':' ','​':'','‑':'-','→':'->','☐':'[ ]','☑':'[x]','☒':'[x]','✓':'v','✔':'v','□':'[ ]','●':'•','▪':'•','◦':'o','➔':'->','':'•','':'•','':'>','':'v','−':'-'};
+const dpTxt=t=>String(t).replace(/[  ​‑→☐-☒✓✔□●▪◦➔−]/g,c=>DP_SWAP[c]??c);
+const dpRGB=c=>{ const m=String(c||'').match(/rgba?\(([^)]+)\)/); if(!m) return null; const v=m[1].split(/[,\s/]+/).map(Number); if(v.length>3&&v[3]===0) return null; return v.slice(0,3); };
+function dpNum(n,style){ const rom=v=>{ let r=''; [[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']].forEach(([a,b])=>{ while(v>=a){ r+=b; v-=a; } }); return r; };
+  const al=v=>{ let r=''; while(v>0){ v--; r=String.fromCharCode(97+v%26)+r; v=Math.floor(v/26); } return r; };
+  return /upper-roman/.test(style)?rom(n).toUpperCase():/lower-roman/.test(style)?rom(n):/upper-(alpha|latin)/.test(style)?al(n).toUpperCase():/lower-(alpha|latin)/.test(style)?al(n):String(n); }
+function dpMarkers(sc,win,d){ const out=[], C={}, rg=d.createRange();
+  const list=v=>String(v||'').trim().split(/\s+(?=[a-zA-Z_-])/).map(x=>x.trim().split(/\s+/)).filter(x=>x[0]&&x[0]!=='none');
+  sc.querySelectorAll('*').forEach(el=>{ const cs=win.getComputedStyle(el);
+    list(cs.counterReset).forEach(([n,v])=>{ C[n]=+v||0; }); list(cs.counterSet).forEach(([n,v])=>{ C[n]=+v||0; }); list(cs.counterIncrement).forEach(([n,v])=>{ C[n]=(C[n]||0)+(v===undefined?1:+v||0); });
+    const b=win.getComputedStyle(el,'::before'), ct=b&&b.content; if(!ct||ct==='none'||ct==='normal') return;
+    list(b.counterReset).forEach(([n,v])=>{ C[n]=+v||0; }); list(b.counterIncrement).forEach(([n,v])=>{ C[n]=(C[n]||0)+(v===undefined?1:+v||0); });
+    let txt=''; ct.replace(/"((?:[^"\\]|\\.)*)"|counter\(\s*([^,)\s]+)\s*(?:,\s*([^)]+))?\)/g,(m,str,name,style)=>{ txt+=str!==undefined?str.replace(/\\([0-9a-fA-F]{1,6})\s?/g,(q,h)=>String.fromCodePoint(parseInt(h,16))).replace(/\\(.)/g,'$1'):dpNum(C[name]||0,style||'decimal'); return ''; });
+    txt=txt.replace(/\t/g,'').trim(); if(!txt) return;
+    const tn=d.createTreeWalker(el,NodeFilter.SHOW_TEXT); let n, first=null; while((n=tn.nextNode())){ if(n.nodeValue.trim()){ first=n; break; } }
+    const er=el.getBoundingClientRect(); let top=er.top, bottom=er.top+parseFloat(b.fontSize||cs.fontSize)*1.2, tl=1e9;
+    if(first){ const i=first.nodeValue.search(/\S/); rg.setStart(first,i); rg.setEnd(first,i+1); const r=rg.getClientRects()[0]; if(r){ top=r.top; bottom=r.bottom; tl=r.left; } }
+    const left=er.left+(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.textIndent)||0), fs=parseFloat(b.fontSize)||parseFloat(cs.fontSize)||14, w=fs*.55*txt.length;
+    out.push({el,cs:{fontFamily:/symbol|wingding/i.test(b.fontFamily)?cs.fontFamily:b.fontFamily,fontWeight:b.fontWeight,fontStyle:b.fontStyle,fontSize:b.fontSize||cs.fontSize,color:b.color,textTransform:'none',textDecorationLine:''},s:txt,left:Math.min(left,tl-w-2),right:Math.min(left,tl-w-2)+w,top,bottom,mark:true}); });
+  return out; }
+async function docxToPdf(file,titre,prog){
+  if(!LJ_PDF_OK) await pdfReady();
+  const old=document.getElementById('dp-pack'); old&&old.remove();
+  const fr=document.createElement('iframe'); fr.id='dp-pack'; fr.setAttribute('aria-hidden','true'); fr.tabIndex=-1; fr.style.cssText='position:fixed;left:-12000px;top:0;width:1400px;height:900px;border:0;visibility:hidden';
+  document.body.appendChild(fr);
+  try{
+    const d=fr.contentDocument, win=fr.contentWindow; d.open(); d.write('<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff}section.docx{margin:0!important;box-shadow:none!important;display:block;box-sizing:border-box;overflow:visible}</style></head><body></body></html>'); d.close();
+    const lib=await getDocxLib(), holder=d.createElement('div'), st=d.createElement('div');
+    await lib.renderAsync(file,holder,st,{className:'docx',inWrapper:false,breakPages:true,ignoreLastRenderedPageBreak:false,renderHeaders:true,renderFooters:true,useBase64URL:true});
+    [...st.childNodes].forEach(x=>d.head.appendChild(x)); const secs=[...holder.querySelectorAll('section.docx')]; secs.forEach(sc=>d.body.appendChild(sc));
+    await Promise.all([...d.images].map(im=>im.complete?0:new Promise(r=>{ im.onload=im.onerror=r; }))); try{ await d.fonts.ready; }catch(e){}
+    if(!secs.length) throw new Error('document vide');
+    const {jsPDF}=window.jspdf; let doc=null, np=0;
+    const font=cs=>{ const f=(cs.fontFamily||'').toLowerCase(), b=(+cs.fontWeight>=600||cs.fontWeight==='bold'), i=/italic|oblique/.test(cs.fontStyle);
+      return [/courier|mono|consol/.test(f)?'courier':(/times|cambria|georgia|garamond|palatino|book antiqua|constantia|caladea|liberation serif/.test(f)||(/serif/.test(f)&&!/sans/.test(f.split(',')[0])&&!/arial|calibri|helvet|verdana|tahoma|segoe|aptos|carlito/.test(f)))?'times':'helvetica',b&&i?'bolditalic':b?'bold':i?'italic':'normal']; };
+    for(let si=0;si<secs.length;si++){ const sc=secs[si]; prog&&prog(si+1,secs.length);
+      const R=sc.getBoundingClientRect(), cs0=win.getComputedStyle(sc), k=72/96;     // px CSS → points
+      const pw=R.width*k, phDecl=(parseFloat(sc.style.minHeight||sc.style.height)||0), ph=/pt$/.test(sc.style.minHeight||sc.style.height||'')?phDecl:(phDecl?phDecl*k:(pw>700?595.3:841.9));
+      const padT=parseFloat(cs0.paddingTop)*k||0, padB=parseFloat(cs0.paddingBottom)*k||0, usable=Math.max(100,ph-padT-padB), tall=R.height*k>ph*1.03;
+      const base=np; let nPages=1, cuts=[0];
+      /* où tombe un élément : page et hauteur dans la page. En-tête et pied de page sont répétés sur chaque page.
+         Section plus haute qu'une page (Word n'a pas indiqué ses sauts de page) : on coupe entre deux lignes, jamais au milieu d'une ligne. */
+      const inHF=el=>el.closest&&(el.closest('header')?'h':el.closest('footer')?'f':'');
+      const place=(el,yPx)=>{ const y=(yPx-R.top)*k; if(!tall) return [[base,y]]; const hf=inHF(el);
+        if(hf==='h') return Array.from({length:nPages},(_,q)=>[base+q,y]); if(hf==='f') return Array.from({length:nPages},(_,q)=>[base+q,ph-(R.height*k-y)]);
+        const c=Math.max(0,y-padT); let q=0; while(q+1<cuts.length&&cuts[q+1]<=c+.5) q++; return [[base+q,padT+c-cuts[q]]]; };
+      const X=xPx=>(xPx-R.left)*k, ops={bg:[],bd:[],img:[],tx:[]};
+      /* fonds, bordures, images */
+      sc.querySelectorAll('*').forEach(el=>{ const cs=win.getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden') return; const r=el.getBoundingClientRect(); if(!r.width||!r.height) return;
+        if(el.tagName==='IMG'){ ops.img.push({el,r}); return; }
+        if(el===sc) return; const bg=dpRGB(cs.backgroundColor); if(bg&&!(bg[0]>250&&bg[1]>250&&bg[2]>250)&&cs.display!=='inline') ops.bg.push({el,r,c:bg});
+        [['Top',r.left,r.top,r.right,r.top],['Bottom',r.left,r.bottom,r.right,r.bottom],['Left',r.left,r.top,r.left,r.bottom],['Right',r.right,r.top,r.right,r.bottom]].forEach(([sd,x1,y1,x2,y2])=>{ const w=parseFloat(cs['border'+sd+'Width'])||0, stl=cs['border'+sd+'Style']; if(w>0&&stl!=='none'&&stl!=='hidden'){ const c=dpRGB(cs['border'+sd+'Color'])||[0,0,0]; ops.bd.push({el,x1,y1,x2,y2,w:Math.max(.4,w*k),c,dash:stl==='dashed'||stl==='dotted'}); } }); });
+      /* texte : ligne par ligne, à l'endroit exact où le navigateur l'a posé */
+      const tw=d.createTreeWalker(sc,NodeFilter.SHOW_TEXT), rg=d.createRange(); let nd;
+      while((nd=tw.nextNode())){ const txt=nd.nodeValue; if(!txt||!txt.trim()) continue; const pe=nd.parentElement; if(!pe) continue; const cs=win.getComputedStyle(pe); if(cs.display==='none'||cs.visibility==='hidden') continue;
+        const re=/\S+/g; let m, cur=null; const flush=()=>{ if(cur){ ops.tx.push(cur); cur=null; } };
+        while((m=re.exec(txt))){ rg.setStart(nd,m.index); rg.setEnd(nd,m.index+m[0].length); const rc=rg.getClientRects(); if(!rc.length) continue; const r=rc[0], r2=rc[rc.length-1];
+          if(cur&&Math.abs(cur.top-r.top)<2&&r.left>=cur.right-1){ cur.s+=' '+m[0]; cur.right=r2.right; } else { flush(); cur={el:pe,cs,s:m[0],left:r.left,right:r2.right,top:r.top,bottom:r.bottom}; } }
+        flush(); }
+      ops.tx.push(...dpMarkers(sc,win,d));
+      if(tall){ const A=[...ops.tx.filter(o=>!inHF(o.el)).map(o=>[(o.top-R.top)*k-padT,(o.bottom-R.top)*k-padT]),...ops.img.filter(o=>!inHF(o.el)).map(o=>[(o.r.top-R.top)*k-padT,(o.r.bottom-R.top)*k-padT])].filter(a=>a[1]-a[0]<usable).sort((a,b)=>a[0]-b[0]);
+        A.forEach(([t,b])=>{ const c0=cuts[cuts.length-1]; if(b>c0+usable&&t>c0+1) cuts.push(t); }); nPages=cuts.length; }
+      for(let q=0;q<nPages;q++){ if(!doc) doc=new jsPDF({unit:'pt',format:[pw,ph],orientation:pw>ph?'landscape':'portrait',compress:true}); else doc.addPage([pw,ph],pw>ph?'landscape':'portrait'); np++; }
+      /* on dessine : fonds, puis images, puis bordures, puis texte */
+      ops.bg.forEach(o=>place(o.el,o.r.top).forEach(([pg,y])=>{ doc.setPage(pg+1); doc.setFillColor(...o.c); doc.rect(X(o.r.left),y,o.r.width*k,Math.min(o.r.height*k,ph-y),'F'); }));
+      for(const o of ops.img){ try{ const im=o.el, c=document.createElement('canvas'), sx=Math.min(3,Math.max(1,(im.naturalWidth||o.r.width)/o.r.width)); c.width=Math.max(1,Math.round(o.r.width*Math.min(sx,2.5))); c.height=Math.max(1,Math.round(o.r.height*Math.min(sx,2.5)));
+          const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); const url=c.toDataURL('image/jpeg',.9);
+          place(im,o.r.top).forEach(([pg,y])=>{ doc.setPage(pg+1); doc.addImage(url,'JPEG',X(o.r.left),y,o.r.width*k,o.r.height*k,undefined,'FAST'); }); }catch(e){} }
+      ops.bd.forEach(o=>place(o.el,o.y1).forEach(([pg,y])=>{ doc.setPage(pg+1); doc.setDrawColor(...o.c); doc.setLineWidth(o.w); doc.setLineDashPattern(o.dash?[o.w*2,o.w*2]:[],0); doc.line(X(o.x1),y,X(o.x2),y+(o.y2-o.y1)*k); }));
+      doc.setLineDashPattern([],0);
+      ops.tx.forEach(o=>{ const [fam,sty]=font(o.cs), size=parseFloat(o.cs.fontSize)*k; if(!(size>1)) return; const str=dpTxt(o.cs.textTransform==='uppercase'?o.s.toUpperCase():o.s), col=dpRGB(o.cs.color)||[0,0,0], wT=(o.right-o.left)*k;
+        place(o.el,o.top).forEach(([pg,y])=>{ doc.setPage(pg+1); doc.setFont(fam,sty); doc.setFontSize(size); doc.setTextColor(...col);
+          const w0=doc.getTextWidth(str), n=o.mark?1:str.length, cspace=n>1&&!/[^\u0000-\u00ff]/.test(str)?Math.max(-size*.1,Math.min(size*.35,(wT-w0)/(n-1))):0, hLine=(o.bottom-o.top)*k, by=y+hLine-Math.max(0,(hLine-size)/2)-size*.22;
+          doc.text(str,X(o.left),by,{charSpace:cspace});
+          if(/underline/.test(o.cs.textDecorationLine||o.cs.textDecoration||'')){ doc.setDrawColor(...col); doc.setLineWidth(Math.max(.4,size/18)); doc.line(X(o.left),by+size*.12,X(o.right),by+size*.12); } }); });
+    }
+    doc.setProperties({title:titre||'Document',creator:'Librejo'});
+    return {blob:doc.output('blob'),pages:np};
+  }finally{ fr.remove(); }
+}
+async function toPdf(d){
+  let file; try{ file=await readRel(d.chemin); }catch(e){ if(e instanceof Cancel) return; const m=fsErr(e); m&&toast(m); return; }
+  openModal(`<h3 id="modal-title">📄 Créer une version PDF</h3><p><b>${esc(d.titre)}</b></p><div class="ocr-bar" id="dx-bar"><i></i></div><p class="hint" id="dx-st">Mise en page du document Word…</p>
+    <p class="hint m-0">Librejo met le Word en page puis le redessine en PDF : le texte reste du vrai texte. La mise en page peut différer un peu de celle de Word (polices, coupures de pages) : jetez un œil au résultat. L’original ne change pas.</p>
+    <div class="btns"><button class="secondary" data-close>Fermer</button></div>`);
+  try{ const r=await docxToPdf(file,d.titre,(n,N)=>{ const st=$('#dx-st'), bar=$('#dx-bar'); if(st) st.textContent=`Page ${n} sur ${N}…`; if(bar) bar.firstElementChild.style.width=Math.round(n/N*100)+'%'; });
+    const name=(d.fichier||d.titre||'document').replace(/\.[^.]+$/,'')+'.pdf'; downloadBlob(r.blob,name); if(isAdmin) jlog('Conversion en PDF',d.titre,'');
+    const st=$('#dx-st'); if(st){ $('#dx-bar').firstElementChild.style.width='100%'; st.innerHTML=`✅ <b>${esc(name)}</b> est dans vos Téléchargements (${r.pages} page${r.pages>1?'s':''}).`; } }
+  catch(e){ console.error(e); const st=$('#dx-st'); if(st) st.textContent='Conversion impossible : '+(e.message||e)+'. Vous pouvez passer par Imprimer › « Enregistrer au format PDF ».'; } }
+
 /* ---------- Modèles Word : champs {…} remplis par Librejo ---------- */
 const WNS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const XMLNS='http://www.w3.org/XML/1998/namespace';
@@ -2731,7 +2828,7 @@ function moreMenu(btn,d){
     ['Signaler un problème (plus à jour, erreur…)',svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),()=>signaler('d:'+d.id)],
   ];
   if(d.ext==='pdf'&&FSA) items.splice(1,0,['Créer une version Word (.docx)',ICON.file,()=>toWord(d)]);
-  if((d.ext==='docx'||d.ext==='doc')&&FSA) items.splice(1,0,['Créer une version PDF (par l’impression)',ICON.print,()=>{ toast('Dans la fenêtre d’impression, choisissez l’imprimante « Enregistrer au format PDF ».'); printDocAny(d); }]);
+  if(d.ext==='docx'&&FSA) items.splice(1,0,['Créer une version PDF',ICON.file,()=>toPdf(d)]);
   if(isAdmin&&tpOK(d.ext)) items.unshift(['Marquer : nom, version, n° de page, logo, pied de page',ICON.pen,()=>markDoc(d)]);
   if(isAdmin) items.unshift(['Modifier ce document (admin : nouvelle version ou correction)',ICON.pen,()=>modifyDoc(d)]);
   if(isAdmin) items.push(['Gérer : description, version, archive…',svg('<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'),()=>editDoc(d)]);
