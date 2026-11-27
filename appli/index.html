@@ -299,6 +299,15 @@ input.in.w-num{width:84px}
 .bigsearch svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:24px;height:24px;color:var(--text-3)}
 .bigsearch input{height:54px;padding-left:52px;font-size:var(--fs-5);font-weight:500;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card)}
 .bigsearch input:focus{border-color:var(--focus)}
+/* La recherche (accueil, catégories, annuaire) et l'en-tête de l'administration restent en haut quand on descend */
+.bigsearch:has(> #q),.annu-tools,.stickhead{position:sticky;top:0;z-index:40;--tb:color-mix(in srgb,var(--blue) 14%,#fff);background:var(--tb);box-shadow:0 0 0 100vmax var(--tb);clip-path:inset(0 -100vmax 0 -40px)}
+.bigsearch:has(> #q)::after,.annu-tools::after,.stickhead::after{content:'';position:absolute;left:-40px;right:-100vmax;bottom:0;height:1px;background:color-mix(in srgb,var(--blue) 35%,#fff)}
+.annu-tools,.stickhead{position:sticky}
+.bigsearch:has(> #q){padding:var(--sp-3) 0;margin-top:calc(-1 * var(--sp-3))}
+.annu-tools{padding-top:var(--sp-3);padding-bottom:var(--sp-3)}
+.stickhead{padding:var(--sp-3) 0;margin:calc(-1 * var(--sp-3)) 0 var(--sp-4)}
+.stickhead h2.sec{margin-top:0}
+.stickhead .row{margin:0}
 
 /* Cartes
    .card        bloc de formulaire ou de réglages ; .card.top : liseré coloré en haut (.blue)

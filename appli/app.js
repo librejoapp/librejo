@@ -1999,7 +1999,8 @@ function makeLetter({titre,confidentiel,date,paras,signataire,tp}){
   /* un paragraphe « --- » seul trace un trait sur toute la largeur (ex. les deux zones d'une ordonnance bizone) */
   paras.forEach(p=>{ if(p.trim()==='---'){ room(10); doc.setDrawColor(...INK); doc.setLineWidth(.5); doc.line(L,y-1,R,y-1); y+=7; return; }
     p.split('\n').forEach(line=>{ const c=line.trim().match(/^>>\s*(.*?)\s*<<$/); /* « >> texte << » : centré, en gras */
-      if(c){ doc.setFont(PF(),'bold'); doc.splitTextToSize(c[1],W).forEach(l=>{ room(6); doc.text(l,L+W/2,y,{align:'center'}); y+=6; }); doc.setFont(PF(),'normal'); return; }
+      if(c){ doc.setFont(PF(),'bold'); let fs=10.5; doc.setFontSize(fs); while(fs>8&&doc.getTextWidth(c[1])>W){ fs-=.25; doc.setFontSize(fs); } /* plus petit plutôt que sur deux lignes */
+        doc.splitTextToSize(c[1],W).forEach(l=>{ room(5.5); doc.text(l,L+W/2,y,{align:'center'}); y+=5.2; }); doc.setFontSize(11.5); doc.setFont(PF(),'normal'); return; }
       doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); }); y+=4; });
   let tw=0,th=0; if(tp){ tw=40; th=tw*tp.h/tp.w; if(th>32){ th=32; tw=th*tp.w/tp.h; } }
   y+=6; room(20+(tp?th+4:0));
@@ -2618,9 +2619,10 @@ function gridCard(d,ts,showCat){
 let asub='forms', fdraft=null;
 function renderAdmin(){
   if(!isAdmin){ $('#p-admin').innerHTML=''; return; }
-  $('#p-admin').innerHTML=`<h2 class="sec">Administration</h2>
+  $('#p-admin').innerHTML=`<div class="stickhead"><h2 class="sec">Administration</h2>
     <div class="row"><button class="chip" data-asub="forms" aria-pressed="${asub==='forms'}">Formulaires et modèles</button>
       <button class="chip" data-asub="syn" aria-pressed="${asub==='syn'}" title="Mots équivalents pour que la recherche trouve les documents (ex. « CMU » trouve « C2S »)">Mots de la recherche</button><button class="chip" data-asub="reg" aria-pressed="${asub==='reg'}">Réglages</button></div>
+    </div>
     <div id="asub"></div>`;
   if(asub==='forms') fdraft?drawFormEditor():drawFormList(); else if(asub==='syn') drawSyn(); else drawReg();
 }
@@ -3472,7 +3474,7 @@ function renderAnnu(){
   const mails=[...new Set(list.flatMap(x=>x.emails))], shown=list.slice(0,300), nd=isAdmin?annuDups().length:0;
   const who=(x,m)=>{ const c=anPers(x).find(y=>String(y.mail).toLowerCase()===m.toLowerCase()); return c?` <small>${esc(c.nom)}</small>`:''; };
   p.innerHTML=`<div class="listhead"><h2 class="sec">Annuaire</h2>
-      <div class="row">${isAdmin?`<button class="primary" data-an="new">${ICON.plus}Ajouter</button><button class="secondary" data-an="import">${ICON.up}Importer</button>${nd?`<button class="secondary warnbtn" data-an="dups">Doublons (${nd})</button>`:''}`:''}
+      <div class="row">${!isAdmin?`<button class="secondary" data-an="import" title="Demande le mot de passe admin">${ICON.up}Importer des contacts</button>`:''}${isAdmin?`<button class="primary" data-an="new">${ICON.plus}Ajouter</button><button class="secondary" data-an="import">${ICON.up}Importer</button>${nd?`<button class="secondary warnbtn" data-an="dups">Doublons (${nd})</button>`:''}`:''}
       <details class="ab-more an-exp"><summary class="secondary">${ICON.dl}Exporter</summary><div class="ab-menu">
         <button data-ex="xls"><b>Tableur (Excel)</b><small>pour le relire ou le corriger</small></button>
         <button data-ex="outlook"><b>Carnet d’adresses</b><small>à importer dans Outlook ou Gmail</small></button>
@@ -3504,7 +3506,7 @@ function renderAnnu(){
     const ex=e.target.closest('[data-ex]'); if(ex){ e.target.closest('details').open=false; exportAnnu(ex.dataset.ex,list); return; }
     const a=e.target.closest('[data-an]'); if(!a) return;
     if(a.dataset.an==='new') return editPartner(null);
-    if(a.dataset.an==='import') return importAnnu();
+    if(a.dataset.an==='import'){ if(!isAdmin){ toast('Importer des contacts se fait en mode admin : entrez le mot de passe.'); $('#adminbtn').click(); return; } return importAnnu(); }
     if(a.dataset.an==='dups') return showDups();
     if(a.dataset.an==='mailall') return mailCompose({to:mails,subject:'',body:'Bonjour,\n\n\n\nCordialement,\n'+structure.signataire,files:[]});
     if(a.dataset.an==='copyall'){ toast(await copyText(mails.join('; '))?`${mails.length} adresses copiées`:'Copie impossible'); return; }
