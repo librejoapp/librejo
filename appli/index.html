@@ -307,6 +307,42 @@ body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearc
 .ad-sim small{color:var(--text-3)}
 .bigcat{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;padding:var(--sp-3);border:1px dashed var(--accent-line);border-radius:10px;background:var(--accent-soft);margin:0 0 var(--sp-3)}
 .bigcat span{flex:1 1 320px}
+.cg-wrap{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:var(--sp-4);align-items:start}
+@media (max-width:1100px){ .cg-wrap{grid-template-columns:1fr} }
+.cg-cal,.cg-side{display:flex;flex-direction:column;gap:var(--sp-3)}
+.cg-dot{display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--c);margin-right:6px;vertical-align:-1px;flex:none}
+.cg-type[aria-pressed=true]{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.cg-nav{display:flex;align-items:center;justify-content:space-between}
+.cg-months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-5);user-select:none;touch-action:none}
+@media (max-width:700px){ .cg-months{grid-template-columns:1fr} }
+.cg-month h4{margin:0 0 var(--sp-2);text-transform:capitalize;color:var(--navy);font-size:var(--fs-4)}
+.cg-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cg-wd{text-align:center;font-size:var(--fs-1);font-weight:700;color:var(--text-3);padding-bottom:2px}
+.cg-day{aspect-ratio:1/1;min-height:36px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer;padding:0}
+.cg-day:hover{border-color:var(--navy)}
+.cg-day.off{background:var(--bg);color:var(--text-3);font-weight:400}
+.cg-day.fer{background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 4px,var(--line) 4px,var(--line) 5px);color:var(--text-3)}
+.cg-day.today{outline:2px solid var(--navy);outline-offset:1px}
+.cg-day.sel{background:var(--c);border-color:var(--c);color:#fff}
+.cg-day.sel.off,.cg-day.sel.fer{background:color-mix(in srgb,var(--c) 22%,var(--surface));color:var(--text-3);border-color:color-mix(in srgb,var(--c) 45%,var(--surface))}
+.cg-legend{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin:0;font-size:var(--fs-2);color:var(--text-3);align-items:center}
+.cg-l{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--line);margin-right:5px;vertical-align:-2px;background:var(--bg)}
+.cg-l.fer{background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 3px,var(--line) 3px,var(--line) 4px)}
+.cg-table{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
+.cg-table th{text-align:left;font-size:var(--fs-1);text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);padding:4px 6px;border-bottom:1px solid var(--line-strong)}
+.cg-table td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.cg-table small{display:block;color:var(--text-3);font-size:var(--fs-1)}
+.cg-table .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cg-table tfoot td{border-bottom:0;padding:5px 6px}
+.cg-table .cg-tot td{border-top:2px solid var(--navy);font-weight:700;color:var(--navy);font-size:var(--fs-4)}
+.cg-warn{margin:0;padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-5);border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:var(--fs-2)}
+.news{list-style:none;margin:0 0 var(--sp-4);padding:0;display:flex;flex-direction:column;gap:6px}
+.news li{display:flex;align-items:center;gap:var(--sp-3);padding:8px var(--sp-3);border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.news li a{font-weight:700;color:var(--navy);text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news li a:hover{text-decoration:underline}
+.news li small{color:var(--text-3);margin-left:auto;white-space:nowrap}
+.news .badge{flex:none;margin:0}
+.newshead{display:flex;align-items:center;gap:var(--sp-3)}.newshead .linkbtn{margin-left:auto}
 .btnlink{display:inline-flex;align-items:center;text-decoration:none;border-radius:var(--r-sm);padding:6px 12px;font-weight:600}
 .installbtn{border-color:var(--accent)!important}
 .installbtn svg{width:16px;height:16px;flex:none}
