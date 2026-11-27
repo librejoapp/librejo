@@ -2674,7 +2674,41 @@ function builtinRow(f){
 }
 function ownRow(f){
   return `<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${esc(formEmoji(f))}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
-      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`;
+      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="secondary" data-fexp="${esc(f.id)}">Exporter</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`;
+}
+/* Formulaires de la structure : exporter / importer (fichier .json). Rien d'exécutable : seuls le texte
+   et les champs sont repris, vérifiés un par un ; l'admin confirme avant l'ajout. */
+const FORM_FILE='librejo-formulaires';
+function formExport(f){
+  const o={format:FORM_FILE,version:1,formulaires:[{titre:f.titre,description:f.description||'',emoji:f.emoji||'',groupe:f.groupe||'mixte',confidentiel:!!f.confidentiel,
+    destinataires:f.destinataires||'',objet:f.objet||'',signataire:f.signataire||'',modele:f.modele||'',motscles:f.motscles||[],
+    champs:(f.champs||[]).map(c=>({label:c.label,type:c.type,options:c.options||'',requis:!!c.requis,...(c.multi?{multi:true}:{}),...(c.infos?{infos:c.infos}:{})}))}]};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));
+  a.download=('Formulaire-'+f.titre).replace(/[\\/:*?"<>|]+/g,'-').slice(0,80)+'.json'; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+  toast('Formulaire exporté');
+}
+function formFromJson(o){
+  if(!o||typeof o!=='object') return null;
+  const str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+  const champs=(Array.isArray(o.champs)?o.champs:[]).slice(0,80).filter(c=>c&&typeof c==='object').map(c=>({id:'c'+rid(),label:str(c.label,200).trim(),
+    type:TYPES.some(t=>t[0]===c.type)?c.type:'texte',options:str(c.options,20000),requis:!!c.requis,...(c.multi?{multi:true}:{}),
+    ...(Array.isArray(c.infos)?{infos:c.infos.filter(x=>EQ_INFOS.some(i=>i[0]===x))}:{})})).filter(c=>c.label);
+  const titre=str(o.titre,200).trim(); if(!titre||!champs.length) return null;
+  const cat=cats().find(c=>o.groupe==='med'&&/m[ée]dic/i.test(c.nom))||cats()[0]||{};
+  return {id:'f'+rid(),titre,description:str(o.description,1000),emoji:str(o.emoji,8),groupe:FORM_GROUPS.some(g=>g[0]===o.groupe)?o.groupe:'mixte',
+    categorie:cat.id||'',confidentiel:!!o.confidentiel,destinataires:str(o.destinataires,500),objet:str(o.objet,200),signataire:str(o.signataire,200),
+    champs,modele:str(o.modele,50000),motscles:Array.isArray(o.motscles)?o.motscles.filter(x=>typeof x==='string').slice(0,30):[]};
+}
+async function formsImport(file){
+  let j; try{ if(file.size>2e6) throw 0; j=JSON.parse(await file.text()); }catch(e){ toast('Ce fichier n’est pas un formulaire Librejo.'); return; }
+  const list=(Array.isArray(j)?j:Array.isArray(j&&j.formulaires)?j.formulaires:[j]).slice(0,50).map(formFromJson).filter(Boolean);
+  if(!list.length){ toast('Aucun formulaire lisible dans ce fichier.'); return; }
+  askConfirm(list.length>1?`Ajouter ${list.length} formulaires ?`:'Ajouter ce formulaire ?',
+    `<ul class="m-0">${list.map(f=>`<li><b>${esc(f.titre)}</b> (${f.champs.length} champ${f.champs.length>1?'s':''})</li>`).join('')}</ul>Ils rejoignent les formulaires de la structure : relisez-les avant de les proposer à l’équipe.`,
+    'Ajouter',async()=>{ const keep=DATA.formulaires.slice(); DATA.formulaires.push(...list);
+      if(!await run(saveData,list.length>1?`${list.length} formulaires ajoutés`:'Formulaire ajouté')) DATA.formulaires=keep;
+      else { list.forEach(f=>{ jlog('Formulaire importé',f.titre); FL_OPEN.add('own:'+f.groupe); }); }
+      drawFormList(); renderForms(); },false);
 }
 function drawFormList(){
   if(!$('#asub')) return;
@@ -2686,13 +2720,15 @@ function drawFormList(){
     <h3>Formulaires de la structure</h3>
     <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
     ${own?`<div class="homecol">${own}</div>`:'<p class="hint">Aucun formulaire pour l’instant : créez-en un, ou ajoutez un modèle de la bibliothèque ci-dessous.</p>'}
-    <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>
+    <div class="row gap-s"><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button><button class="secondary" data-fimp>Importer un formulaire (.json)</button><input type="file" id="f-imp" accept=".json,application/json" hidden></div>
+    <p class="hint m-0">« Exporter » enregistre un formulaire dans un fichier, pour le donner à une autre structure ; « Importer » l’ajoute ici. Relisez toujours un formulaire importé.</p></div>
     <div class="card top w-wide">
     <h3>Formulaires intégrés</h3>
     <p class="hint">Leur texte est fixe, mais ce qu'ils proposent se règle : destinataires, adresses, médecins, partenaires. « Masquer » les retire de la liste de l'équipe.</p>
     <div class="homecol">${integ}</div></div>
     ${modelesHTML()}`;
-  const box=$('#asub'); if(!box._flToggle){ box._flToggle=true; box.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.fl){ if(d.open) FL_OPEN.add(d.dataset.fl); else FL_OPEN.delete(d.dataset.fl); } },true); }
+  const box=$('#asub'); if(!box._flImp){ box._flImp=true; box.addEventListener('change',e=>{ if(e.target.id==='f-imp'&&e.target.files[0]){ formsImport(e.target.files[0]); e.target.value=''; } }); }
+  if(!box._flToggle){ box._flToggle=true; box.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.fl){ if(d.open) FL_OPEN.add(d.dataset.fl); else FL_OPEN.delete(d.dataset.fl); } },true); }
   $('#asub').onclick=async e=>{
     const ma=e.target.closest('[data-madd]'); if(ma) return addModele(ma.dataset.madd);
     const fo=e.target.closest('[data-foff]'); if(fo){ const id=fo.dataset.foff, hidden=formsOff().includes(id), old=PAR.formsOff, oldOn=PAR.formsOn, base=formsOffBase();
@@ -2701,6 +2737,8 @@ function drawFormList(){
       if(!await run(saveParams,hidden?'Formulaire proposé à l’équipe':'Formulaire masqué pour l’équipe')){ PAR.formsOff=old; PAR.formsOn=oldOn; }
       renderForms(); drawFormList(); return; }
     if(e.target.closest('[data-fnew]')) return editForm(null);
+    if(e.target.closest('[data-fimp]')) return $('#f-imp').click();
+    const ex=e.target.closest('[data-fexp]'); if(ex){ const f=DATA.formulaires.find(x=>x.id===ex.dataset.fexp); if(f) formExport(f); return; }
     const ed=e.target.closest('[data-fedit]'); if(ed) return editForm(ed.dataset.fedit);
     const du=e.target.closest('[data-fdup]'); if(du){ const f=DATA.formulaires.find(x=>x.id===du.dataset.fdup); const c=JSON.parse(JSON.stringify(f)); c.id='f'+rid(); c.titre+=' (copie)'; DATA.formulaires.push(c); if(!await run(saveData,'Formulaire dupliqué')) DATA.formulaires.pop(); return drawFormList(); }
     const de=e.target.closest('[data-fdel]'); if(de){ const f=DATA.formulaires.find(x=>x.id===de.dataset.fdel);
