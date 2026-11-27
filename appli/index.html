@@ -151,7 +151,7 @@ h2.sec .o{color:var(--blue);font-weight:600}
 
 /* ---------- 3. Mise en page ---------- */
 .app{min-height:100vh}
-.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sbw);background:var(--navy);color:var(--on-color);display:flex;flex-direction:column;padding:20px 14px 16px;overflow-y:auto;z-index:5}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sbw);background:var(--navy);color:var(--on-color);display:flex;flex-direction:column;padding:20px 14px 16px;overflow-y:auto;z-index:5} /* au-dessus du bandeau fixe du haut (z-index 4), qui s'étend jusqu'à lui */
 .sidebar .brand{display:flex;align-items:center;gap:var(--sp-3);padding:2px var(--sp-2) 22px}
 
 /* Navigation et catégories du menu */
@@ -300,8 +300,8 @@ input.in.w-num{width:84px}
 .bigsearch input{height:54px;padding-left:52px;font-size:var(--fs-5);font-weight:500;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card)}
 .bigsearch input:focus{border-color:var(--focus)}
 /* La recherche (accueil, catégories, annuaire) et l'en-tête de l'administration restent en haut quand on descend */
-.bigsearch:has(> #q),.annu-tools,.stickhead{position:sticky;top:0;z-index:40;--tb:color-mix(in srgb,var(--blue) 14%,#fff);background:var(--tb);box-shadow:0 0 0 100vmax var(--tb);clip-path:inset(0 -100vmax 0 -40px)}
-.bigsearch:has(> #q)::after,.annu-tools::after,.stickhead::after{content:'';position:absolute;left:-40px;right:-100vmax;bottom:0;height:1px;background:color-mix(in srgb,var(--blue) 35%,#fff)}
+.bigsearch:has(> #q),.annu-tools,.stickhead{position:sticky;top:0;z-index:4;--tb:color-mix(in srgb,var(--blue) 14%,#fff);background:var(--tb);box-shadow:0 0 0 100vmax var(--tb);clip-path:inset(0 -100vmax)}
+.bigsearch:has(> #q)::after,.annu-tools::after,.stickhead::after{content:'';position:absolute;left:-100vmax;right:-100vmax;bottom:0;height:1px;background:color-mix(in srgb,var(--blue) 35%,#fff)}
 .annu-tools,.stickhead{position:sticky}
 .bigsearch:has(> #q){padding:var(--sp-3) 0;margin-top:calc(-1 * var(--sp-3))}
 .annu-tools{padding-top:var(--sp-3);padding-bottom:var(--sp-3)}
