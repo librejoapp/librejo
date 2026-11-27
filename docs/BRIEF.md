@@ -96,7 +96,7 @@ Une version que n'importe quelle petite structure médico-sociale peut installer
 5. **Distribution et installation** : PWA en voie principale, zip hors ligne en secours, mode dégradé et kit DSI. → **PWA prototypée** (voir « État du prototype ») ; **mode dégradé fait** (26/11/2026, voir « Mode dégradé ») ; zip et kit DSI à faire.
 6. **Documentation et support** : un mode d'emploi générique, et une décision sur qui maintient (licence libre, diffusion par un réseau comme la Fédération Addiction ?). → Un `LISEZ-MOI.md` accompagne le prototype ; le reste est à faire.
 7. **Deux admins qui modifient en même temps** : avant, le dernier enregistrement l'emportait sans rien dire. → **Fait (26/11/2026)** : avant d'écrire un fichier de réglages, Librejo vérifie qu'il n'a pas changé depuis qu'il l'a lu ; sinon « Recharger ses modifications », « Enregistrer quand même » (après confirmation) ou « Voir les différences ». Copies en conflit des services cloud signalées à l'admin (jamais supprimées par Librejo), modification récente d'un autre poste signalée à l'entrée en mode admin. Détail dans le README, « Deux postes qui modifient en même temps ».
-8. **Ordonnance** : la remplacer par un « En-tête d'ordonnance ». → **Fait** : c'est un modèle de la bibliothèque, et l'ancien formulaire est masqué par défaut.
+8. **Ordonnance** : la remplacer par un « En-tête d'ordonnance ». → **Fait** : c'est un modèle de la bibliothèque. L'ancien formulaire (listes de médicaments à posologie pré-remplie) a été retiré du code le 27/11/2026 : il entrait dans la définition d'un logiciel d'aide à la prescription.
 
 ### Ordre de travail (mis à jour le 25/11/2026)
 
@@ -145,7 +145,7 @@ Le champ `{Association}` d'un modèle est rempli tout seul avec le nom de la str
 
 **Éditeur de formulaire avec aperçu.** En modifiant un formulaire, on voit à côté à quoi il ressemble : soit la page de saisie, soit le PDF final.
 
-**Formulaires intégrés masquables.** L'admin peut masquer un formulaire intégré dont il n'a pas besoin. L'ancien formulaire d'ordonnance est masqué par défaut.
+**Formulaires intégrés masquables.** L'admin peut masquer un formulaire intégré dont il n'a pas besoin. L'ancien formulaire d'ordonnance a été retiré (27/11/2026).
 
 **Miniatures des liens.** Les liens web ont une vignette (générée, ou une image choisie par l'admin : collée ou depuis un fichier).
 

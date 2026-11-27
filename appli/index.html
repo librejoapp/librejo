@@ -894,19 +894,9 @@ ol.how.compact{font-size:var(--fs-3);margin:var(--sp-1) 0}
 .photo span{font-size:var(--fs-2)}
 @media (max-width:700px){ .photo{grid-template-columns:1fr var(--h-control)} .photo img{width:100%;height:auto} }
 
-/* Certificat libre et ordonnance */
+/* Certificat libre */
 .cl-start{margin:0;padding:var(--sp-2) var(--sp-3);background:var(--surface-2);border-radius:var(--r-sm);font-weight:600;color:var(--navy)}
-.ordo-cat{display:grid;gap:var(--sp-2);max-height:340px;overflow:auto;padding-right:var(--sp-1)}
-.ordo-group{display:grid;gap:var(--sp-1)}
-.ordo-lines{margin:0;padding-left:22px;display:grid;gap:var(--sp-3)}
-.ordo-line{display:grid;gap:var(--sp-2);padding-bottom:var(--sp-3);border-bottom:1px solid var(--line-soft)}
-.ordo-line::marker{font-weight:700;color:var(--navy)}
-.ordo-line.bad input:placeholder-shown,.ordo-line.bad textarea:placeholder-shown{border-color:var(--warn);background:var(--warn-bg)}
-.ordo-head{display:grid;grid-template-columns:1fr auto var(--h-control);gap:var(--sp-2);align-items:center}
-.ordo-aide{margin:0;padding:var(--sp-2) var(--sp-3);background:var(--accent-soft);border-radius:var(--r-sm);font-size:var(--fs-2);color:var(--text-2)}
-.ordo-aide b{color:var(--accent-text)}
 .od-row .od-aide{grid-column:1/-2}
-.ordo-name{font-weight:700;min-height:var(--h-input)!important;resize:vertical}
 .bilan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--sp-1) var(--sp-4)}
 .od-row.coche{grid-template-columns:2fr 1fr var(--h-control)}
 .od-row{display:grid;grid-template-columns:1.4fr 1fr 2.2fr var(--h-control);gap:var(--sp-2);align-items:start;padding-bottom:var(--sp-2);border-bottom:1px solid var(--line-soft)}
@@ -1110,7 +1100,16 @@ table.docs img.thumb.land:hover{transform:scale(5.5)}
 
 /* Accueil : bloc « Documents » repliable, les catégories à l'intérieur */
 .hdocsec{overflow:visible}
-.hdocsec>.hcats{padding:var(--sp-2);border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 var(--r-md) var(--r-md)}
+.hdocsec>.hcats{position:relative;padding:var(--sp-3) var(--sp-3) var(--sp-3) 44px;border-top:1px solid var(--line);background:var(--surface-2);border-radius:0 0 var(--r-md) var(--r-md)}
+/* Hiérarchie lisible : niveau 2 (catégories) décalé et relié par un trait canard, niveau 3 (documents) encore décalé, sur fond teinté et repéré par un trait ambre */
+.hdocsec>.hcats::before{content:'';position:absolute;left:24px;top:var(--sp-3);bottom:var(--sp-3);width:3px;border-radius:3px;background:color-mix(in srgb,var(--blue) 40%,transparent)}
+.hcats>.hsec{box-shadow:var(--shadow-soft)}
+.hcats>.hsec>summary{min-height:52px}
+.hcats>.hsec .he{width:34px;height:34px;font-size:18px}
+.hcats>.hsec>.hlist{background:var(--surface-3);border-left:3px solid var(--accent-line);margin-left:var(--sp-4)}
+.hcats>.hsec .hrow{padding-left:var(--sp-3)}
+.hsec.main>.hlist .hrow{padding-left:calc(var(--sp-4) + 18px)}
+.hsec.main>.hlist>li.hsub{padding-top:var(--sp-3);color:var(--navy)}
 #modal-box .dm-list{margin:6px 0 10px}
 .lj-brandbox{width:100%}
 .lj-brand{margin:0;line-height:0}
@@ -1487,7 +1486,6 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
     <section class="panel deliv" id="p-cmi" hidden></section>
     <section class="panel deliv" id="p-att" hidden></section>
     <section class="panel deliv" id="p-mt" hidden></section>
-    <section class="panel deliv" id="p-ordo" hidden></section>
     <section class="panel deliv" id="p-cl" hidden></section>
     <section class="panel deliv" id="p-urg" hidden></section>
     <section class="panel deliv" id="p-cp" hidden></section>
