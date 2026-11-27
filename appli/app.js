@@ -478,7 +478,7 @@ function applyParams(){
 applyParams();
 
 /* ---------- Apparence choisie par l'admin : couleurs du menu et des boutons, logo de la structure ---------- */
-const THEME_DEF={menu:'#174f4c',accent:'#E9A23B',logo:null,menuLogo:'librejo',nom:true,menuStyle:'clair'};
+const THEME_DEF={menu:'#174f4c',accent:'#E9A23B',logo:null,menuLogo:'librejo',nom:true,menuStyle:'fonce'};
 const THEME_MENUS=[['#174f4c','Canard'],['#0d2a5e','Marine'],['#1f5130','Forêt'],['#5a2a52','Prune'],['#2f3a4a','Ardoise'],['#7a2e1f','Brique']];
 const THEME_ACCENTS=[['#E9A23B','Ambre'],['#ee8a12','Orange'],['#e8735a','Corail'],['#f2c230','Soleil'],['#3fbf9b','Menthe'],['#e57fa6','Rose']];
 function hexRgb(x){ x=String(x||'').replace('#',''); if(x.length===3) x=x.split('').map(c=>c+c).join(''); const n=parseInt(x,16); return x.length!==6||isNaN(n)?null:[n>>16&255,n>>8&255,n&255]; }
@@ -490,7 +490,7 @@ function reach(c,bg,target,toward){ let r=c, i=0; while(ratio(r,bg)<target&&i<60
 function themeVars(t){
   const W=[255,255,255], K=[0,0,0];
   const m0=hexRgb(t.menu)||hexRgb(THEME_DEF.menu), a=hexRgb(t.accent)||hexRgb(THEME_DEF.accent);
-  const CREAM=[251,246,236], BG=[247,244,236], mbg=mixRgb(m0,CREAM,.95);
+  const CREAM=[251,246,236], BG=[247,244,236], mbg=mixRgb(m0,CREAM,.84);
   /* Les jetons de texte tirés du thème sont lisibles sur tous les fonds clairs où ils sont posés, pas seulement
      sur le blanc : papier, crème, papier 2 (survols), les quatre fonds de saison de l'accueil et le menu clair. */
   const SURF=[W,BG,[240,236,226],[230,238,249],[234,245,230],[253,243,220],[248,233,220],mbg];
@@ -2846,7 +2846,7 @@ function drawReg(){
     <div class="card top w-wide" data-rsec="apparence"><h3>Apparence</h3>
       <p class="hint muted m-0">Aperçu immédiat sur ce poste. Les couleurs ne s’appliquent à tous les postes qu’une fois enregistrées ; si vous quittez la page sans enregistrer, Librejo vous le demande.</p>
       <div class="ap-grid">
-        <div><b>Style du menu</b><div class="choice">${[['clair','Clair (recommandé)'],['fonce','Foncé']].map(([v,l])=>`<button type="button" class="chip" data-apstyle="${v}" aria-pressed="${(ap.menuStyle||'clair')===v}">${l}</button>`).join('')}</div></div>
+        <div><b>Style du menu</b><div class="choice">${[['fonce','Foncé (recommandé)'],['clair','Clair']].map(([v,l])=>`<button type="button" class="chip" data-apstyle="${v}" aria-pressed="${(ap.menuStyle||'fonce')===v}">${l}</button>`).join('')}</div></div>
         <div><b>Couleur du menu et des titres</b><div class="ap-sw">${sw(THEME_MENUS,'menu')}</div>
           ${adj(ap.menu,th.vars['--navy'],'Couleur appliquée aux titres et au menu')}</div>
         <div><b>Couleur des boutons et des repères</b><div class="ap-sw">${sw(THEME_ACCENTS,'accent')}</div>
