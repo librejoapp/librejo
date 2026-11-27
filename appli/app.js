@@ -1126,6 +1126,7 @@ function formItems(){ return [{id:'__conges',titre:'Demande de congés',descript
   {id:'__cl',titre:'Certificat libre',description:"Certificat « Je soussigné(e), Dr X, certifie que… » : le médecin, la date, et le texte à écrire.",motscles:['certificat','certifie','soussigné','attestation médicale','sport'],kind:'form'},{id:'__att',titre:'Attestation de suivi',description:"Atteste qu'une personne est suivie (obligation de soins, injonction thérapeutique, SPIP, employeur), sans information médicale.",motscles:['attestation','suivi','obligation de soins','injonction','SPIP','juge','justice','présence','rendez-vous'],kind:'form'},
   {id:'__mt',titre:'Courrier au médecin traitant',description:"Courrier médical au médecin traitant : information de suivi, compte rendu, demande d'avis ou fin de suivi.",motscles:['courrier','lettre','médecin traitant','généraliste','confrère','compte rendu','liaison'],kind:'form'},{id:'__cmi',titre:'Certificat médical initial – violences',description:"Certificat pour une personne majeure victime de violences (modèle inspiré de l'Ordre des médecins) : dires, examen, lésions, ITT, photos datées en annexe.",motscles:['certificat','CMI','violences','coups','agression','ITT','constatation','photos','plainte','médecin légiste'],kind:'form'},{id:'__relais',titre:'Demande de relais TSO',description:"Adresser un patient à un autre CSAPA ou à un médecin qui prendra le relais de la prescription : posologie, antécédents, traitements associés.",motscles:['relais','orientation','méthadone','buprénorphine','CSAPA','médecin','prescription','TSO'],categorie:(DATA.categories.find(c=>/orientation/i.test(c.nom))||{}).id||'',kind:'form'},{id:'__deliv',titre:'Délivrance exceptionnelle de TSO',description:"Attestation envoyée au CSAPA de suivi quand un patient est venu chercher son traitement (méthadone, buprénorphine) chez nous.",motscles:['attestation','méthadone','buprénorphine','CSAPA','week-end'],categorie:(DATA.categories.find(c=>/d[ée]livrance/i.test(c.nom))||{}).id||'',kind:'form'}]
   .filter(x=>!formsOff().includes(x.id)).concat(DATA.formulaires.map(f=>({...f,kind:'form'})))
+  .concat(zoneDocs().map(d=>({id:'pdf:'+d.id,titre:d.titre,description:'Votre document habituel, à remplir à l’écran'+(d.description?' · '+d.description:''),motscles:[...(d.motscles||[]),'remplir','formulaire'],kind:'form',groupe:d.zonesGroupe||'mixte',emoji:'🖊️'})))
   .concat(cerfaDocs().map(d=>({id:'cerfa:'+d.id,titre:d.titre,description:(d.cerfa.numero?'Cerfa '+d.cerfa.numero+', ':'Cerfa ')+'pré-rempli avec les infos de la structure'+(d.cerfa.pieces?', avec la liste des pièces':''),motscles:[...(d.motscles||[]),'cerfa',d.cerfa.numero||''],kind:'form',groupe:d.cerfa.rubrique||'social',emoji:'🧾'}))); }
 /* Formulaires proposés selon la structure : les formulaires médicaux seulement s'il y a des médecins,
    ceux des traitements de substitution seulement pour un CSAPA ou un CAARUD. L'admin garde la main :
@@ -1943,7 +1944,7 @@ function openForm(id){
   if(id==='__mt'){ mtErr=false; formView='__mt'; setTab('mt'); window.scrollTo({top:0}); return; }
   if(id==='__cmi'){ cmErr=false; formView='__cmi'; setTab('cmi'); window.scrollTo({top:0}); return; }
   if(id==='__relais'){ rlErr=false; formView='__relais'; setTab('relais'); window.scrollTo({top:0}); return; }
-  if(String(id).startsWith('cerfa:')){ formView=id; setTab('forms'); window.scrollTo({top:0}); return; }
+  if(String(id).startsWith('cerfa:')||String(id).startsWith('pdf:')){ formView=id; setTab('forms'); window.scrollTo({top:0}); return; }
   const f=DATA.formulaires.find(x=>x.id===id); if(!f) return;
   formView=id; FV={_date:today(),_to:f.destinataires||''}; fShowErr=false; setTab('forms'); window.scrollTo({top:0});
 }
@@ -1981,6 +1982,7 @@ document.addEventListener('toggle',e=>{ const d=e.target; if(!d.dataset||!d.data
 function renderFill(){
   if(formView==='__conges') return renderConges();
   if(String(formView||'').startsWith('cerfa:')) return renderCerfa();
+  if(String(formView||'').startsWith('pdf:')) return renderPdfFill();
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f){ formView=null; return renderForms(); }
   const errs=fShowErr?validateFill(f):[];
   const bad=new Set(errs.map(x=>x.k));
@@ -2701,6 +2703,126 @@ async function toPdf(d){
     const st=$('#dx-st'); if(st){ $('#dx-bar').firstElementChild.style.width='100%'; st.innerHTML=`✅ <b>${esc(name)}</b> est dans vos Téléchargements (${r.pages} page${r.pages>1?'s':''}).`; } }
   catch(e){ console.error(e); const st=$('#dx-st'); if(st) st.textContent='Conversion impossible : '+(e.message||e)+'. Vous pouvez passer par Imprimer › « Enregistrer au format PDF ».'; } }
 
+
+/* ======================================================================
+   Remplir à l'écran le PDF habituel de la structure.
+   L'admin pose des zones sur le PDF (un rectangle par endroit où l'on écrit d'habitude au stylo) ; l'équipe remplit
+   un formulaire classique et Librejo écrit au bon endroit sur le PDF. La mise en page d'origine ne bouge pas.
+   Les zones sont rangées avec le document (d.zones, en fractions de la page). Rien de ce qui est saisi n'est enregistré.
+   ====================================================================== */
+const ZN_TYPES=[['texte','Texte (une ligne)'],['long','Texte long (plusieurs lignes)'],['date','Date'],['case','Case à cocher'],['auto:date','Automatique : date du jour'],['auto:asso','Automatique : nom de la structure'],['auto:ville','Automatique : ville']];
+const zoneDocs=()=>docs().filter(d=>d.ext==='pdf'&&Array.isArray(d.zones)&&d.zones.length);
+const znSort=Z=>Z.slice().sort((a,b)=>a.p-b.p||(Math.abs(a.y-b.y)<.012?a.x-b.x:a.y-b.y));
+const ZN_PG=new Map();
+async function znPages(d){ const k=d.id+'|'+txSig(d); if(ZN_PG.has(k)) return ZN_PG.get(k);
+  const f=await readRel(d.chemin), lib=await getPdfjs(), pdf=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false}).promise, out=[];
+  try{ for(let n=1;n<=Math.min(pdf.numPages,30);n++){ const pg=await pdf.getPage(n), v1=pg.getViewport({scale:1}), sc=Math.min(2.2,1500/v1.width), vp=pg.getViewport({scale:sc}), c=document.createElement('canvas'); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); await pg.render({canvasContext:x,viewport:vp}).promise; out.push({url:c.toDataURL('image/jpeg',.85),w:v1.width,h:v1.height,rot:pg.rotate||0}); c.width=c.height=0; } }
+  finally{ pdf.destroy(); }
+  ZN_PG.clear(); ZN_PG.set(k,out); return out; }
+const znSize=(z,P)=>z.size||(z.t==='long'?10:Math.max(7,Math.min(11,Math.round(z.h*P.h*.62*2)/2)));
+const znAuto=z=>z.t==='auto:date'?frDate(today()):z.t==='auto:asso'?(structure.nom||''):z.t==='auto:ville'?(structure.ville||''):null;
+const znVal=(z,V)=>{ const a=znAuto(z); if(a!=null) return a; const v=V[z.id]; if(z.t==='case') return v?'X':''; if(z.t==='date') return v?frDate(v):''; return String(v||''); };
+const znBoxHTML=(z,P,txt,cls)=>`<div class="zn-z ${cls||''} ${z.t==='case'?'case':z.t==='long'?'long':''}" data-zid="${esc(z.id)}" style="left:${z.x*100}%;top:${z.y*100}%;width:${z.w*100}%;height:${z.h*100}%;font-size:${znSize(z,P)/P.w*100}cqw">${txt}</div>`;
+/* ---- côté admin : poser les zones ---- */
+async function zonesEdit(d){
+  let P; try{ P=await znPages(d); }catch(e){ if(e instanceof Cancel) return; toast('Lecture du PDF impossible : '+(fsErr(e)||e.message||e)); return; }
+  let Z=(d.zones||[]).map(z=>({...z})), pi=0, sel=null, grp=d.zonesGroupe||'mixte', dirty=false, nAcro=0;
+  try{ await needLib('pdflib'); const pd=await PDFLib.PDFDocument.load(await (await readRel(d.chemin)).arrayBuffer(),{ignoreEncryption:true}); nAcro=pd.getForm().getFields().length; }catch(e){}
+  openModal(`<h3 id="modal-title">🖊️ Zones à remplir : ${esc(d.titre)}</h3>
+    <p class="hint m-0">Dessinez un rectangle à chaque endroit où l’on écrit d’habitude au stylo, puis donnez-lui un nom. L’équipe remplira ces zones à l’écran ; le PDF lui-même ne change pas.</p>
+    <div class="zn-ed"><div class="zn-left"><div class="zn-nav"><button type="button" class="secondary sm" id="zn-prev" aria-label="Page précédente">‹</button><span id="zn-pn"></span><button type="button" class="secondary sm" id="zn-next" aria-label="Page suivante">›</button>${nAcro?`<button type="button" class="secondary sm" id="zn-acro">Reprendre les ${nAcro} champs du PDF</button>`:''}</div>
+      <div class="zn-page edit" id="zn-page"></div></div>
+      <div class="zn-side"><div id="zn-prop"></div><h4>Zones (<span id="zn-n">0</span>)</h4><ol class="zn-list" id="zn-list"></ol>
+        <label class="field"><span>Rubrique dans Formulaires</span><select class="in" id="zn-grp">${FORM_GROUPS.map(([g,n,e])=>`<option value="${g}" ${g===grp?'selected':''}>${e} ${esc(n)}</option>`).join('')}</select></label></div></div>
+    <div class="btns"><button class="primary" id="zn-ok">Enregistrer les zones</button><button class="secondary" data-close>Annuler</button></div>`,'wide zn-modal');
+  modalGuard=()=>dirty?'Fermer sans enregistrer les zones ?':'';
+  const page=$('#zn-page'), tlab=t=>(ZN_TYPES.find(x=>x[0]===t)||[,t])[1];
+  const draw=()=>{ const pg=P[pi]; $('#zn-pn').textContent=`Page ${pi+1} / ${P.length}`; $('#zn-prev').disabled=!pi; $('#zn-next').disabled=pi>=P.length-1; $('#zn-n').textContent=Z.length;
+    page.style.aspectRatio=`${pg.w} / ${pg.h}`; page.innerHTML=`<img src="${pg.url}" alt="Page ${pi+1} du document" draggable="false">${pg.rot?'<p class="zn-rot">Page tournée dans le fichier : les zones peuvent être mal placées dans le PDF final.</p>':''}`+Z.filter(z=>z.p===pi).map(z=>znBoxHTML(z,pg,`<span>${esc(z.label)}</span><i class="zn-h"></i>`,z.id===sel?'sel':'')).join('');
+    $('#zn-list').innerHTML=znSort(Z).map(z=>`<li><button type="button" class="linkbtn ${z.id===sel?'on':''}" data-zsel="${esc(z.id)}">${esc(z.label)}</button><small>p. ${z.p+1} · ${esc(tlab(z.t).split(' (')[0].split(' : ').pop())}</small></li>`).join('')||'<li class="hint">Aucune zone pour l’instant.</li>';
+    const z=Z.find(x=>x.id===sel); $('#zn-prop').innerHTML=z?`<div class="zn-card"><label class="field"><span>Nom de la zone</span><input class="in" id="zp-l" value="${esc(z.label)}" maxlength="80"></label>
+      <label class="field"><span>Type</span><select class="in" id="zp-t">${ZN_TYPES.map(([v,l])=>`<option value="${v}" ${v===z.t?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+      <label class="field"><span>Taille du texte</span><select class="in" id="zp-s"><option value="">Automatique</option>${[7,8,9,10,11,12,14].map(v=>`<option value="${v}" ${z.size===v?'selected':''}>${v} pt</option>`).join('')}</select></label>
+      <label class="row gap-s"><input type="checkbox" id="zp-r" ${z.requis?'checked':''}> Obligatoire</label>
+      <button type="button" class="ghost danger sm" id="zp-del">${ICON.trash}Supprimer la zone</button></div>`:`<p class="hint">Cliquez sur une zone pour la régler, ou dessinez-en une nouvelle sur la page.</p>`;
+    if(z){ $('#zp-l').oninput=e=>{ z.label=e.target.value; dirty=true; const el=page.querySelector(`[data-zid="${z.id}"] span`); if(el) el.textContent=z.label; };
+      $('#zp-l').onchange=()=>{ const b=$('#zn-list').querySelector(`[data-zsel="${z.id}"]`); if(b) b.textContent=z.label; }; $('#zp-t').onchange=e=>{ z.t=e.target.value; dirty=true; draw(); }; $('#zp-s').onchange=e=>{ z.size=+e.target.value||0; if(!z.size) delete z.size; dirty=true; draw(); };
+      $('#zp-r').onchange=e=>{ z.requis=e.target.checked; dirty=true; }; $('#zp-del').onclick=()=>{ Z=Z.filter(x=>x!==z); sel=null; dirty=true; draw(); }; } };
+  $('#zn-prev').onclick=()=>{ pi--; sel=null; draw(); }; $('#zn-next').onclick=()=>{ pi++; sel=null; draw(); }; $('#zn-grp').onchange=e=>{ grp=e.target.value; dirty=true; };
+  $('#zn-list').onclick=e=>{ const b=e.target.closest('[data-zsel]'); if(!b) return; const z=Z.find(x=>x.id===b.dataset.zsel); if(z){ sel=z.id; pi=z.p; draw(); const i=$('#zp-l'); i&&i.focus(); } };
+  /* dessiner, déplacer, redimensionner */
+  let act=null; const pos=e=>{ const r=page.getBoundingClientRect(); return [Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))]; };
+  page.onpointerdown=e=>{ if(e.button) return; const [x,y]=pos(e), zb=e.target.closest('.zn-z'); e.preventDefault(); page.setPointerCapture(e.pointerId);
+    if(zb){ const z=Z.find(q=>q.id===zb.dataset.zid); sel=z.id; act={k:e.target.classList.contains('zn-h')?'size':'move',z,x,y,o:{...z},moved:false}; }
+    else { const z={id:'z'+rid(),p:pi,x,y,w:0,h:0,t:'texte',label:''}; act={k:'new',z,x,y}; } };
+  page.onpointermove=e=>{ if(!act) return; const [x,y]=pos(e), z=act.z;
+    if(act.k==='new'){ z.x=Math.min(x,act.x); z.y=Math.min(y,act.y); z.w=Math.abs(x-act.x); z.h=Math.abs(y-act.y); let g=page.querySelector('.zn-ghost'); if(!g){ g=document.createElement('div'); g.className='zn-z zn-ghost'; page.appendChild(g); } g.style.cssText=`left:${z.x*100}%;top:${z.y*100}%;width:${z.w*100}%;height:${z.h*100}%`; }
+    else { act.moved=true; if(act.k==='move'){ z.x=Math.max(0,Math.min(1-z.w,act.o.x+x-act.x)); z.y=Math.max(0,Math.min(1-z.h,act.o.y+y-act.y)); } else { z.w=Math.max(.01,Math.min(1-z.x,act.o.w+x-act.x)); z.h=Math.max(.006,Math.min(1-z.y,act.o.h+y-act.y)); }
+      const el=page.querySelector(`[data-zid="${z.id}"]`); if(el){ el.style.left=z.x*100+'%'; el.style.top=z.y*100+'%'; el.style.width=z.w*100+'%'; el.style.height=z.h*100+'%'; } } };
+  page.onpointerup=()=>{ if(!act) return; const a=act, z=a.z; act=null; const g=page.querySelector('.zn-ghost'); g&&g.remove();
+    if(a.k==='new'){ if(z.w<.012||z.h<.006){ sel=null; draw(); return; }
+      const pg=P[pi], wp=z.w*pg.w, hp=z.h*pg.h; z.t=wp<22&&hp<22?'case':hp>34?'long':'texte'; z.label=(z.t==='case'?'Case ':'Champ ')+(Z.length+1); Z.push(z); sel=z.id; dirty=true; draw(); const i=$('#zp-l'); if(i){ i.focus(); i.select(); } }
+    else { if(a.moved) dirty=true; draw(); } };
+  const ac=$('#zn-acro'); if(ac) ac.onclick=async()=>{ ac.disabled=true; try{ const pd=await PDFLib.PDFDocument.load(await (await readRel(d.chemin)).arrayBuffer(),{ignoreEncryption:true}), pages=pd.getPages(); let n=0;
+      pd.getForm().getFields().forEach(f=>{ const kind=f.constructor&&f.constructor.name||''; f.acroField.getWidgets().forEach(w=>{ const r=w.getRectangle(); let ix=pages.findIndex(pg=>pg.ref===w.P()); if(ix<0) ix=pages.findIndex(pg=>{ try{ return (pg.node.Annots()?.asArray()||[]).some(a=>a===w.ref||pd.context.lookup(a)===w.dict); }catch(e){ return false; } }); if(ix<0||ix>=P.length||!r.width||!r.height) return;
+        const b=pages[ix].getCropBox(), z={id:'z'+rid(),p:ix,x:(r.x-b.x)/b.width,y:1-(r.y-b.y+r.height)/b.height,w:r.width/b.width,h:r.height/b.height,t:/CheckBox|Radio/.test(kind)?'case':(r.height>34?'long':'texte'),label:String(f.getName()||'Champ').replace(/[_.\[\]0-9]+/g,' ').trim().slice(0,80)||'Champ'};
+        if(z.x<-.01||z.y<-.01||z.x+z.w>1.01||z.y+z.h>1.01) return; if(!Z.some(q=>q.p===z.p&&Math.abs(q.x-z.x)<.01&&Math.abs(q.y-z.y)<.01)){ Z.push(z); n++; } }); });
+      dirty=dirty||n>0; draw(); toast(n?`${n} zone${n>1?'s':''} reprise${n>1?'s':''} : vérifiez leurs noms`:'Aucune zone à reprendre'); }catch(e){ toast('Lecture des champs impossible'); } ac.disabled=false; };
+  $('#zn-ok').onclick=async()=>{ const bad=Z.find(z=>!String(z.label||'').trim()); if(bad){ sel=bad.id; pi=bad.p; draw(); toast('Donnez un nom à chaque zone.'); return; }
+    const keep=[d.zones,d.zonesGroupe]; d.zones=Z.map(z=>({id:z.id,p:z.p,x:+z.x.toFixed(4),y:+z.y.toFixed(4),w:+z.w.toFixed(4),h:+z.h.toFixed(4),t:z.t,label:z.label.trim(),...(z.size?{size:z.size}:{}),...(z.requis?{requis:true}:{})})); if(!d.zones.length) delete d.zones; d.zonesGroupe=grp; d.zonesSig=txSig(d);
+    if(await run(saveData,d.zones?`${d.zones.length} zone${d.zones.length>1?'s':''} enregistrée${d.zones.length>1?'s':''} : le document est dans Formulaires`:'Zones retirées')){ jlog('Zones à remplir',d.titre,d.zones?d.zones.length+' zone(s)':'retirées'); modalGuard=null; dirty=false; closeModal(); renderDocs(); renderForms(); } else { d.zones=keep[0]; d.zonesGroupe=keep[1]; } };
+  draw();
+}
+/* ---- côté équipe : remplir ---- */
+let ZF=null;
+async function renderPdfFill(){
+  const d=zoneDocs().find(x=>'pdf:'+x.id===formView), p=$('#p-forms'); if(!d){ formView=null; return renderForms(); }
+  if(!ZF||ZF.id!==d.id) ZF={id:d.id,V:{},err:false};
+  p.innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button><h2 class="sec"><span class="temoji" aria-hidden="true">🖊️</span>${esc(d.titre)}</h2><p class="hint">Préparation du document…</p>`;
+  let P; try{ P=await znPages(d); }catch(e){ if(formView!=='pdf:'+d.id) return; p.querySelector('.hint').textContent='Document illisible : '+(fsErr(e)||e.message||'accès au dossier refusé'); return; }
+  if(formView!=='pdf:'+d.id||tab!=='forms') return;
+  const Z=znSort(d.zones), ask=Z.filter(z=>!z.t.startsWith('auto:')), V=ZF.V, miss=z=>ZF.err&&z.requis&&!znVal(z,V);
+  p.innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
+    <h2 class="sec"><span class="temoji" aria-hidden="true">🖊️</span>${esc(d.titre)}</h2>
+    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n’est enregistré : ce que vous tapez ne va que dans le PDF que vous imprimez ou envoyez.</span></div>
+    ${isAdmin&&d.zonesSig&&d.zonesSig!==txSig(d)?`<div class="cz-warn">Le PDF a changé depuis que les zones ont été posées : vérifiez qu’elles tombent toujours au bon endroit. <button class="secondary sm" data-znedit>Revoir les zones</button></div>`:''}
+    <div class="zn-fill"><div class="card top zn-form">
+        ${ask.map(z=>z.t==='case'?`<label class="zn-ck"><input type="checkbox" data-zf="${esc(z.id)}" ${V[z.id]?'checked':''}> ${esc(z.label)}</label>`
+          :`<label class="field${miss(z)?' bad':''}"><span>${esc(z.label)}${z.requis?'':' <small>(facultatif)</small>'}</span>${z.t==='long'?`<textarea class="in" rows="3" data-zf="${esc(z.id)}">${esc(V[z.id]||'')}</textarea>`:`<input class="in" ${z.t==='date'?'type="date"':'autocomplete="off"'} data-zf="${esc(z.id)}" value="${esc(V[z.id]||'')}">`}</label>`).join('')||'<p class="hint">Ce document n’a que des zones automatiques.</p>'}
+        <div class="row"><button class="primary" data-zdo="pdf">${ICON.file}Aperçu PDF</button><button class="secondary" data-zdo="print">${ICON.print}Imprimer</button><button class="secondary" data-zdo="dl">${ICON.dl}Télécharger</button><button class="secondary" data-zdo="send">${ICON.mail}Envoyer</button></div>
+        <div class="row end"><button class="ghost danger" data-zdo="clear">${ICON.trash}Tout effacer</button></div></div>
+      <div class="zn-prev">${P.map((pg,i)=>`<div class="zn-page" style="aspect-ratio:${pg.w} / ${pg.h}"><img src="${pg.url}" alt="Page ${i+1}" draggable="false">${Z.filter(z=>z.p===i).map(z=>znBoxHTML(z,pg,esc(znVal(z,V)),'fill')).join('')}</div>`).join('')}</div></div>`;
+  p.querySelectorAll('[data-zf]').forEach(el=>{ el.oninput=()=>{ const z=Z.find(q=>q.id===el.dataset.zf); V[z.id]=el.type==='checkbox'?el.checked:el.value; const b=p.querySelector(`.zn-prev [data-zid="${z.id}"]`); if(b) b.textContent=znVal(z,V); }; el.onfocus=()=>{ const b=p.querySelector(`.zn-prev [data-zid="${el.dataset.zf}"]`); if(b){ p.querySelectorAll('.zn-z.cur').forEach(x=>x.classList.remove('cur')); b.classList.add('cur'); b.scrollIntoView({block:'nearest',behavior:smooth()}); } }; });
+  p.querySelectorAll('.zn-prev .zn-z').forEach(b=>{ b.onclick=()=>{ const i=p.querySelector(`[data-zf="${b.dataset.zid}"]`); i&&i.focus(); }; });
+  const ze=p.querySelector('[data-znedit]'); if(ze) ze.onclick=()=>zonesEdit(d);
+  p.querySelectorAll('[data-zdo]').forEach(b=>{ b.onclick=()=>znDo(d,b.dataset.zdo); });
+}
+const znSafe=t=>dpTxt(t).replace(/[^\n\u0020-\u007e\u00a0-\u00ff\u0152\u0153\u0160\u0161\u0178\u017d\u017e\u20ac\u2018\u2019\u201a\u201c\u201d\u201e\u2013\u2014\u2022\u2026\u2030]/g,'?');
+async function znBuild(d){
+  const Z=d.zones, V=ZF.V, miss=Z.filter(z=>z.requis&&!znVal(z,V)); if(miss.length){ ZF.err=true; await renderPdfFill(); toast(`À remplir : ${miss.map(z=>z.label).join(', ')}`); return null; }
+  await needLib('pdflib'); const pd=await PDFLib.PDFDocument.load(await (await readRel(d.chemin)).arrayBuffer(),{ignoreEncryption:true}), font=await pd.embedFont(PDFLib.StandardFonts.Helvetica), pages=pd.getPages(), ink=PDFLib.rgb(.04,.08,.3);
+  Z.forEach(z=>{ const pg=pages[z.p]; if(!pg) return; let txt=znSafe(znVal(z,V)); if(!txt.trim()) return; const b=pg.getCropBox(), x=b.x+z.x*b.width, top=b.y+b.height-z.y*b.height, w=z.w*b.width, h=z.h*b.height; let size=znSize(z,{w:b.width,h:b.height});
+    const W=t=>{ try{ return font.widthOfTextAtSize(t,size); }catch(e){ return t.length*size*.5; } };
+    try{
+      if(z.t==='case'){ const sz=Math.max(6,Math.min(w,h)*.85); pg.drawText('X',{x:x+(w-font.widthOfTextAtSize('X',sz))/2,y:top-h+(h-sz*.72)/2,size:sz,font,color:ink}); return; }
+      if(z.t==='long'){ const wrap=()=>{ const L=[]; txt.split('\n').forEach(par=>{ let cur=''; par.split(/\s+/).forEach(wd=>{ const t=cur?cur+' '+wd:wd; if(W(t)<=w-2||!cur) cur=t; else { L.push(cur); cur=wd; } }); L.push(cur); }); return L; };
+        let L=wrap(); while(L.length*size*1.18>h+1&&size>6){ size-=.5; L=wrap(); } L.forEach((ln,i)=>{ const y=top-size*.9-i*size*1.18; if(y>=top-h-size*.3) pg.drawText(ln,{x:x+1,y,size,font,color:ink}); }); return; }
+      txt=txt.replace(/\n/g,' '); while(W(txt)>w-2&&size>6) size-=.5;
+      pg.drawText(txt,{x:x+1,y:top-h+Math.max(1,(h-size*.72)/2),size,font,color:ink});
+    }catch(e){ console.warn('zone',z.label,e); } });
+  return new File([await pd.save()],`${fileSafe(d.titre)}_${today()}.pdf`,{type:'application/pdf'}); }
+let ZN_URL='';
+async function znDo(d,a){
+  if(a==='clear'){ askConfirm('Tout effacer ?','Les champs seront vidés.','Effacer',()=>{ ZF=null; renderPdfFill(); }); return; }
+  let f; try{ f=await znBuild(d); }catch(e){ if(e instanceof Cancel) return; console.error(e); toast('Création du PDF impossible : '+(fsErr(e)||e.message||e)); return; } if(!f) return;
+  stBump('f:pdf:'+d.id,'g');
+  if(a==='pdf'){ if(ZN_URL) URL.revokeObjectURL(ZN_URL); ZN_URL=URL.createObjectURL(f); previewUrl(ZN_URL,d.titre); }
+  if(a==='print') printBlob(f,true);
+  if(a==='dl'){ downloadBlob(f,f.name); toast('PDF téléchargé'); }
+  if(a==='send') sendDialog(`Envoyer « ${d.titre} »`,'',1,async to=>{ closeModal(); await mailCompose({to,subject:`Librejo – ${d.titre}`,body:`Bonjour,\n\nVeuillez trouver ci-joint : ${d.titre}.\n\nCordialement`,files:[f]}); });
+}
+
 /* ---------- Modèles Word : champs {…} remplis par Librejo ---------- */
 const WNS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const XMLNS='http://www.w3.org/XML/1998/namespace';
@@ -2828,6 +2950,8 @@ function moreMenu(btn,d){
     ['Signaler un problème (plus à jour, erreur…)',svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),()=>signaler('d:'+d.id)],
   ];
   if(d.ext==='pdf'&&FSA) items.splice(1,0,['Créer une version Word (.docx)',ICON.file,()=>toWord(d)]);
+  if(d.ext==='pdf'&&FSA&&d.zones&&d.zones.length) items.unshift(['Remplir à l’écran',ICON.pen,()=>openForm('pdf:'+d.id)]);
+  if(d.ext==='pdf'&&FSA&&isAdmin) items.splice(1,0,[d.zones&&d.zones.length?'Modifier les zones à remplir':'Rendre remplissable à l’écran (poser des zones)',ICON.pen,()=>zonesEdit(d)]);
   if(d.ext==='docx'&&FSA) items.splice(1,0,['Créer une version PDF',ICON.file,()=>toPdf(d)]);
   if(isAdmin&&tpOK(d.ext)) items.unshift(['Marquer : nom, version, n° de page, logo, pied de page',ICON.pen,()=>markDoc(d)]);
   if(isAdmin) items.unshift(['Modifier ce document (admin : nouvelle version ou correction)',ICON.pen,()=>modifyDoc(d)]);
