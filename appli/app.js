@@ -1513,7 +1513,7 @@ function addDocs(initFiles,initDest){
         if(picked.length){ if($('#ad-list')) draw(); toast(`Nouvelle version de « ${d.titre} » en place`); } else { modalGuard=null; closeModal(); toast(`Nouvelle version de « ${d.titre} » en place pour l’équipe`); } }); return; }
     if(e.target.closest('[data-ocr]')){ const p=picked[i]; p.ocring=true; draw();
       try{ const r=await ocrPdf(p.file); const txt=r.lines.map(l=>l.t).join(' ').replace(/\s+/g,' ').trim();
-        if(!txt) toast('Aucun texte lisible trouvé'); else { if(!p.description.trim()) p.description=txt.slice(0,280).replace(/\s\S*$/,'')+(txt.length>280?'…':''); p.ocrDone=true; p.tpOpen=p.tpOpen; toast('Texte lu : description proposée, à relire'); } }
+        if(!txt) toast('Aucun texte lisible trouvé'); else { if(!p.description.trim()) p.description=txt.slice(0,280).replace(/\s\S*$/,'')+(txt.length>280?'…':''); p.ocrDone=true; p.ocrTxt=txt.slice(0,60000); toast('Texte lu : description proposée, à relire'); } }
       catch(err){ toast('Lecture impossible : '+(err.message||err)); }
       p.ocring=false; draw(); return; }
     if(e.target.closest('[data-modif]')){ const p=picked[i]; downloadBlob(p.file,p.file.name.replace(/(\.[^.]+)?$/,'_a-modifier$1')); p.edit=true; draw(); return; }
@@ -1549,7 +1549,7 @@ function addDocs(initFiles,initDest){
       }
       await saveData();
     },`C’est rangé ! ${picked.length} document${picked.length>1?'s':''} ajouté${picked.length>1?'s':''}`);
-    if(ok){ picked.forEach(p=>jlog('Ajout',p.titre.trim(),destName(p.dest)+(p.tp&&p.det&&tpSum(p.tp)!=='rien'?' · marqué : '+tpSum(p.tp):''))); txRefresh(DATA.documents.slice(-picked.length));
+    if(ok){ picked.forEach(p=>jlog('Ajout',p.titre.trim(),destName(p.dest)+(p.tp&&p.det&&tpSum(p.tp)!=='rien'?' · marqué : '+tpSum(p.tp):''))); { const N=DATA.documents.slice(-picked.length); picked.forEach((p,i)=>{ if(p.ocrTxt&&N[i]) OCR_TXT.set(N[i].id,p.ocrTxt); }); txRefresh(N); }
       closeModal(); const ds=[...new Set(picked.map(p=>p.dest))]; filter=ds.length===1?ds[0]:splitDest(ds[0])[0]; renderDocs(); } else { draw(); }
   };
 }
@@ -6549,16 +6549,20 @@ const TX_REL='app/recherche-texte.json';
 let TXT=null, TXT_ON=false, txLoading=null;
 const txSig=d=>[d.chemin,d.taille||'',d.version||'',d.modifie||''].join('|');
 async function txLoad(){ if(TXT) return TXT; if(!txLoading) txLoading=(async()=>{ try{ TXT=JSON.parse(await (await readRel(TX_REL)).text())||{}; }catch(e){ TXT={}; } return TXT; })(); return txLoading; }
+const OCR_TXT=new Map();   // texte lu par l'OCR à l'ajout, en attente d'être rangé dans l'index
 const TXN=new Map(); const txRaw=d=>TXT&&TXT[d.id]?TXT[d.id].t||'':''; const txOf=d=>{ if(!TXT||!TXT[d.id]) return ''; const k=d.id+'|'+TXT[d.id].s; if(!TXN.has(k)) TXN.set(k,norm(TXT[d.id].t||'')); return TXN.get(k); };
+/* Un PDF scanné peut contenir un peu de texte quand même (le marquage ajouté par Librejo : en-tête, version, pied de page) :
+   moins de 250 lettres par page = scan probable, à lire avec l'OCR */
+const txPeu=(t,np)=>String(t||'').replace(/[^a-zA-ZÀ-ÿ]/g,'').length<250*(np||1);
 async function txExtract(file){
-  const t=await cmpLines(file).catch(()=>null); if(!t) return '';
+  const t=await cmpLines(file).catch(()=>null); txExtract.np=t&&t.pages||1; if(!t) return '';
   return t.lines.map(l=>l.t).join(' ').slice(0,60000);
 }
 async function txIndex(list,prog){
   await txLoad(); let n=0, changed=false;
   for(const d of list){ n++; prog&&prog(n,list.length,d);
     if(isLink(d)||!d.chemin) continue; const cur=TXT[d.id]; if(cur&&cur.s===txSig(d)) continue;
-    try{ const f=await readRel(d.chemin); const t=await txExtract(f); TXT[d.id]={s:txSig(d),t,scan:!t&&d.ext==='pdf'}; changed=true; }catch(e){ console.warn('index',d.chemin,e); } }
+    try{ const f=await readRel(d.chemin); let t=await txExtract(f), ocr=false; const peu=txPeu(t,txExtract.np); if(peu&&OCR_TXT.has(d.id)){ t=(t+' '+OCR_TXT.get(d.id)).trim(); ocr=true; } OCR_TXT.delete(d.id); TXT[d.id]={s:txSig(d),t,scan:!ocr&&peu&&d.ext==='pdf',...(ocr?{ocr:true}:{})}; changed=true; }catch(e){ console.warn('index',d.chemin,e); } }
   const ids=new Set(DATA.documents.map(d=>d.id)); Object.keys(TXT).forEach(k=>{ if(!ids.has(k)){ delete TXT[k]; changed=true; } });
   if(changed) await writeRel(TX_REL,new Blob([JSON.stringify(TXT)],{type:'application/json'}));
   return changed;
@@ -6569,15 +6573,29 @@ async function txSetup(){
   const list=DATA.documents.filter(d=>!isLink(d));
   openModal(`<h3 id="modal-title">🔎 Recherche dans le texte des documents</h3>
     <p>Librejo lit une fois le texte de chaque document (PDF, Word, LibreOffice, texte) et le garde dans le dossier. Ensuite, l’équipe peut cocher « Chercher aussi dans le texte » sous la barre de recherche.</p>
-    <p class="hint">Les PDF scannés n’ont pas de texte : on peut les lire avec l’OCR au moment de les ajouter. Les nouveaux documents sont ajoutés à l’index tout seuls.</p>
+    <p class="hint">Les PDF scannés n’ont pas de texte : Librejo peut les lire avec l’OCR, sur ce poste (rien n’est envoyé). C’est long, plusieurs secondes par page : lancez-le une fois et laissez tourner. Les nouveaux documents sont ajoutés à l’index tout seuls.</p>
     <div class="ocr-bar" id="tx-bar" hidden><i></i></div><p class="hint" id="tx-st"></p>
-    <div class="row end mt"><button type="button" class="ghost" data-close>Fermer</button><button type="button" class="primary" id="tx-go">Préparer (${list.length} document${list.length>1?'s':''})</button></div>`);
+    <div class="row end mt"><button type="button" class="ghost" data-close>Fermer</button><button type="button" class="secondary" id="tx-ocr" hidden></button><button type="button" class="primary" id="tx-go">Préparer (${list.length} document${list.length>1?'s':''})</button></div>`);
+  /* PDF scannés : l'OCR les lit un par un, sur ce poste. C'est long (plusieurs secondes par page) : on enregistre au fur et à mesure, et fermer la fenêtre arrête proprement. */
+  const scans=()=>DATA.documents.filter(d=>!isLink(d)&&TXT&&TXT[d.id]&&TXT[d.id].scan&&!TXT[d.id].vide&&TXT[d.id].s===txSig(d));
+  const ocrBtn=()=>{ const b=$('#tx-ocr'); if(!b) return; const n=scans().length; b.hidden=!n||location.protocol==='file:'; b.textContent=`📷 Lire ${n>1?'les '+n+' PDF scannés ou presque sans texte':'le PDF scanné ou presque sans texte'} (OCR)`; };
+  txLoad().then(ocrBtn);
+  $('#tx-ocr').onclick=async()=>{ const L=scans(), ob=$('#tx-ocr'), gb=$('#tx-go'); ob.disabled=gb.disabled=true; $('#tx-bar').hidden=false; let done=0, lus=0;
+    for(const d of L){ const st=$('#tx-st'), bar=$('#tx-bar'); if(!st) break;   // fenêtre fermée : on s'arrête
+      st.textContent=`Lecture ${done+1} / ${L.length} : ${d.titre}…`;
+      try{ const f=await readRel(d.chemin), r=await ocrPdf(f,(p,n,N)=>{ const s2=$('#tx-st'), b2=$('#tx-bar'); if(s2&&n) s2.textContent=`Lecture ${done+1} / ${L.length} : ${d.titre} (page ${n} sur ${N})`; if(b2) b2.firstElementChild.style.width=Math.round((done+(p||0))/L.length*100)+'%'; });
+        const t=r.lines.map(l=>l.t).join(' ').replace(/\s+/g,' ').trim().slice(0,60000);
+        const base=TXT[d.id]&&TXT[d.id].t||''; TXT[d.id]={s:txSig(d),t:(base+' '+t).trim(),scan:!t,ocr:true,...(t?{}:{vide:true})}; if(t) lus++;
+        await writeRel(TX_REL,new Blob([JSON.stringify(TXT)],{type:'application/json'})); }
+      catch(e){ if(e instanceof Cancel) break; console.warn('ocr',d.chemin,e); TXT[d.id]={...TXT[d.id],vide:true}; }
+      done++; }
+    const st=$('#tx-st'); if(st){ st.textContent=`✅ ${lus} PDF lu${lus>1?'s':''} par l’OCR sur ${L.length}${lus<L.length?' ; les autres n’ont pas de texte lisible':''}. La recherche et le détecteur de documents périmés les voient maintenant.`; ob.disabled=gb.disabled=false; ocrBtn(); jlog('Lecture des scans (OCR)','',`${lus} PDF lus sur ${L.length}`); } };
   $('#tx-go').onclick=async()=>{ const bt=$('#tx-go'); bt.disabled=true; $('#tx-bar').hidden=false;
     const ok=await run(()=>txIndex(list,(i,N,d)=>{ const st=$('#tx-st'), bar=$('#tx-bar'); if(st) st.textContent=`${i} / ${N} : ${d.titre}`; if(bar) bar.firstElementChild.style.width=Math.round(i/N*100)+'%'; }));
     const st=$('#tx-st'); if(!st) return;
     const sc=Object.values(TXT||{}).filter(x=>x.scan).length;
     st.textContent=ok?`✅ C’est prêt : ${Object.keys(TXT).length} documents lus${sc?`, dont ${sc} PDF scanné${sc>1?'s':''} sans texte`:''}.`:'La préparation n’a pas pu se terminer.';
-    if(ok){ bt.textContent='Refaire'; bt.disabled=false; jlog('Recherche dans le texte','',`${Object.keys(TXT).length} documents indexés`); } };
+    if(ok){ bt.textContent='Refaire'; bt.disabled=false; ocrBtn(); jlog('Recherche dans le texte','',`${Object.keys(TXT).length} documents indexés`); } };
 }
 /* ---------- Documents peut-être périmés : Librejo relit le texte des documents et le recoupe avec l'annuaire et le calendrier ----------
    1. une ancienne coordonnée d'un partenaire (téléphone, mail, adresse remplacés dans l'annuaire) figure encore dans un document ;
@@ -6733,7 +6751,7 @@ async function dashboard(){
     card('👯',dups.length+sameSize.length,'doublons possibles','Même titre ou même fichier',dups.length+sameSize.length?`<button type="button" class="linkbtn" data-dbshow="dups">Voir</button>`:'',dups.length+sameSize.length?'warn':'ok'),
     card('🏷️',noDesc.length,'documents sans description ni mots-clés','La recherche les trouve mal',noDesc.length?`<button type="button" class="linkbtn" data-dbshow="nodesc">Voir</button>`:'',noDesc.length>5?'warn':''),
     card('🏛️',cz.length,'Cerfa non vérifiés depuis 3 mois','',cz.length?`<button type="button" class="linkbtn" data-dbgo="cerfa">Vérifier</button>`:'',cz.length?'warn':'ok'),
-    card('🔎',txN==null||!Object.keys(TXT||{}).length?'—':txN,txN==null||!Object.keys(TXT||{}).length?'recherche dans le texte non préparée':'documents à ajouter à la recherche dans le texte','',`<button type="button" class="linkbtn" data-dbgo="tx">Préparer</button>`,txN?'':'ok'),
+    card('🔎',txN==null||!Object.keys(TXT||{}).length?'—':txN,txN==null||!Object.keys(TXT||{}).length?'recherche dans le texte non préparée':'documents à ajouter à la recherche dans le texte',(n=>n?`${n} PDF scanné${n>1?'s':''} à lire (OCR)`:'')(Object.values(TXT||{}).filter(x=>x.scan&&!x.vide).length),`<button type="button" class="linkbtn" data-dbgo="tx">Préparer</button>`,txN?'':'ok'),
   ].join('');
   const lists={
     perime:['🕰️ Peut-être périmés',PM.map(x=>`<a href="${hrefOf(x.d.chemin)}" target="_blank" rel="noopener">${esc(x.d.titre)}</a> <small>${esc(destName(destOf(x.d)))}</small>${x.L.map(w=>`<span class="pm-w">${esc(w.txt)} <button type="button" class="linkbtn" data-pmok="${esc(pmKey(x.d,w.k))}">ce n’est pas périmé</button></span>`).join('')}`)],
