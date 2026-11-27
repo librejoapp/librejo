@@ -2253,8 +2253,8 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
 function renderPinned(){
   const {order}=pinnedAndUsed();
   if(!order.length) return '';
-  const tile=(title,sub,btns,mark,th,href)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
-  const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin));
+  const tile=(title,sub,btns,mark,th,href,fav)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}${fav?favBtn(fav):''}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
+  const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`,'','f:'+f.id), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin),'d:'+d.id);
   return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
     ${order.map(([t,x])=>t==='f'?F(x):t==='k'?K(x):D(x)).join('')}
@@ -2569,6 +2569,23 @@ function thumbHtml(d,cls){
   const [k,lab]=kind(d.ext), src=thumbSrc(d);
   return src?`<img class="${cls}" src="${src}" alt="" loading="lazy" data-land data-err="ico" data-k="${esc(k)}" data-lab="${esc(lab)}">`:`<span class="ico ${k}" role="img" aria-label="Fichier ${esc(lab)}">${esc(lab)}</span>`;
 }
+
+/* Survol d'une petite miniature (listes) : la page s'affiche en grand à côté du pointeur.
+   Seulement avec une souris ; rien à lire de plus pour un lecteur d'écran (aria-hidden). */
+(()=>{ if(!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  const z=document.createElement('div'); z.className='thumbzoom'; z.hidden=true; z.setAttribute('aria-hidden','true');
+  const im=document.createElement('img'); im.alt=''; z.append(im); document.body.append(z);
+  let cur=null;
+  const hide=()=>{ cur=null; z.hidden=true; };
+  const place=(x0,y0)=>{ const r=z.getBoundingClientRect(), m=12; let x=x0+24, y=y0-r.height/2;
+    if(x+r.width>innerWidth-m) x=x0-r.width-24; y=Math.max(m,Math.min(y,innerHeight-r.height-m)); z.style.left=x+'px'; z.style.top=y+'px'; };
+  document.addEventListener('mouseover',e=>{ const t=e.target;
+    if(!(t instanceof HTMLImageElement)||!t.hasAttribute('data-land')||!t.getAttribute('src')||t.getBoundingClientRect().width>120) return;
+    cur=t; im.src=t.currentSrc||t.src; z.classList.toggle('land',t.classList.contains('land')); z.hidden=false; place(e.clientX,e.clientY); });
+  document.addEventListener('mousemove',e=>{ if(cur) place(e.clientX,e.clientY); });
+  document.addEventListener('mouseout',e=>{ if(e.target===cur) hide(); });
+  window.addEventListener('scroll',hide,true); document.addEventListener('click',hide,true);
+})();
 
 /* ---------- Vue en vignettes ---------- */
 let view='liste'; try{ view=localStorage.getItem('docubus-vue')||'liste'; }catch(e){}
@@ -5038,9 +5055,9 @@ function homeFormRow(f){
 }
 function homeDocRow(d){
   if(isLink(d)) return `<li><div class="hrow"><span class="hi lien" aria-hidden="true">🔗</span><a class="hn" href="${esc(safeHref(d.url)||'#')}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc('Lien web · '+linkHost(d.url))}</small></a>
-    <span class="ha"><button class="iconbtn" data-lsend="${esc(d.id)}" title="Envoyer le lien" aria-label="Envoyer le lien ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
+    <span class="ha">${favBtn('d:'+d.id)}<button class="iconbtn" data-lsend="${esc(d.id)}" title="Envoyer le lien" aria-label="Envoyer le lien ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
   return `<li><div class="hrow"><span class="hi thumb" aria-hidden="true">${thumbHtml(d,'')}</span><a class="hn" href="${hrefOf(d.chemin)}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc(String(d.ext||'').toUpperCase())}</small></a>
-    <span class="ha">${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="iconbtn" data-print="${esc(d.chemin)}" title="Imprimer" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}</button>`:''}<button class="iconbtn" data-send="${esc(d.chemin)}" title="Envoyer" aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
+    <span class="ha">${favBtn('d:'+d.id)}${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="iconbtn" data-print="${esc(d.chemin)}" title="Imprimer" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}</button>`:''}<button class="iconbtn" data-send="${esc(d.chemin)}" title="Envoyer" aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}</button></span></div></li>`;
 }
 function renderHome(){
   const fs=formItems();

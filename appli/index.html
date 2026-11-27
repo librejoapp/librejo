@@ -1304,6 +1304,13 @@ html:not(.menu-clair) .sidebar nav.top button[aria-current="page"],html:not(.men
 /* Pastille de la journée alignée sur la date */
 .todayrow{align-items:center}
 .todayrow .fete{align-self:flex-end;margin-bottom:2px}
+/* Séparation entre l'en-tête de l'accueil (bonjour, date) et la recherche */
+.todayrow{padding-bottom:var(--sp-4);margin-bottom:var(--sp-5);border-bottom:2px solid var(--line-strong)}
+/* Aperçu agrandi d'une miniature au survol */
+.thumbzoom{position:fixed;z-index:9000;width:280px;padding:6px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--r-sm);box-shadow:var(--shadow-pop);pointer-events:none}
+.thumbzoom.land{width:400px}
+.thumbzoom img{display:block;width:100%;height:auto;border-radius:3px}
+.fcard.tile .favbtn{font-size:18px;padding:0 4px}
 /* Focus bien visible sur l'onglet choisi (le contour fin de la sélection ne suffit pas) */
 html.menu-clair .sidebar nav.top button:focus-visible,html.menu-clair .catbtn:focus-visible{outline:3px solid var(--menu-ink,var(--navy));outline-offset:2px}
 html:not(.menu-clair) .sidebar nav.top button:focus-visible,html:not(.menu-clair) .catbtn:focus-visible{outline:3px solid var(--accent-on-dark);outline-offset:2px}
