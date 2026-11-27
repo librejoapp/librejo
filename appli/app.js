@@ -2001,7 +2001,8 @@ function makeLetter({titre,confidentiel,date,paras,signataire,tp}){
     p.split('\n').forEach(line=>{ const c=line.trim().match(/^>>\s*(.*?)\s*<<$/); /* « >> texte << » : centré, en gras */
       if(c){ doc.setFont(PF(),'bold'); let fs=10.5; doc.setFontSize(fs); while(fs>8&&doc.getTextWidth(c[1])>W){ fs-=.25; doc.setFontSize(fs); } /* plus petit plutôt que sur deux lignes */
         doc.splitTextToSize(c[1],W).forEach(l=>{ room(5.5); doc.text(l,L+W/2,y,{align:'center'}); y+=5.2; }); doc.setFontSize(11.5); doc.setFont(PF(),'normal'); return; }
-      doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); }); y+=4; });
+      doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); });
+    y+=p.split('\n').every(l=>/^>>.*<<$/.test(l.trim()))?.5:4; }); /* intitulé centré : le trait suivant vient tout près */
   let tw=0,th=0; if(tp){ tw=40; th=tw*tp.h/tp.w; if(th>32){ th=32; tw=th*tp.w/tp.h; } }
   y+=6; room(20+(tp?th+4:0));
   doc.setFont(PF(),'bold'); doc.setTextColor(...NAVY); doc.text(signataire,R,y,{align:'right'});
