@@ -2572,18 +2572,20 @@ function thumbHtml(d,cls){
   return src?`<img class="${cls}" src="${src}" alt="" loading="lazy" data-land data-err="ico" data-k="${esc(k)}" data-lab="${esc(lab)}">`:`<span class="ico ${k}" role="img" aria-label="Fichier ${esc(lab)}">${esc(lab)}</span>`;
 }
 
-/* Survol d'une petite miniature (listes) : la page s'affiche en grand à côté du pointeur.
-   Seulement avec une souris ; rien à lire de plus pour un lecteur d'écran (aria-hidden). */
+/* Survol d'une petite miniature (listes, impression rapide) : la page s'affiche en grand à côté du pointeur,
+   en grandissant depuis la miniature. Seulement avec une souris ; rien de plus pour un lecteur d'écran (aria-hidden). */
 (()=>{ if(!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
-  const z=document.createElement('div'); z.className='thumbzoom'; z.hidden=true; z.setAttribute('aria-hidden','true');
+  const z=document.createElement('div'); z.className='thumbzoom'; z.setAttribute('aria-hidden','true');
   const im=document.createElement('img'); im.alt=''; z.append(im); document.body.append(z);
   let cur=null;
-  const hide=()=>{ cur=null; z.hidden=true; };
-  const place=(x0,y0)=>{ const r=z.getBoundingClientRect(), m=12; let x=x0+24, y=y0-r.height/2;
-    if(x+r.width>innerWidth-m) x=x0-r.width-24; y=Math.max(m,Math.min(y,innerHeight-r.height-m)); z.style.left=x+'px'; z.style.top=y+'px'; };
+  const hide=()=>{ cur=null; z.classList.remove('on'); };
+  const place=(x0,y0)=>{ const w=z.offsetWidth, h=z.offsetHeight, m=12; let x=x0+24, flip=false, y=y0-h/2;
+    if(x+w>innerWidth-m){ x=x0-w-24; flip=true; } y=Math.max(m,Math.min(y,innerHeight-h-m));
+    z.classList.toggle('flip',flip); z.style.left=x+'px'; z.style.top=y+'px'; };
   document.addEventListener('mouseover',e=>{ const t=e.target;
-    if(!(t instanceof HTMLImageElement)||!t.hasAttribute('data-land')||!t.getAttribute('src')||t.getBoundingClientRect().width>120) return;
-    cur=t; im.src=t.currentSrc||t.src; z.classList.toggle('land',t.classList.contains('land')); z.hidden=false; place(e.clientX,e.clientY); });
+    if(!(t instanceof HTMLImageElement)||!(t.hasAttribute('data-land')||t.closest('.qthumb'))||!t.getAttribute('src')||t.getBoundingClientRect().width>120) return;
+    cur=t; im.src=t.currentSrc||t.src; z.classList.toggle('land',t.classList.contains('land')||t.naturalWidth>t.naturalHeight); place(e.clientX,e.clientY);
+    requestAnimationFrame(()=>{ if(cur===t) z.classList.add('on'); }); });
   document.addEventListener('mousemove',e=>{ if(cur) place(e.clientX,e.clientY); });
   document.addEventListener('mouseout',e=>{ if(e.target===cur) hide(); });
   window.addEventListener('scroll',hide,true); document.addEventListener('click',hide,true);

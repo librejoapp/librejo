@@ -1089,14 +1089,10 @@ img.thumb.land{width:48px;height:34px;max-width:none;object-fit:contain}
 .gthumb img.land{object-fit:contain;object-position:center;background:var(--surface-2)}
 .hi.thumb img.land,.qthumb img.land{width:40px;height:30px}
 table.docs img.thumb{transition:transform .15s ease,box-shadow .15s ease;transform-origin:left center;position:relative}
-table.docs img.thumb:hover{transform:scale(4.5);z-index:30;box-shadow:var(--shadow-pop);object-fit:contain}
-table.docs img.thumb.land:hover{transform:scale(5.5)}
 
-/* Impression rapide : même agrandissement au survol que dans la liste des documents */
+/* Impression rapide : l'agrandissement au survol est l'aperçu commun (.thumbzoom) */
 .qthumb img{transition:transform .15s ease,box-shadow .15s ease;transform-origin:left center;position:relative;background:var(--surface)}
-.qthumb img:hover{transform:scale(5.5);z-index:30;box-shadow:var(--shadow-pop);object-fit:contain}
 .qthumb img.land{max-width:none}
-.qthumb img.land:hover{transform:scale(6.5)}
 
 /* Accueil : bloc « Documents » repliable, les catégories à l'intérieur */
 .hdocsec{overflow:visible}
@@ -1307,8 +1303,11 @@ html:not(.menu-clair) .sidebar nav.top button[aria-current="page"],html:not(.men
 /* Séparation entre l'en-tête de l'accueil (bonjour, date) et la recherche */
 .todayrow{padding-bottom:var(--sp-4);margin-bottom:var(--sp-5);border-bottom:2px solid var(--line-strong)}
 /* Aperçu agrandi d'une miniature au survol */
-.thumbzoom{position:fixed;z-index:9000;width:280px;padding:6px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--r-sm);box-shadow:var(--shadow-pop);pointer-events:none}
-.thumbzoom.land{width:400px}
+.thumbzoom{position:fixed;z-index:9000;width:320px;padding:6px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--r-sm);box-shadow:var(--shadow-pop);pointer-events:none;opacity:0;visibility:hidden;transform:scale(.2);transform-origin:left center;transition:opacity .16s ease,transform .22s cubic-bezier(.2,.8,.2,1),visibility 0s .22s}
+.thumbzoom.on{opacity:1;visibility:visible;transform:none;transition:opacity .16s ease,transform .22s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.thumbzoom.flip{transform-origin:right center}
+@media (prefers-reduced-motion:reduce){.thumbzoom,.thumbzoom.on{transition:none;transform:none}}
+.thumbzoom.land{width:440px}
 .thumbzoom img{display:block;width:100%;height:auto;border-radius:3px}
 .fcard.tile .favbtn{font-size:18px;padding:0 4px}
 /* Focus bien visible sur l'onglet choisi (le contour fin de la sélection ne suffit pas) */
