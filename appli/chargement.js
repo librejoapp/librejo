@@ -13,3 +13,8 @@
   window.LJ_THEME_KEEP=function(vars,clair){ try { localStorage.setItem(KEY, JSON.stringify({vars:vars,clair:!!clair})); } catch(e){} };
   setTimeout(window.LJ_LOADED, 15000);
 })();
+
+/* Installation : Chrome et Edge préviennent quand l'appli peut être installée ; on garde l'évènement
+   pour proposer notre propre bouton (l'icône de la barre d'adresse n'est pas claire pour tout le monde). */
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); window.LJ_INSTALL=e; document.dispatchEvent(new Event('lj-install')); });
+window.addEventListener('appinstalled',function(){ window.LJ_INSTALL=null; document.dispatchEvent(new Event('lj-install')); });

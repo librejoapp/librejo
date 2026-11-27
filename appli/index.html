@@ -300,6 +300,12 @@ input.in.w-num{width:84px}
 .bigsearch input{height:54px;padding-left:52px;font-size:var(--fs-5);font-weight:500;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-card)}
 .bigsearch input:focus{border-color:var(--focus)}
 /* Numéro de version, tout petit, sous « Accès admin » */
+/* bandeau « formulaires seulement » au-dessus : la teinte du titre ne remonte pas dessus */
+body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearch:first-child{border-image-outset:0 100vmax}
+#sdbar{position:relative;z-index:5}
+.btnlink{display:inline-flex;align-items:center;text-decoration:none;border-radius:var(--r-sm);padding:6px 12px;font-weight:600}
+.installbtn{border-color:var(--accent)!important}
+.installbtn svg{width:16px;height:16px;flex:none}
 .sidever{margin:6px 0 0;text-align:center;font-size:10.5px;line-height:1.2;color:var(--text-on-dark-2);opacity:.85}
 html.menu-clair .sidever{color:var(--menu-muted)}
 /* La recherche (accueil, catégories, annuaire) et l'en-tête de l'administration restent en haut quand on descend */
@@ -1554,6 +1560,7 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
     <div class="sidefoot">
       <button class="conn" id="conn" title="Autoriser Librejo à lire son dossier (impression en un clic, pièces jointes)"></button>
       <button class="adminbtn" id="guidebtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.6"/><path d="M12 17h.01"/></svg>Mode d’emploi</button>
+      <button class="adminbtn installbtn" id="installbtn" type="button" hidden title="Librejo s’ouvre ensuite dans sa propre fenêtre, depuis le bureau ou le menu Démarrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>Installer Librejo sur ce poste</button>
       <button class="adminbtn" id="adminbtn" type="button">Accès admin</button>
       <p class="sidever" id="sidever"></p>
     </div>

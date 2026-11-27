@@ -7253,18 +7253,34 @@ function sdStart(){
   nav.after(off);
   const bar=document.createElement('div'); bar.id='sdbar'; bar.setAttribute('role','region'); bar.setAttribute('aria-label','Formulaires seulement');
   bar.innerHTML=`${svg('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/>')}<p><b>Formulaires seulement.</b> ${esc(SD_RAISON[SANS.raison]||SD_RAISON.choix)} Les documents, l’annuaire et les réglages de la structure ne sont pas disponibles.</p>
-    <div class="sd-acts"><button type="button" class="linkbtn" id="sd-why">Pourquoi ?</button>${SANS.api?'<button type="button" class="secondary sm" id="sd-pick">Choisir le dossier</button>':''}</div>`;
+    <div class="sd-acts"><button type="button" class="linkbtn" id="sd-why">Pourquoi ?</button>${SANS.raison==='api'?autreNavHTML():''}${SANS.api?'<button type="button" class="secondary sm" id="sd-pick">Choisir le dossier</button>':''}</div>`;
   $('.content').prepend(bar);
   $('#sd-why').onclick=sdWhy;
   const pk=$('#sd-pick'); if(pk) pk.onclick=()=>window.LJ_CHOISIR_DOSSIER&&window.LJ_CHOISIR_DOSSIER();
   const r=document.querySelector('footer .reassure'); if(r) r.lastChild.textContent='Rien n’est enregistré : le formulaire ne va que dans le PDF ou le mail';
   tab='forms';
 }
+/* Navigateur sans accès aux dossiers (Firefox, Safari) : passer à Edge ou Chrome en un clic.
+   Windows sait lancer Edge depuis un lien (microsoft-edge:) ; rien d'équivalent pour Chrome, donc on copie l'adresse. */
+const LJ_URL=()=>location.origin+location.pathname;
+function autreNavHTML(){ const win=/Windows/.test(navigator.userAgent);
+  return `${win?`<a class="secondary sm btnlink" href="microsoft-edge:${esc(LJ_URL())}">Ouvrir dans Edge</a>`:''}<button type="button" class="secondary sm" data-nav-chrome>Ouvrir dans Chrome</button>`; }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-nav-chrome]'); if(!b) return;
+  copyText(LJ_URL()).then(ok=>openModal(`<h3 id="modal-title">Ouvrir Librejo dans Chrome</h3>
+    <ol><li>Ouvrez <b>Google Chrome</b>.</li><li>Cliquez dans la barre d’adresse, collez (<b>Ctrl+V</b>) puis Entrée.</li></ol>
+    <p>${ok?'✅ L’adresse est déjà copiée :':'Adresse à copier :'} <code>${esc(LJ_URL())}</code></p>
+    <p class="hint m-0">Un navigateur ne peut pas en lancer un autre, sauf Edge sous Windows.</p>
+    <div class="btns"><button class="primary" data-close>OK</button></div>`)); });
+/* Bouton « Installer Librejo sur ce poste » : visible seulement quand le navigateur le permet et que ce n'est pas déjà fait */
+(function(){ const b=$('#installbtn'); if(!b) return;
+  const sync=()=>{ b.hidden=!window.LJ_INSTALL||!!DEMO; }; document.addEventListener('lj-install',sync); sync();
+  b.onclick=async()=>{ const ev=window.LJ_INSTALL; if(!ev) return; ev.prompt(); try{ const r=await ev.userChoice; if(r&&r.outcome==='accepted') toast('Librejo est installé : retrouvez-le sur le bureau ou dans le menu Démarrer'); }catch(_){} window.LJ_INSTALL=null; sync(); };
+})();
 function sdWhy(){
   openModal(`<h3 id="modal-title">Pourquoi « formulaires seulement » ?</h3>
     <p>${esc(SD_RAISON[SANS.raison]||SD_RAISON.choix)}</p>
     <p>Librejo n’a pas de serveur : les documents, l’annuaire et les réglages de la structure sont rangés dans un dossier partagé (NAS, lecteur réseau, OneDrive, Google Drive…), que le navigateur ouvre avec votre accord. Sans ce dossier, seuls les formulaires marchent : PDF, impression, téléchargement et mail, comme d’habitude.</p>
-    <p class="hint">${SANS.raison==='api'?'Ouvrez Librejo dans <b>Microsoft Edge</b> ou <b>Google Chrome</b> sur un ordinateur pour retrouver tout le reste.':'Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement : aucune donnée n’est envoyée sur Internet.'}</p>
+    <p class="hint">${SANS.raison==='api'?'Ouvrez Librejo dans <b>Microsoft Edge</b> ou <b>Google Chrome</b> sur un ordinateur pour retrouver tout le reste.</p><p class="row">'+autreNavHTML()+'</p><p class="hint">Firefox et Safari ne savent pas ouvrir un dossier du poste. Edge ouvre Librejo directement ; pour Chrome, l’adresse est copiée et il reste à la coller.':'Si votre service informatique bloque l’accès aux dossiers dans le navigateur, il peut l’autoriser pour Librejo seulement : aucune donnée n’est envoyée sur Internet.'}</p>
     <p><a href="${SD_KIT}" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>
     <h4 class="mt-s m-0">Vérifications de ce poste</h4><div id="ck-box"></div>
     <div class="btns">${SANS.api?'<button class="primary" id="sdw-pick">Choisir le dossier</button>':''}<button class="secondary" data-close>Fermer</button></div>`,'wide');
