@@ -62,10 +62,9 @@
       <h2>La bonne version, sans chercher</h2>
       <p class="lead">Tapez deux mots : Librejo affiche la version à jour, prête à imprimer ou à envoyer.</p>
     </div>
-    <div class="shot shot--app loop" data-slot="recherche" data-kind="product">
-      <img src="images/rech-0.webp" width="1600" height="1000" alt="" loading="lazy">
-      <img src="images/rech-1.webp" width="1600" height="1000" alt="" loading="lazy">
-      <img src="images/rech-2.webp" width="1600" height="1000" alt="Une recherche du mot « droits » trouve sept documents, avec les boutons Imprimer et Envoyer" loading="lazy">
+    <div class="shot shot--app" data-slot="recherche" data-kind="product">
+      <img src="images/anim-recherche.webp" width="1600" height="1000" alt="Une recherche du mot « droits » trouve sept documents, avec les boutons Imprimer et Envoyer" loading="lazy">
+      <video class="anim" data-keep muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"><source src="videos/anim-recherche.mp4" type="video/mp4"></video>
     </div>
   </div>
 </section>
@@ -76,10 +75,9 @@
       <h2>Des formulaires à remplir à l’écran</h2>
       <p class="lead">Remplissez une attestation ou un courrier : Librejo produit le PDF à l’en-tête de la structure et prépare le mail.</p>
     </div>
-    <div class="shot shot--app loop" data-slot="formulaire" data-kind="product">
-      <img src="images/form-0.webp" width="1600" height="1000" alt="" loading="lazy">
-      <img src="images/form-1.webp" width="1600" height="1000" alt="" loading="lazy">
-      <img src="images/form-2.webp" width="1600" height="1000" alt="Une attestation de suivi se remplit, son aperçu se dessine à côté" loading="lazy">
+    <div class="shot shot--app" data-slot="formulaire" data-kind="product">
+      <img src="images/anim-formulaire.webp" width="1600" height="1000" alt="Une attestation de passage se remplit et son aperçu se met à jour, puis Librejo propose d’imprimer, d’envoyer ou de télécharger le PDF" loading="lazy">
+      <video class="anim" data-keep muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"><source src="videos/anim-formulaire.mp4" type="video/mp4"></video>
     </div>
   </div>
 </section>
@@ -102,7 +100,8 @@
       <p class="lead">Reliez chaque document au critère qu’il prouve : Librejo indique ce qui est à jour, à relire ou manquant.</p>
     </div>
     <div class="shot" data-slot="has" data-kind="product">
-      <img src="images/has.webp" width="1600" height="1000" alt="L’écran Préparer l’évaluation HAS : des critères avec leur preuve à jour, d’autres sans preuve" loading="lazy">
+      <img src="images/anim-has.webp" width="1600" height="1000" alt="Préparer l’évaluation HAS : la Charte des droits et libertés est reliée au critère 2.2.2, et le compteur passe à 6 critères impératifs prouvés sur 18" loading="lazy">
+      <video class="anim" data-keep muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"><source src="videos/anim-has.mp4" type="video/mp4"></video>
     </div>
   </div>
 </section>
@@ -119,7 +118,8 @@
       </div>
     </div>
     <div class="shot" data-slot="demarrage" data-kind="product">
-      <img src="images/boot.webp" width="1600" height="1000" alt="Le premier écran de Librejo : choisir le dossier de la structure" loading="lazy">
+      <img src="images/anim-installation.webp" width="1600" height="1000" alt="L’assistant de démarrage : on crée le dossier de la structure, puis on saisit son nom, son type et sa ville" loading="lazy">
+      <video class="anim" data-keep muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"><source src="videos/anim-installation.mp4" type="video/mp4"></video>
     </div>
   </div>
 </section>
@@ -159,6 +159,19 @@ document.querySelectorAll('[data-sendlink]').forEach((a) => {
   a.href = 'mailto:?subject=' + encodeURIComponent('Librejo, à ouvrir sur un ordinateur') + '&body=' + encodeURIComponent(url);
   a.addEventListener('click', (e) => { if (navigator.share) { e.preventDefault(); navigator.share({ title: 'Librejo', url }).catch(() => {}); } });
 });
+// Animations des captures : lecture quand elles sont à l'écran, jamais si l'ordinateur demande moins d'animations
+const calme = matchMedia('(prefers-reduced-motion: reduce)');
+const anims = [...document.querySelectorAll('video.anim')];
+anims.forEach((v) => v.addEventListener('playing', () => v.classList.add('on'), { once: true }));
+if ('IntersectionObserver' in window && anims.length) {
+  const vo = new IntersectionObserver((es) => es.forEach((e) => {
+    const v = e.target;
+    if (e.isIntersecting && !calme.matches) { if (v.preload !== 'auto') { v.preload = 'auto'; } v.play().catch(() => {}); }
+    else v.pause();
+  }), { threshold: 0.35 });
+  anims.forEach((v) => vo.observe(v));
+  calme.addEventListener?.('change', () => { if (calme.matches) anims.forEach((v) => { v.pause(); v.classList.remove('on'); }); });
+}
 const ready = (s) => s.classList.add('ready');
 document.querySelectorAll('.shot').forEach((s) => { const im = s.querySelector('img:last-of-type'); if (!im || im.complete) return ready(s); im.addEventListener('load', () => ready(s), { once: true }); im.addEventListener('error', () => ready(s), { once: true }); setTimeout(() => ready(s), 5000); });
 
