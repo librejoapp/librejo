@@ -340,6 +340,9 @@ body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearc
 .mt{display:flex;flex-direction:column;gap:6px}
 .mt-row{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:8px;align-items:center}
 .mt-row .num{text-align:right;font-variant-numeric:tabular-nums}
+.mt-km{display:grid;grid-template-columns:minmax(0,1fr) 90px 150px auto auto;gap:8px;align-items:center;margin-top:var(--sp-2);padding:var(--sp-3);border:1px dashed var(--line-strong);border-radius:10px;background:var(--bg)}
+.mt-km>b,.mt-km>small{grid-column:1/-1}.mt-km>small{color:var(--text-3)}.mt-el{display:flex;gap:5px;align-items:center;white-space:nowrap}
+@media (max-width:800px){ .mt-km{grid-template-columns:1fr 1fr} }
 .mt-tot{display:flex;justify-content:flex-end;gap:var(--sp-3);align-items:baseline;padding-top:6px;border-top:2px solid var(--navy);color:var(--navy);font-weight:700}
 .mt-tot b{font-size:var(--fs-5);font-variant-numeric:tabular-nums;min-width:120px;text-align:right;margin-right:18px}
 .news{list-style:none;margin:0 0 var(--sp-4);padding:0;display:flex;flex-direction:column;gap:6px}
