@@ -1041,6 +1041,11 @@ const catName=id=>(DATA.categories.find(c=>c.id===id)||{}).nom||id||'';
 /* Moteur de recherche : tous les mots doivent être trouvés (sans tenir compte des accents) dans le titre,
    la description, les mots-clés, la catégorie ou le nom du fichier ; le titre compte le plus. */
 function terms(q){ return norm(q).split(/[\s,;'’]+/).filter(t=>t.length>0); }
+const SEARCH_STOP=new Set('de du des le la les l un une et ou a au aux en pour par sur sans avec dans chez qui que quoi comment quel quelle quels quelles est son sa ses ce cette ces d patient patiente patients personne personnes usager usagere usagers quelqu qu on il elle faire avoir besoin veut faut'.split(' '));
+function looseSearch(ts){ const T=ts.filter(t=>t.length>1&&!SEARCH_STOP.has(t)); if(T.length<2) return [];
+  const need=Math.max(1,Math.ceil(T.length/2));
+  return docs().concat(formItems()).concat(DATA.kits.map(k=>({...k,kind:'kit'}))).map(it=>{ let n=0, s=0; T.forEach(t=>{ const x=scoreItem(it,[t]); if(x>0){ n++; s+=x; } }); return {it,n,s}; })
+    .filter(x=>x.n>=need).sort((a,b)=>b.n-a.n||b.s-a.s).slice(0,30).map(x=>x.it); }
 function scoreItem(it,ts){
   const F={t:norm(it.titre),k:norm((it.motscles||[]).join(' ')),d:norm(it.description),c:norm(catName(it.categorie)),f:norm(it.fichier||''),x:TXT_ON&&!it.kind?txOf(it):''};
   let s=0;
@@ -1142,6 +1147,9 @@ function renderDocs(){
   if(ts.length){
     list=docs().concat(formItems()).concat(DATA.kits.map(k=>({...k,kind:'kit'}))).map(it=>({it,s:scoreItem(it,ts)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).map(x=>x.it);
     title=`${list.length} résultat${list.length>1?'s':''}`;
+    /* Phrase en langage courant (« patient sans papier couverture santé ») : si aucun document ne contient tous les mots,
+       on montre ceux qui en contiennent au moins la moitié, mots vides retirés et synonymes compris. */
+    if(!list.length){ const L=looseSearch(ts); if(L.length){ list=L; title=`Aucun résultat exact · ${L.length} approchant${L.length>1?'s':''}`; } }
   }else if(filter==='recent'){ list=sortDocs(docs().slice()).slice(0,20); title='Derniers documents'; }
   else if(filter==='kits'){ list=[]; title='Kits de documents'; }
   else{ const [fc,fs]=splitDest(filter); list=sortDocs(docs().filter(d=>d.categorie===fc&&(!fs||d.sous===fs))).concat(fs?[]:formItems().filter(f=>f.categorie===fc)); title=esc(catName(fc))+(fs?` <span class="o">› ${esc(fs)}</span>`:''); showCat=false; }
@@ -3763,7 +3771,8 @@ function editPartner(x){
     const before=x?JSON.parse(JSON.stringify(x)):null, t=x||n;
     Object.assign(t,{nom:f.nom,type:f.type||'Partenaire',tel:f.tel,adresse:f.adresse,cp:f.cp,ville:f.ville,notes:f.notes,personnes:f.personnes,emails:anMails(all)});
     if(!x) ANNU.partenaires.push(t);
-    if(await run(saveAnnu,'Fiche enregistrée')){ closeModal(); renderAnnu(); }
+    const chg=pmKeepOld(before,t);
+    if(await run(saveAnnu,'Fiche enregistrée')){ closeModal(); renderAnnu(); if(chg) pmAfterPartner(t); }
     else{ if(x) Object.keys(x).forEach(k=>delete x[k]), Object.assign(x,before); else ANNU.partenaires.pop(); }
   };
   if(x) $('#pa-del').onclick=()=>askConfirm('Supprimer cette fiche ?',`« ${esc(x.nom)} » sera retirée de l'annuaire de Librejo.`,'Supprimer',async()=>{
@@ -3870,6 +3879,10 @@ const DEFAULT_SYN=[
   ['LHSS','lits halte soins santé'],
   ['ACT','appartement de coordination thérapeutique'],
   ['AME','aide médicale','C2S','CSS','sécurité sociale','droits'],
+  ['sans papiers','sans-papiers','situation irrégulière','séjour irrégulier','AME','titre de séjour'],
+  ['couverture maladie','couverture sociale','AME','C2S','PUMa','sécurité sociale','mutuelle','complémentaire'],
+  ['SDF','sans domicile','sans abri','à la rue','115','domiciliation','hébergement'],
+  ['manger','repas','colis','aide alimentaire','restaurant social'],
   ['cure','sevrage'],
   ['psy','psychiatrie','CMP','santé mentale'],
   ['naloxone','surdose','overdose','Prenoxad','Nyxoid'],
@@ -6566,6 +6579,45 @@ async function txSetup(){
     st.textContent=ok?`✅ C’est prêt : ${Object.keys(TXT).length} documents lus${sc?`, dont ${sc} PDF scanné${sc>1?'s':''} sans texte`:''}.`:'La préparation n’a pas pu se terminer.';
     if(ok){ bt.textContent='Refaire'; bt.disabled=false; jlog('Recherche dans le texte','',`${Object.keys(TXT).length} documents indexés`); } };
 }
+/* ---------- Documents peut-être périmés : Librejo relit le texte des documents et le recoupe avec l'annuaire et le calendrier ----------
+   1. une ancienne coordonnée d'un partenaire (téléphone, mail, adresse remplacés dans l'annuaire) figure encore dans un document ;
+   2. le document annonce une échéance passée (« jusqu'au 31/12/2024 ») ou un millésime dépassé (« tarifs 2024 »).
+   Ce sont des indices, pas des certitudes : l'admin peut écarter chacun (« ce n'est pas périmé »). */
+const PM_MOIS={janvier:1,fevrier:2,mars:3,avril:4,mai:5,juin:6,juillet:7,aout:8,septembre:9,octobre:10,novembre:11,decembre:12};
+const pmDigits=s=>String(s||'').replace(/\D/g,'');
+function pmKey(d,k){ return d.id+'|'+k; }
+function perimeScan(){
+  if(!TXT) return []; const out=[], now=today(), Y=+now.slice(0,4), ign=new Set(DATA.perimeOk||[]);
+  const olds=[]; ANNU.partenaires.forEach(p=>(p.anciens||[]).forEach(a=>olds.push({p,a})));
+  DATA.documents.forEach(d=>{ if(isLink(d)) return; const raw=txRaw(d); if(!raw) return; const W=[], low=norm(raw), dig=raw.replace(/[\s.\-–]/g,'');
+    olds.forEach(({p,a})=>{
+      if(a.tel){ const t=pmDigits(a.tel); if(t.length>=9&&t!==pmDigits(p.tel)&&dig.includes(t)) W.push({k:'tel:'+t,txt:`ancien téléphone de ${p.nom} : ${a.tel}${p.tel?' (aujourd’hui : '+p.tel+')':''}`}); }
+      if(a.mail&&!(p.emails||[]).includes(a.mail)&&low.includes(norm(a.mail))) W.push({k:'mail:'+a.mail,txt:`ancienne adresse mail de ${p.nom} : ${a.mail}`});
+      if(a.adresse){ const o=norm(a.adresse).replace(/[^a-z0-9]+/g,' ').trim(); if(o.length>=8&&o!==norm(p.adresse||'').replace(/[^a-z0-9]+/g,' ').trim()&&low.replace(/[^a-z0-9]+/g,' ').includes(o)) W.push({k:'adr:'+o,txt:`ancienne adresse de ${p.nom} : ${a.adresse}${p.adresse?' (aujourd’hui : '+partAddr(p)+')':''}`}); } });
+    const seen=new Set();
+    for(const m of low.matchAll(/(jusqu['’ ]?au|jusqu['’ ]?en|avant le|au plus tard le|date limite[^.]{0,25}?|valable[^.]{0,25}?|expire[^.]{0,15}?)\s+(?:le\s+)?(\d{1,2})(?:er)?[\/.\- ]\s?(\d{1,2}|janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)[\/.\- ]\s?(20\d{2})/g)){
+      const mo=PM_MOIS[m[3]]||+m[3]; if(!(mo>=1&&mo<=12)) continue; const iso=`${m[4]}-${pad(mo)}-${pad(+m[2])}`; if(iso>=now||seen.has(iso)) continue; seen.add(iso);
+      W.push({k:'ech:'+iso,txt:`échéance dépassée : « ${m[0].replace(/\s+/g,' ').trim()} »`}); }
+    for(const m of low.matchAll(/\b(tarifs?|baremes?|plafonds?|montants?|planning|calendrier|programme|horaires|permanences|campagne|saison|edition|rentree|annee|budget|smic|rsa)\s+(?:[a-z']+\s+){0,2}?(20\d{2})(?:\s?[-\/]\s?(?:20)?(\d{2}))?\b/g)){
+      const y=m[3]?2000+ +m[3]:+m[2]; if(y>=Y||y<2000||seen.has('y'+m[1]+y)) continue; seen.add('y'+m[1]+y);
+      W.push({k:'an:'+m[1]+y,txt:`mention datée : « ${m[0].replace(/\s+/g,' ').trim()} »`}); }
+    const L=W.filter(w=>!ign.has(pmKey(d,w.k))); if(L.length) out.push({d,L}); });
+  return out.sort((a,b)=>b.L.length-a.L.length); }
+/* À l'enregistrement d'une fiche de l'annuaire : on garde les anciennes coordonnées, pour les retrouver dans les documents */
+function pmKeepOld(before,p){ if(!before) return 0; const A=p.anciens=Array.isArray(before.anciens)?before.anciens.slice():[]; let n=0; const add=o=>{ A.push({...o,le:today()}); n++; };
+  if(before.tel&&pmDigits(before.tel)!==pmDigits(p.tel)) add({tel:before.tel});
+  (before.emails||[]).filter(m=>!(p.emails||[]).includes(m)).forEach(m=>add({mail:m}));
+  if(before.adresse&&norm(before.adresse)!==norm(p.adresse||'')) add({adresse:before.adresse});
+  while(A.length>12) A.shift(); if(!A.length) delete p.anciens; return n; }
+async function pmAfterPartner(p){ try{ await txLoad(); }catch(e){ return; }
+  if(!Object.keys(TXT||{}).length){ toast('Coordonnées changées. Pour retrouver les documents qui citent les anciennes : Outils › Tableau de bord › préparer la recherche dans le texte.'); return; }
+  const H=perimeScan().map(x=>({d:x.d,L:x.L.filter(w=>w.txt.includes(' de '+p.nom+' :'))})).filter(x=>x.L.length); if(!H.length) return;
+  openModal(`<h3 id="modal-title">🕰️ ${H.length} document${H.length>1?'s citent':' cite'} encore les anciennes coordonnées</h3>
+    <p>Vous venez de modifier la fiche de <b>${esc(p.nom)}</b>. Ces documents sont à corriger :</p>
+    <ul class="pm-list">${H.map(x=>`<li><a href="${hrefOf(x.d.chemin)}" target="_blank" rel="noopener"><b>${esc(x.d.titre)}</b></a><small>${esc(destName(destOf(x.d)))}</small>${x.L.map(w=>`<span>${esc(w.txt)}</span>`).join('')}</li>`).join('')}</ul>
+    <p class="hint m-0">Corrigez le fichier, puis déposez-le sur la ligne du document : « Nouvelle version ». La liste reste dans Outils › Tableau de bord.</p>
+    <div class="btns"><button class="primary" data-close>Compris</button></div>`,'wide'); }
+
 /* ---------- Statistiques d'utilisation : par poste, par mois ; seulement des identifiants de documents et des nombres ---------- */
 const ST_KEY='librejo-stats', ST_POSTE='librejo-poste';
 function stPoste(){ try{ let p=localStorage.getItem(ST_POSTE); if(!p){ p='p'+rid(); localStorage.setItem(ST_POSTE,p); } return p; }catch(e){ return 'p-inconnu'; } }
@@ -6670,7 +6722,9 @@ async function dashboard(){
   const bk=DATA.sauvegarde?age(DATA.sauvegarde):null;
   const card=(ic,n,lab,sub,act,level)=>`<div class="db-card ${level||''}"><span class="db-ic">${ic}</span><b>${n}</b><span>${lab}</span>${sub?`<small>${sub}</small>`:''}${act||''}</div>`;
   const rl=D.filter(d=>relState(d)==='late'), rs=D.filter(d=>relState(d)==='soon'), hOk=HAS_CRIT.filter(c=>hasStatus(c)==='ok').length, hImp=HAS_CRIT.filter(c=>c.imp), hImpOk=hImp.filter(c=>hasStatus(c)==='ok').length;
+  const PM=perimeScan(), pmN=PM.reduce((a,x)=>a+x.L.length,0);
   const todo=[
+    card('🕰️',PM.length,'documents peut-être périmés',!Object.keys(TXT||{}).length?'Préparez d’abord la recherche dans le texte':pmN?`${pmN} indice${pmN>1?'s':''} : ancienne coordonnée, date dépassée`:'Aucune ancienne coordonnée ni date dépassée repérée',PM.length?`<button type="button" class="linkbtn" data-dbshow="perime">Voir</button>`:'',PM.length?'warn':'ok'),
     card('⏰',rl.length,'documents à relire',rs.length?`et ${rs.length} dans le mois`:'',rl.length+rs.length?`<button type="button" class="linkbtn" data-dbshow="relire">Voir</button>`:'',rl.length?'warn':'ok'),
     card('⏳',D.filter(d=>d.statut==='avalider').length,'documents à valider',`${D.filter(d=>d.statut==='brouillon').length} brouillon(s)`,D.some(d=>!isPub(d))?`<button type="button" class="linkbtn" data-dbshow="aval">Voir</button>`:'',D.some(d=>d.statut==='avalider')?'warn':'ok'),
     card('🏅',`${hImpOk}/${hImp.length}`,'critères HAS impératifs prouvés',`${hOk}/${HAS_CRIT.length} critères au total`,`<button type="button" class="linkbtn" data-dbgo="has">Préparer</button>`,hImpOk<hImp.length?'warn':'ok'),
@@ -6682,6 +6736,7 @@ async function dashboard(){
     card('🔎',txN==null||!Object.keys(TXT||{}).length?'—':txN,txN==null||!Object.keys(TXT||{}).length?'recherche dans le texte non préparée':'documents à ajouter à la recherche dans le texte','',`<button type="button" class="linkbtn" data-dbgo="tx">Préparer</button>`,txN?'':'ok'),
   ].join('');
   const lists={
+    perime:['🕰️ Peut-être périmés',PM.map(x=>`<a href="${hrefOf(x.d.chemin)}" target="_blank" rel="noopener">${esc(x.d.titre)}</a> <small>${esc(destName(destOf(x.d)))}</small>${x.L.map(w=>`<span class="pm-w">${esc(w.txt)} <button type="button" class="linkbtn" data-pmok="${esc(pmKey(x.d,w.k))}">ce n’est pas périmé</button></span>`).join('')}`)],
     aval:['⏳ À valider et brouillons',D.filter(d=>!isPub(d)).map(d=>`${esc(d.titre)} <small>${ST_LAB[d.statut]} · ${esc(destName(destOf(d)))}</small>`)],
     relire:['⏰ À relire',[...rl,...rs].map(d=>`${esc(d.titre)} <small>${relState(d)==='late'?'en retard depuis le':'avant le'} ${frDate(d.relire)} · ${esc(destName(destOf(d)))}</small>`)],
     popold:['🔁 Très utilisés, vieux de plus d’un an',popOld.map(d=>`${esc(d.titre)} <small>${tot(T['d:'+d.id])} utilisations · ${docDate(d.date)}</small>`)],
@@ -6720,6 +6775,8 @@ async function dashboard(){
       sgTraite(ids).then(()=>{ jlog('Signalement traité',ids.length>1?ids.length+' signalements':(SG.find(x=>x.id===ids[0])||{}).titre||''); toast(ids.length>1?'Signalements marqués comme traités':'Signalement marqué comme traité'); dashboard(); renderDocs(); }).catch(()=>{ sd.disabled=false; toast('Enregistrement impossible'); }); return; }
     const so=e.target.closest('[data-sgopen]'); if(so){ const it=sgItem(so.dataset.sgopen); if(!it) return; closeModal();
       if(it.d) window.open(isLink(it.d)?it.d.url:hrefOf(it.d.chemin),'_blank','noopener'); else if(it.f){ setTab('forms'); if(typeof editForm==='function') editForm(it.f.id); } return; }
+    const po=e.target.closest('[data-pmok]'); if(po){ po.disabled=true; DATA.perimeOk=[...(DATA.perimeOk||[]),po.dataset.pmok].slice(-500);
+      run(saveData).then(ok=>{ if(ok){ const w=po.closest('.pm-w'), li=w.closest('li'); w.remove(); if(li&&!li.querySelector('.pm-w')) li.remove(); } else { DATA.perimeOk.pop(); po.disabled=false; } }); return; }
     const sh=e.target.closest('[data-dbshow]'); if(sh){ const [t,L]=lists[sh.dataset.dbshow]; $('#db-list').innerHTML=`<div class="db-listbox"><h5>${t} (${L.length})</h5><ul>${L.slice(0,200).map(x=>`<li>${x}</li>`).join('')}</ul></div>`; $('#db-list').scrollIntoView({block:'nearest',behavior:smooth()}); return; }
     const go=e.target.closest('[data-dbgo]'); if(go){ const k=go.dataset.dbgo; closeModal(); if(k==='backup') backup(); else if(k==='has') hasPrep(); else if(k==='tx') txSetup(); else if(k==='cerfa'){ const f=window.cerfaCheck||(typeof cerfaCheck==='function'?cerfaCheck:null); f?f():setTab('forms'); } } };
   $('#db-csv').onclick=()=>{ const c=v=>`"${String(v??'').replace(/"/g,'""')}"`;
