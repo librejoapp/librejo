@@ -2273,15 +2273,22 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
 
 /* ---------- Épinglés (page d'accueil) ---------- */
 function renderPinned(){
-  const {order}=pinnedAndUsed();
+  const {order,nPin}=pinnedAndUsed();
   if(!order.length) return '';
   const tile=(title,sub,btns,mark,th,href,fav)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}${fav?favBtn(fav):''}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
   const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`,'','f:'+f.id), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin),'d:'+d.id);
   return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
-    ${order.map(([t,x])=>t==='f'?F(x):t==='k'?K(x):D(x)).join('')}
-  </div>`;
+    ${order.map(([t,x],i)=>{ const h=t==='f'?F(x):t==='k'?K(x):D(x); if(i>=nPin) return h;
+      /* épinglé par l'admin : toujours affiché, quel que soit l'usage ; on le dit, et l'admin peut le retirer d'ici */
+      return h.replace('<div class="fcard tile">',`<div class="fcard tile pinned"><span class="pinmark" title="Épinglé par l’admin : toujours affiché ici, même s’il sert peu">📌${isAdmin?`<button type="button" class="pinoff" data-unpin="${t}:${esc(x.id)}" title="Retirer de l’accueil" aria-label="Retirer ${esc(x.titre)} de l’accueil">×</button>`:''}</span>`); }).join('')}
+  </div>${nPin?`<p class="hint pinhint">📌 épinglé par l’admin${isAdmin?' (× pour le retirer)':''} · les autres : ce qui sert le plus sur ce poste ces dernières semaines.</p>`:''}`;
 }
+
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-unpin]'); if(!b||!isAdmin) return; e.preventDefault(); e.stopPropagation();
+  const [t,id]=[b.dataset.unpin.slice(0,1),b.dataset.unpin.slice(2)], keep=JSON.stringify({f:DATA.formsEpingles,k:DATA.kits.map(k=>k.epingle),d:DATA.documents.map(d=>d.epingle)});
+  if(t==='f') DATA.formsEpingles=DATA.formsEpingles.filter(x=>x!==id); else if(t==='k'){ const k=DATA.kits.find(x=>x.id===id); if(k) k.epingle=false; } else { const d=DATA.documents.find(x=>x.id===id); if(d) d.epingle=false; }
+  run(()=>saveData(),'Retiré de l’accueil').then(ok=>{ if(!ok){ const o=JSON.parse(keep); DATA.formsEpingles=o.f; DATA.kits.forEach((k,i)=>k.epingle=o.k[i]); DATA.documents.forEach((d,i)=>d.epingle=o.d[i]); } renderDocs(); }); },true);
 
 /* ---------- Modèles Word : champs {…} remplis par Librejo ---------- */
 const WNS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -7058,14 +7065,14 @@ document.addEventListener('click',e=>{
 function pinnedAndUsed(){
   const all=formItems(), fs=all.filter(f=>DATA.formsEpingles.includes(f.id)), ks=DATA.kits.filter(k=>k.epingle), ds=docs().filter(d=>d.epingle);
   // d'abord les épinglés, toujours à la même place ; puis ce qui sert le plus sur ce poste
-  const order=[...fs.map(x=>['f',x]),...ks.map(x=>['k',x]),...ds.map(x=>['d',x])];
+  const order=[...fs.map(x=>['f',x]),...ks.map(x=>['k',x]),...ds.map(x=>['d',x])], nPin=order.length;
   const room=Math.max(4,USE_MAX-order.length); let n=0;
   for(const k of useTop()){
     if(n>=room) break; const i=k.indexOf(':'), ty=k.slice(0,i), id=k.slice(i+1);
     const [list,src]=ty==='f'?[fs,all]:ty==='k'?[ks,DATA.kits]:ty==='d'?[ds,docs()]:[null,[]];
     const x=src.find(y=>y.id===id); if(list&&x&&!list.includes(x)){ list.push(x); order.push([ty,x]); n++; }
   }
-  return {fs,ks,ds,order};
+  return {fs,ks,ds,order,nPin};
 }
 
 /* Délivrance : ce qui manque n'empêche plus de créer les PDF. Une fenêtre le liste :

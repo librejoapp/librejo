@@ -1269,6 +1269,11 @@ html.menu-clair .catbtn svg{color:var(--cc,currentColor)}
 .todayrow{align-items:flex-end}
 .todayrow .today{margin:0;font-size:var(--fs-4);color:var(--text-3);font-weight:500}
 .todayrow .today .who{color:var(--text-3)}
+.fcard.tile.pinned{position:relative}
+.pinmark{position:absolute;top:8px;right:10px;display:flex;align-items:center;gap:2px;font-size:15px;line-height:1;z-index:1}
+.pinoff{border:1px solid var(--line-strong);background:var(--surface);color:var(--text-3);border-radius:999px;width:22px;height:22px;font:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0}
+.pinoff:hover{color:var(--danger);border-color:var(--danger)}
+.pinhint{margin-top:var(--sp-2)}
 .todayrow .today .clock{font-variant-numeric:tabular-nums;white-space:nowrap}
 /* Mode admin apaisé */
 body.is-admin::before{height:3px;opacity:.9}
