@@ -273,7 +273,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&a
 function sdOffer(raison){
   var b=document.createElement('div'); b.className='lj-sd';
   b.innerHTML='<button class="lj-btn lj-sec" id="lj-sd">Remplir un formulaire sans dossier</button>'
-    +'<p class="lj-aide">Sans le dossier, vous n’aurez pas les documents, l’annuaire ni les réglages de la structure : seulement les formulaires, avec l’en-tête que vous saisissez. C’est la solution quand le navigateur ou le service informatique bloque l’accès aux dossiers. <a href="'+KIT_DSI+'" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>';
+    +'<p class="lj-aide">Sans le dossier, vous n’aurez pas les documents, l’annuaire ni les réglages de la structure : seulement les formulaires, avec l’en-tête que vous saisissez. Utilisez ce mode quand le navigateur ou le service informatique bloque l’accès aux dossiers. <a href="'+KIT_DSI+'" target="_blank" rel="noopener">Ce qu’il faut demander à l’informatique</a></p>';
   ui.querySelector('.lj-in').appendChild(b);
   document.getElementById('lj-sd').onclick=function(){ formsOnly(raison||'choix'); };
 }
@@ -470,7 +470,7 @@ async function boot(){
     sdOffer('choix');
     return;
   }
-  show('<h1>Bienvenue dans Librejo</h1><p>Choisissez le dossier de votre structure : celui qui contient les sous-dossiers <b>app</b> et <b>Documents</b> (sur le NAS, un lecteur réseau, OneDrive…).</p><p class="lj-aide">Les documents restent dans ce dossier. Rien n’est envoyé sur Internet.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>');
+  show('<h1>Bienvenue dans Librejo</h1><p>Choisissez le dossier de votre structure : celui qui contient les sous-dossiers <b>app</b> et <b>Documents</b> (sur cet ordinateur, ou sur un NAS, un lecteur réseau ou OneDrive si plusieurs postes s’en servent).</p><p class="lj-aide">Les documents restent dans ce dossier. Rien n’est envoyé sur Internet.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>');
   document.getElementById('lj-pick').onclick = pick;
   var nb=document.createElement('p'); nb.className='lj-aide'; nb.innerHTML='Première installation ? <button class="lj-link" id="lj-new">Créer le dossier Librejo de votre structure</button>'; ui.querySelector('.lj-in').appendChild(nb);
   document.getElementById('lj-new').onclick = create;

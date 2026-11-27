@@ -4401,10 +4401,10 @@ function guideSteps(){
   const exp=PAR.sansMail||!env.length?'':env.length===1?` L’adresse d’envoi de l’équipe est <b>${esc(env[0])}</b>.`:` Choisissez l’expéditeur parmi ${env.slice(0,-1).map(m=>`<b>${esc(m)}</b>`).join(', ')} et <b>${esc(env[env.length-1])}</b>.`;
   return [
   {ico:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',t:'Trouver un document',
-   p:[`Tapez simplement ce que vous cherchez, même sans cliquer dans la barre${ex.length?' : '+ex.join(', ')+'…':'.'}`,'À gauche, les catégories. Cliquez sur le titre d’un document pour l’ouvrir ; dessous : <b>Imprimer</b>, <b>Envoyer</b> par mail, ou <b>Remplir</b> pour les modèles Word.']},
+   p:[`Tapez ce que vous cherchez, même sans cliquer dans la barre${ex.length?' : '+ex.join(', ')+'…':'.'}`,'À gauche, les catégories. Cliquez sur le titre d’un document pour l’ouvrir ; dessous : <b>Imprimer</b>, <b>Envoyer</b> par mail, ou <b>Remplir</b> pour les modèles Word.']},
   {ico:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',t:'Remplir un formulaire',
    p:[nF?`Page <b>Formulaires</b> : ${fl}.${C?` Et ${C>1?C+' Cerfa':'un Cerfa'} déjà rempli${C>1?'s':''} avec les infos de la structure.`:''}`:'Page <b>Formulaires</b> : l’admin y ajoute les formulaires de la structure.',
-     `<b>Rien n’est enregistré</b> : le PDF est créé sur ce poste, puis le formulaire s’efface. ${mail}${exp}`]},
+     `Librejo crée le PDF sur ce poste, puis efface le formulaire : <b>rien n’est enregistré</b>. ${mail}${exp}`]},
   {ico:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',t:'Et aussi',
    p:['<b>Impression rapide</b> : les documents choisis par l’admin, le nombre d’exemplaires de chacun, puis un clic sur « Imprimer ».','<b>Annuaire</b> : les partenaires, pour écrire par exemple à tous les partenaires d’un même type d’un coup.',
      'En bas à gauche, <b>Dossier connecté</b> indique que Librejo lit bien le dossier de la structure (sinon, cliquez dessus pour l’autoriser). L’<b>accès admin</b> sert à ajouter ou remplacer des documents.']},
@@ -5964,7 +5964,7 @@ function wizBody(){ const W=WZ, s=W.step;
     ${W.mailmode&&W.mailmode!=='aucun'?`<label class="field"><span>Adresse(s) d’envoi de l’équipe <small>(une par ligne : reçoivent une copie)</small></span><textarea class="in" data-w="envoi" rows="2" spellcheck="false">${esc(W.envoi)}</textarea></label>
       <div class="row"><button type="button" class="secondary" id="wz-test">${ICON.mail}Tester</button><small class="hint">Prépare un mail d’essai, sans rien envoyer.</small></div>`:''}`;
   if(s===6) return `<h2 id="wz-h">Le mot de passe admin</h2><p class="wz-lead">Il protège le mode admin, qui permet d’ajouter et de modifier les documents.</p>
-    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>C’est un verrou contre les erreurs de manipulation, pas un coffre-fort. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier. La vraie protection, ce sont les droits d’accès au dossier, gérés par votre service informatique.</span></div>
+    <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Ce mot de passe évite les erreurs de manipulation. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier. Ce sont les droits d’accès au dossier, gérés par votre service informatique, qui protègent les documents.</span></div>
     <div class="fieldgrid"><label class="field"><span>Mot de passe <small>(6 caractères au moins)</small></span><input class="in" type="password" id="wz-pw" value="${esc(W.pw)}" autocomplete="new-password" data-autofocus></label>
       <label class="field"><span>À nouveau</span><input class="in" type="password" id="wz-pw2" value="${esc(W.pw2)}" autocomplete="new-password"></label></div>`;
   const nf=MODELES.filter(m=>W.packs&&W.packs.includes(m.pack)).length, typ=(WZ_TYPES.find(t=>t[0]===W.type)||[])[1]||'—';
@@ -7738,7 +7738,7 @@ const AIDE={
       '<b>Gérer</b>, sur chaque ligne : description, mots-clés, version, épinglage, archive.',
       'Sous le titre : <b>Nouveau sous-dossier</b>, <b>Renommer la catégorie</b>, <b>Changer l’emoji</b>, <b>Supprimer la catégorie</b>.']},
   kits:{titre:'Kits de documents',
-    but:'Des lots de documents à imprimer ou à envoyer ensemble, en une seule fois.',
+    but:'Des lots de documents à imprimer ou à envoyer ensemble, en une fois.',
     etapes:['Repérez le kit voulu : la liste de ses documents est affichée.',
       'L’imprimante imprime tout le kit ; l’enveloppe joint tous ses documents au même mail.',
       'La flèche vers le bas télécharge tous les documents du kit.'],
@@ -7841,7 +7841,7 @@ const AIDE={
       '<b>Lecteur réseau…</b> : si le lecteur du NAS (Z:, X:…) disparaît au démarrage, Librejo prépare un programme de réparation pour ce poste.',
       '<b>Relancer</b> après une correction, puis <b>Fermer</b>.']},
   defaut:{
-    but:'Une page de Librejo. Les boutons disent ce qu’ils font, et rien n’est enregistré sur les personnes accompagnées.',
+    but:'Chaque bouton indique ce qu’il fait. Librejo n’enregistre rien sur les personnes accompagnées.',
     etapes:['Le menu à gauche mène aux grandes parties : <b>Accueil</b>, <b>Formulaires</b>, <b>Impression rapide</b>, <b>Annuaire</b>.',
       'Les champs marqués « (facultatif) » peuvent rester vides.',
       'Perdu ? Cliquez sur <b>Accueil</b>.',
@@ -7929,7 +7929,7 @@ const AIDE_FORMS={
 /* Réglages : une entrée par section (clé = section des réglages) */
 const AIDE_REGLAGES={
   structure:{titre:'Réglages : Structure',
-    but:'Les informations administratives de la structure (adresse, SIRET, agrément, responsable…). Elles servent à pré-remplir les Cerfa, et à rien d’autre.',
+    but:'Les informations administratives de la structure (adresse, SIRET, agrément, responsable…). Elles ne servent qu’à pré-remplir les Cerfa.',
     etapes:['Remplissez ce que vous avez. Une case laissée vide restera vide sur le Cerfa.',
       'En gris : ce que Librejo a déjà trouvé, à confirmer.',
       'Cliquez sur <b>Enregistrer les réglages</b>.']},
@@ -7968,7 +7968,7 @@ const AIDE_REGLAGES={
       'Cliquez sur <b>Enregistrer les réglages</b>.']},
   securite:{titre:'Réglages : Accès',
     but:'Le mot de passe du mode admin, et l’assistant de démarrage.',
-    etapes:['<b>Nouveau mot de passe admin</b> : laissez vide pour garder l’actuel. Librejo n’en garde qu’une empreinte, il ne peut donc pas être affiché ; en cas d’oubli, un admin encore connecté en choisit un nouveau. C’est un verrou contre les erreurs, pas un coffre-fort : la vraie protection, ce sont les droits sur le dossier.',
+    etapes:['<b>Nouveau mot de passe admin</b> : laissez vide pour garder l’actuel. Librejo n’en garde qu’une empreinte, il ne peut donc pas être affiché ; en cas d’oubli, un admin encore connecté en choisit un nouveau. Il évite les fausses manipulations ; ce sont les droits d’accès au dossier qui protègent réellement les documents.',
       '<b>Relancer l’assistant</b> pour revoir d’un coup la structure, l’équipe, les catégories, les modèles et le mail.',
       'Cliquez sur <b>Enregistrer les réglages</b>.']}
 };
@@ -8005,7 +8005,7 @@ const AIDE_WIZ=[
   {but:'Le mot de passe du mode admin, qui permet d’ajouter et de modifier les documents.',
     etapes:['Choisissez un mot de passe de 6 caractères au moins, sans rapport avec le nom de la structure.',
       'Saisissez-le une deuxième fois dans <b>À nouveau</b>.',
-      'C’est un verrou contre les erreurs, pas un coffre-fort. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier.']},
+      'Ce mot de passe évite les fausses manipulations. Librejo n’en garde qu’une empreinte : personne ne peut le relire dans le dossier.']},
   {but:'Le récapitulatif, avant que Librejo écrive les réglages dans le dossier de la structure.',
     etapes:['Relisez chaque ligne. Cliquez sur une étape, à gauche, pour y revenir.',
       'Cliquez sur <b>C’est parti</b>.',
