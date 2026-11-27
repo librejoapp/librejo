@@ -1996,7 +1996,9 @@ function makeLetter({titre,confidentiel,date,paras,signataire,tp}){
   doc.text(`${villeLe(st)}${frDate(date)}`,L,y); y+=14;
   const footTop=297-14-((st.pied||[]).length)*4-8;
   const room=n=>{ if(y+n>footTop){ doc.addPage(); y=25; doc.setFontSize(11.5); doc.setFont(PF(),'normal'); doc.setTextColor(...INK); } };
-  paras.forEach(p=>{ p.split('\n').forEach(line=>{ doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); }); y+=4; });
+  /* un paragraphe « --- » seul trace un trait sur toute la largeur (ex. les deux zones d'une ordonnance bizone) */
+  paras.forEach(p=>{ if(p.trim()==='---'){ room(10); doc.setDrawColor(...INK); doc.setLineWidth(.5); doc.line(L,y-1,R,y-1); y+=7; return; }
+    p.split('\n').forEach(line=>{ doc.splitTextToSize(line,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=6; }); }); y+=4; });
   let tw=0,th=0; if(tp){ tw=40; th=tw*tp.h/tp.w; if(th>32){ th=32; tw=th*tp.w/tp.h; } }
   y+=6; room(20+(tp?th+4:0));
   doc.setFont(PF(),'bold'); doc.setTextColor(...NAVY); doc.text(signataire,R,y,{align:'right'});
@@ -2813,7 +2815,7 @@ function drawFormEditor(){
     </div>`).join('')}</div>
     <div><button class="secondary" data-cadd>${ICON.plus}Ajouter un champ</button></div>
     <h3 class="mt-s">Texte du document</h3>
-    <p class="hint muted">Écrivez le texte du PDF. Mettez le nom d'un champ entre accolades pour l'insérer, par ex. {Initiales}. Laissez une ligne vide entre deux paragraphes.</p>
+    <p class="hint muted">Écrivez le texte du PDF. Mettez le nom d'un champ entre accolades pour l'insérer, par ex. {Initiales}. Laissez une ligne vide entre deux paragraphes. Une ligne avec seulement <code>---</code> trace un trait sur toute la largeur.</p>
     <div class="tokens">${f.champs.map(c=>`<button type="button" data-tok="${esc(c.label)}">{${esc(c.label)}}</button>`).join('')}</div>
     <textarea class="in" id="fe-modele" rows="9">${esc(f.modele)}</textarea>
     <div class="row between"><button class="secondary" data-fprev>${ICON.file}Aperçu du PDF</button>
