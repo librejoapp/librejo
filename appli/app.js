@@ -2171,7 +2171,9 @@ async function prepare(force){
   try{
     const logo=await loadLogo(), N=F.patients.length;
     let tp=null; try{ tp=await loadTampon(); }catch(e){}
-    files=F.patients.map((pt,i)=>new File([makePdf(pt,logo,tp)],`Delivrance-exceptionnelle_${F.date||today()}${N>1?`_${i+1}-sur-${N}`:''}.pdf`,{type:'application/pdf'}));
+    /* initiales du patient dans le nom du fichier (« Dupont Jean-Marie » → DJM) : on retrouve le bon PDF sans y mettre le nom */
+    const iniOf=pt=>String(pt.ini||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[\s.\-'’]+/).filter(Boolean).map(w=>w[0].toUpperCase()).join('').replace(/[^A-Z]/g,'').slice(0,5);
+    files=F.patients.map((pt,i)=>new File([makePdf(pt,logo,tp)],`Delivrance-exceptionnelle${iniOf(pt)?'_'+iniOf(pt):''}_${F.date||today()}${N>1?`_${i+1}-sur-${N}`:''}.pdf`,{type:'application/pdf'}));
   }catch(e){ console.error(e); toast('Le PDF n’a pas pu être créé. Réessayez ; si cela recommence, prévenez l’admin.'); return; }
   const D=dest()||{structure:'',adresses:[]}, N=files.length;
   showSendGeneric({files,to:D.adresses,subject:subject(),body:mailBody(N),sensitive:true,onDone:()=>clearAll()});
