@@ -2630,26 +2630,49 @@ async function addModele(id){
   jlog('Formulaire ajouté',f.titre,'depuis la bibliothèque');
   renderForms(); drawFormList();
 }
+/* Administration › Formulaires et modèles : une liste déroulante par rubrique (même présentation que l'accueil).
+   Ce qui est ouvert reste ouvert quand la liste se redessine (après « Ajouter », « Masquer »…). */
+const FL_OPEN=new Set(['own:mixte','own:med','own:social']);
+const PACK_EMOJI={droits:'⚖️',qualite:'✅',social:'🤝',liaison:'🔗',handicap:'♿',enfance:'🧒',agees:'🧓',asile:'🏠',addicto:'💊'};
+function flSec(key,emo,titre,sous,rows){
+  return `<details class="hsec flsec" data-fl="${esc(key)}"${FL_OPEN.has(key)?' open':''}>
+    <summary><span class="he" aria-hidden="true">${emo}</span><span class="ht"><b>${esc(titre)}</b><small>${esc(sous)}</small></span><span class="chev" aria-hidden="true"></span></summary>
+    <div class="tblwrap"><table class="docs"><tbody>${rows}</tbody></table></div></details>`;
+}
+const nb=(n,un,des)=>n+' '+(n>1?des:un);
 function modelesHTML(){
   return `<div class="card top w-wide"><h3>Bibliothèque de modèles</h3>
-    <p class="hint">Des formulaires prêts à l’emploi. « Ajouter » en fait une copie que vous pouvez ensuite modifier librement. Relisez toujours le texte avant de l’utiliser.</p>
-    ${MODELE_PACKS.map(([k,nom,txt])=>`<h4 class="mt-s m-0">${esc(nom)}</h4><p class="hint muted m-0">${esc(txt)}</p>
-      <div class="tblwrap"><table class="docs"><tbody>${MODELES.filter(m=>m.pack===k).map(m=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${m.emoji||'📝'}</span></td><td class="t"><b>${esc(m.titre)}</b><small>${esc(m.description)}${m.source?` · <i>${esc(m.source)}</i>`:''}</small></td>
-        <td><div class="act">${modeleAdded(m)?`<span class="badge">Déjà ajouté</span><button class="ghost" data-madd="${m.id}">Ajouter une copie</button>`:`<button class="secondary sm" data-madd="${m.id}">${ICON.plus}Ajouter</button>`}</div></td></tr>`).join('')}</tbody></table></div>`).join('')}</div>`;
+    <p class="hint">Des formulaires prêts à l’emploi, rangés par thème. « Ajouter » en fait une copie que vous pouvez ensuite modifier librement. Relisez toujours le texte avant de l’utiliser.</p>
+    <div class="homecol">${MODELE_PACKS.map(([k,nom,txt])=>{ const l=MODELES.filter(m=>m.pack===k); if(!l.length) return ''; const deja=l.filter(modeleAdded).length;
+      return flSec('pack:'+k,PACK_EMOJI[k]||'📝',nom,nb(l.length,'modèle','modèles')+(deja?' · '+deja+' déjà ajouté'+(deja>1?'s':''):''),
+        l.map(m=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${m.emoji||'📝'}</span></td><td class="t"><b>${esc(m.titre)}</b><small>${esc(m.description)}${m.source?` · <i>${esc(m.source)}</i>`:''}</small></td>
+        <td><div class="act">${modeleAdded(m)?`<span class="badge">Déjà ajouté</span><button class="ghost" data-madd="${m.id}">Ajouter une copie</button>`:`<button class="secondary sm" data-madd="${m.id}">${ICON.plus}Ajouter</button>`}</div></td></tr>`).join('')); }).join('')}</div></div>`;
+}
+function builtinRow(f){
+  return `<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}${formsOff().includes(f.id)?` · <b>${esc(formsOffBase().includes(f.id)?'masqué':formsAuto(f.id)||'masqué')}</b>`:(PAR.formsOn||[]).includes(f.id)&&formsAuto(f.id)?' · <b>activé par vous</b>':''}</small></td>
+      <td><div class="act"><button class="secondary sm" data-foff="${f.id}">${formsOff().includes(f.id)?'Proposer':'Masquer'}</button>${f.tab==='deliv'?`<button class="secondary" data-goset="dest">Destinataires</button>`:''}${f.sets.includes('annu')?`<button class="secondary" data-goset="annu">Annuaire</button>`:''}${f.sets.includes('catalogue')?`<button class="secondary" data-goset="catalogue">Listes de l'ordonnance</button>`:''}${f.sets.includes('med')?`<button class="secondary" data-goset="med">Médecins</button>`:''}</div></td></tr>`;
+}
+function ownRow(f){
+  return `<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${esc(formEmoji(f))}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
+      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`;
 }
 function drawFormList(){
   if(!$('#asub')) return;
-  $('#asub').innerHTML=`${modelesHTML()}<div class="card top w-wide">
+  const grpOf=id=>{ const g=formGroup({id}); return g; };
+  const own=FORM_GROUPS.map(([g,nom,emo])=>{ const l=DATA.formulaires.filter(f=>formGroup(f)===g); return l.length?flSec('own:'+g,emo,nom,nb(l.length,'formulaire','formulaires'),l.map(ownRow).join('')):''; }).join('');
+  const integ=FORM_GROUPS.map(([g,nom,emo])=>{ const l=BUILTIN_FORMS.filter(f=>grpOf(f.id)===g); if(!l.length) return ''; const off=l.filter(f=>formsOff().includes(f.id)).length;
+    return flSec('int:'+g,emo,nom,nb(l.length,'formulaire','formulaires')+(off?' · '+off+' masqué'+(off>1?'s':''):''),l.map(builtinRow).join('')); }).join('');
+  $('#asub').innerHTML=`<div class="card top w-wide">
+    <h3>Formulaires de la structure</h3>
+    <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
+    ${own?`<div class="homecol">${own}</div>`:'<p class="hint">Aucun formulaire pour l’instant : créez-en un, ou ajoutez un modèle de la bibliothèque ci-dessous.</p>'}
+    <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>
+    <div class="card top w-wide">
     <h3>Formulaires intégrés</h3>
     <p class="hint">Leur texte est fixe, mais ce qu'ils proposent se règle : destinataires, adresses, médecins, partenaires. « Masquer » les retire de la liste de l'équipe.</p>
-    <div class="tblwrap"><table class="docs"><tbody>${BUILTIN_FORMS.map(f=>`<tr><td class="col-icon"><span class="ico emoji" aria-hidden="true">${FORM_EMOJI[f.id]}</span></td><td class="t"><b>${esc(f.titre)}</b><small>${f.sets.map(k=>esc(SETTINGS[k].l)).join(' · ')}${formsOff().includes(f.id)?` · <b>${esc(formsOffBase().includes(f.id)?'masqué':formsAuto(f.id)||'masqué')}</b>`:(PAR.formsOn||[]).includes(f.id)&&formsAuto(f.id)?' · <b>activé par vous</b>':''}</small></td>
-      <td><div class="act"><button class="secondary sm" data-foff="${f.id}">${formsOff().includes(f.id)?'Proposer':'Masquer'}</button>${f.tab==='deliv'?`<button class="secondary" data-goset="dest">Destinataires</button>`:''}${f.sets.includes('annu')?`<button class="secondary" data-goset="annu">Annuaire</button>`:''}${f.sets.includes('catalogue')?`<button class="secondary" data-goset="catalogue">Listes de l'ordonnance</button>`:''}${f.sets.includes('med')?`<button class="secondary" data-goset="med">Médecins</button>`:''}</div></td></tr>`).join('')}</tbody></table></div></div>
-    <div class="card top w-wide">
-    <h3>Formulaires</h3>
-    <p class="hint">Un formulaire = des champs à remplir + un texte modèle. Librejo en fait un PDF à l'en-tête de la structure, puis prépare le mail.</p>
-    ${DATA.formulaires.length?`<div class="tblwrap"><table class="docs"><tbody>${DATA.formulaires.map(f=>`<tr><td class="t"><b>${esc(f.titre)}</b><small>${esc(catName(f.categorie))} · ${(f.champs||[]).length} champ(s)</small></td>
-      <td><div class="act"><button class="secondary" data-fedit="${esc(f.id)}">Modifier</button><button class="secondary" data-fdup="${esc(f.id)}">Dupliquer</button><button class="ghost danger" data-fdel="${esc(f.id)}" aria-label="Supprimer le formulaire « ${esc(f.titre)} »" title="Supprimer le formulaire">${ICON.trash}</button></div></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Aucun formulaire pour l’instant.</p>'}
-    <div><button class="primary" data-fnew>${ICON.plus}Créer un formulaire</button></div></div>`;
+    <div class="homecol">${integ}</div></div>
+    ${modelesHTML()}`;
+  const box=$('#asub'); if(!box._flToggle){ box._flToggle=true; box.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.fl){ if(d.open) FL_OPEN.add(d.dataset.fl); else FL_OPEN.delete(d.dataset.fl); } },true); }
   $('#asub').onclick=async e=>{
     const ma=e.target.closest('[data-madd]'); if(ma) return addModele(ma.dataset.madd);
     const fo=e.target.closest('[data-foff]'); if(fo){ const id=fo.dataset.foff, hidden=formsOff().includes(id), old=PAR.formsOff, oldOn=PAR.formsOn, base=formsOffBase();
