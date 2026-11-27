@@ -1269,6 +1269,17 @@ html.menu-clair .catbtn svg{color:var(--cc,currentColor)}
 .todayrow{align-items:flex-end}
 .todayrow .today{margin:0;font-size:var(--fs-4);color:var(--text-3);font-weight:500}
 .todayrow .today .who{color:var(--text-3)}
+.fold{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0;min-width:0;max-width:100%;overflow:hidden}
+.fold>summary{display:flex;align-items:center;gap:var(--sp-2);cursor:pointer;padding:10px var(--sp-3);list-style:none;min-height:44px;min-width:0}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::before{content:'';width:8px;height:8px;border-right:2px solid var(--navy);border-bottom:2px solid var(--navy);transform:rotate(-45deg);transition:transform .15s;flex:0 0 auto;margin-right:4px}
+.fold[open]>summary::before{transform:rotate(45deg)}
+.fold .fold-t{font-weight:700;color:var(--navy);text-transform:uppercase;font-size:var(--fs-2);letter-spacing:.04em}
+.fold .fold-n{background:var(--accent-soft);color:var(--accent-text);border-radius:999px;padding:1px 8px;font-size:var(--fs-1);font-weight:700}
+.fold .fold-s{flex:1 1 0;min-width:0;color:var(--text-3);font-size:var(--fs-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fold[open] .fold-s{display:none}
+.fold>.choice{padding:0 var(--sp-3) var(--sp-3)}
+.fold:hover{border-color:var(--line-strong)}
 .fcard.tile.pinned{position:relative}
 .pinmark{position:absolute;top:8px;right:10px;display:flex;align-items:center;gap:2px;font-size:15px;line-height:1;z-index:1}
 .pinoff{border:1px solid var(--line-strong);background:var(--surface);color:var(--text-3);border-radius:999px;width:22px;height:22px;font:inherit;font-size:14px;line-height:1;cursor:pointer;padding:0}

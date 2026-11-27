@@ -1914,6 +1914,8 @@ function openForm(id){
   formView=id; FV={_date:today(),_to:f.destinataires||''}; fShowErr=false; setTab('forms'); window.scrollTo({top:0});
 }
 const fieldKey=c=>c.id;
+const FOLD=new Set();
+document.addEventListener('toggle',e=>{ const d=e.target; if(!d.dataset||!d.dataset.fold) return; d.open?FOLD.add(d.dataset.fold):FOLD.delete(d.dataset.fold); },true);
 function renderFill(){
   if(String(formView||'').startsWith('cerfa:')) return renderCerfa();
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f){ formView=null; return renderForms(); }
@@ -1929,11 +1931,15 @@ function renderFill(){
     return `<input class="in${B}" data-f="${c.id}" value="${esc(v)}" autocomplete="off">`; };
   $('#p-forms').innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
     <h2 class="sec"><span class="temoji" aria-hidden="true">${esc(formEmoji(f))}</span>${esc(f.titre)}</h2>
-    ${f.description?`<p class="hint">${esc(f.description)}</p>`:''}
+    ${f.description?`<p class="hint w-form">${esc(f.description)}</p>`:''}
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface après l'envoi ou si vous fermez la page.</span></div>
     <div class="card top w-form">
       <div class="fieldgrid">
-        ${fieldsShown(f).map(c=>{ const t=c.type==='equipe'||c.type==='cases'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
+        ${fieldsShown(f).map(c=>{ if(c.type==='cases'&&caseOpts(c.options).length>3){
+            /* longues listes de cases (ordonnances…) : repliées, avec ce qui est coché visible sur la ligne du titre */
+            const sel=String(FV[c.id]||'').split('\n').filter(Boolean), op=FOLD.has(c.id)||bad.has(c.id);
+            return `<details class="field wide fold" data-fold="${esc(c.id)}"${op?' open':''}><summary><span class="fold-t">${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${sel.length?`<span class="fold-n">${sel.length} coché${sel.length>1?'s':''}</span><span class="fold-s">${esc(sel.join(' · '))}</span>`:''}</summary>${input(c)}</details>`; }
+          const t=c.type==='equipe'||c.type==='cases'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
         <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
         <label class="field"><span>Date du document</span><input class="in${bad.has('_date')?' bad" data-errk="_date':''}" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
