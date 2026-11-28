@@ -2353,7 +2353,7 @@ function renderPinned(){
   const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`,'','f:'+f.id), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin),'d:'+d.id);
   return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
-    ${order.map(([t,x],i)=>{ const h=t==='f'?F(x):t==='k'?K(x):D(x); if(i>=nPin) return h;
+    ${order.slice(0,Math.max(6,nPin)).map(([t,x],i)=>{ const h=t==='f'?F(x):t==='k'?K(x):D(x); if(i>=nPin) return h;
       /* épinglé par l'admin : toujours affiché, quel que soit l'usage ; on le dit, et l'admin peut le retirer d'ici */
       return h.replace('<div class="fcard tile">',`<div class="fcard tile pinned"><span class="pinmark" title="Épinglé par l’admin : toujours affiché ici, même s’il sert peu">📌${isAdmin?`<button type="button" class="pinoff" data-unpin="${t}:${esc(x.id)}" title="Retirer de l’accueil" aria-label="Retirer ${esc(x.titre)} de l’accueil">×</button>`:''}</span>`); }).join('')}
   </div>${nPin?`<p class="hint pinhint">📌 épinglé par l’admin${isAdmin?' (× pour le retirer)':''} · les autres : ce qui sert le plus sur ce poste ces dernières semaines.</p>`:''}`;
@@ -5664,7 +5664,7 @@ function quickForms(){
   const already=new Set(pinnedAndUsed().fs.map(f=>f.id));
   const used=useTop().filter(k=>k.startsWith('f:')).map(k=>k.slice(2));
   const rank=f=>DATA.formsEpingles.includes(f.id)?0:used.includes(f.id)?1+used.indexOf(f.id):100;
-  const list=all.filter(f=>!already.has(f.id)).sort((a,b)=>rank(a)-rank(b)).slice(0,6);
+  const list=all.filter(f=>!already.has(f.id)).sort((a,b)=>rank(a)-rank(b)).slice(0,4);
   if(!list.length) return '';
   return `<h2 class="lab">Remplir un formulaire</h2><div class="qforms">${list.map(f=>`<button type="button" class="qform" data-fill="${esc(f.id)}"><span class="qe" aria-hidden="true">${esc(formEmoji(f))}</span><span class="qt"><b>${esc(f.titre)}</b>${f.description?`<small>${esc(excerpt(f.description,[]))}</small>`:''}</span><span class="qgo" aria-hidden="true">›</span></button>`).join('')}</div>`;
 }
@@ -7336,9 +7336,9 @@ const newsK=d=>`${d.id}:${d.version||1}:${d.modifie||d.ajoute||''}`;
 function newsList(){ const lim=cgIso(cgAdd(new Date(),-NEWS_DAYS)), seen=newsSeen();
   return DATA.documents.filter(isPub).map(d=>({d,q:String(d.modifie||'')>String(d.ajoute||'')?d.modifie:d.ajoute,maj:!!d.modifie&&String(d.modifie)>String(d.ajoute||'')})).filter(x=>x.q&&String(x.q)>=lim&&!seen.has(newsK(x.d))).sort((a,b)=>String(b.q).localeCompare(String(a.q))); }
 function renderNews(){ if(isAdmin||SANS) return ''; const L=newsList(); if(!L.length) return '';
-  return `<div class="newshead"><h2 class="lab">🆕 Quoi de neuf</h2><button type="button" class="linkbtn" data-newsok>J’ai vu, masquer</button></div>
+  return `<details class="newsfold"><summary><span class="badge accent m-0">Nouveau</span><span class="nf-t">${L.length} document${L.length>1?'s':''} ajouté${L.length>1?'s':''} ou mis à jour, dont <b>${esc(L[0].d.titre)}</b></span><span class="nf-go">Voir</span></summary>
     <ul class="news">${L.slice(0,6).map(({d,q,maj})=>`<li><span class="badge ${maj?'':'accent'}">${maj?'Mis à jour'+(d.version?' · v'+esc(d.version):''):'Nouveau'}</span><a href="${isLink(d)?esc(safeHref(d.url)||'#'):hrefOf(d.chemin)}" target="_blank" rel="noopener">${esc(d.titre)}</a><small>${esc(catName(d.categorie))} · ${esc(frDate(q))}</small></li>`).join('')}
-    ${L.length>6?`<li><span>et ${L.length-6} autre${L.length-6>1?'s':''} : voir « Derniers documents ».</span></li>`:''}</ul>`; }
+    ${L.length>6?`<li><span>et ${L.length-6} autre${L.length-6>1?'s':''} : voir « Derniers documents ».</span></li>`:''}</ul><button type="button" class="linkbtn" data-newsok>J’ai vu, masquer</button></details>`; }
 document.addEventListener('click',e=>{ if(!(e.target.closest&&e.target.closest('[data-newsok]'))) return; const S=newsSeen(); newsList().forEach(x=>S.add(newsK(x.d)));
   try{ localStorage.setItem(NEWS_KEY,JSON.stringify([...S].slice(-400))); }catch(_){} renderDocs(); });
 function renderFavs(){

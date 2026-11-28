@@ -379,6 +379,12 @@ body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearc
 .news li a:hover{text-decoration:underline}
 .news li small{color:var(--text-3);margin-left:auto;white-space:nowrap}
 .news .badge{flex:none;margin:0}
+.newsfold{margin:0 0 var(--sp-4);background:var(--accent-soft);border-radius:10px;padding:0 var(--sp-3)}
+.newsfold summary{display:flex;align-items:center;gap:var(--sp-3);min-height:48px;cursor:pointer;list-style:none;color:var(--accent-ink)}
+.newsfold summary::-webkit-details-marker{display:none}
+.newsfold .nf-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.newsfold .nf-go{font-weight:700;color:var(--accent-text)}.newsfold[open] .nf-go{display:none}
+.newsfold[open]{padding-bottom:var(--sp-3)}.newsfold .news{margin-bottom:var(--sp-2)}
 .newshead{display:flex;align-items:center;gap:var(--sp-3)}.newshead .linkbtn{margin-left:auto}
 .btnlink{display:inline-flex;align-items:center;text-decoration:none;border-radius:var(--r-sm);padding:6px 12px;font-weight:600}
 .installbtn{border-color:var(--accent)!important}

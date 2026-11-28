@@ -2,7 +2,7 @@
 /* Nom du cache : toujours « librejo-appli-… » (incrémenter le numéro à chaque mise à jour du code).
    À l'activation, seuls les anciens caches « librejo-appli-* » sont supprimés : jamais ceux du site ni d'autres. */
 const PREFIX='librejo-appli-';
-const VERSION=PREFIX+'v36';
+const VERSION=PREFIX+'v37';
 /* Mise en cache en deux temps.
    1. À l'installation (~2,4 Mo) : ce qu'il faut pour ouvrir Librejo et produire un PDF hors ligne. */
 const BASE=['./','index.html','chargement.js','app.js','fichier.js','boot.js','boot.css','logo.svg','logo-blanc.svg','manifest.webmanifest','favicon.ico','favicon.svg','app/polices.css',
