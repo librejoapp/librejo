@@ -2000,7 +2000,7 @@ function renderFill(){
     if(c.type==='cases'){ const sel=new Set(String(v).split('\n')); return `<div class="choice cases${B}">${caseOpts(c.options).map(o=>`<button type="button" class="chip" data-case="${c.id}" data-v="${esc(o)}" aria-pressed="${sel.has(o)}">${esc(o)}</button>`).join('')}</div>`; }
     return `<input class="in${B}" data-f="${c.id}" value="${esc(v)}" autocomplete="off">`; };
   $('#p-forms').innerHTML=`<button class="backlink" data-back>${svg('<path d="m15 6-6 6 6 6"/>')}Tous les formulaires</button>
-    <h2 class="sec"><span class="temoji" aria-hidden="true">${esc(formEmoji(f))}</span>${esc(f.titre)}</h2>
+    <h2 class="sec"><span class="temoji" aria-hidden="true">${esc(formEmoji(f))}</span>${esc(f.titre)}${guideBtn(f,'inh')}</h2>
     ${f.description?`<p class="hint w-form">${esc(f.description)}</p>`:''}
     <div class="privacy"><span class="pemo" aria-hidden="true">🔒</span><span>Rien n'est enregistré. Le formulaire s'efface après l'envoi ou si vous fermez la page.</span></div>
     <div class="card top w-form">
@@ -2065,6 +2065,7 @@ function formBlob(f,tp){
 }
 async function makeFormPdf(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f) return;
+  if(guideAvant(f,makeFormPdf)) return;
   fShowErr=true; if(missingStop(validateFill(f),'#p-forms',renderFill,makeFormPdf,()=>FV)) return; fShowErr=false;
   let tp=null; try{ tp=await loadTampon(); }catch(e){}
   try{ await pdfReady(); }catch(e){ return; }
@@ -2516,6 +2517,100 @@ function dicoEdit(){
     if(isAdmin&&$('#dc-s')){ const keep=DATA.dico; DATA.dico=L($('#dc-s').value).sort((a,b)=>a.localeCompare(b,'fr')); if(!await run(saveData,'Dictionnaire enregistré')){ DATA.dico=keep; return; } } else toast('Dictionnaire enregistré');
     closeModal(); SP.p=null; SP.set=null; spLoad().then(spAll); };
 }
+/* ======================================================================
+   Guides des formulaires : repères pour bien rédiger, avec leurs sources.
+   Un guide par thème, rattaché aux modèles de la bibliothèque (modele_src). Il s'ouvre dans un panneau à droite,
+   sans quitter le formulaire. « Vérifié le » : au-delà d'un an, le guide se signale « à revérifier ».
+   Le coordinateur peut ajouter une note « Chez nous » (DATA.guidesNotes), visible par l'équipe.
+   Repères, pas un avis juridique : chaque point renvoie à ses sources.
+   ====================================================================== */
+const GUIDES={
+  'etranger-malade':{
+    titre:'Titre de séjour pour soins (« étranger malade »)',
+    verifie:'2026-11-28',
+    resume:'Une personne étrangère gravement malade, qui vit en France, peut obtenir une carte de séjour « vie privée et familiale » pour se soigner (article L. 425-9 du CESEDA). Tout repose sur un certificat médical officiel, lu uniquement par les médecins de l’OFII.',
+    blocs:[
+      ['Les conditions (toutes à remplir)',[
+        'Résider habituellement en France.',
+        'Avoir un état de santé qui nécessite une prise en charge médicale, faute de laquelle la santé se dégraderait gravement (« conséquences d’une exceptionnelle gravité »).',
+        'Ne pas pouvoir accéder au traitement approprié dans son pays d’origine.',
+        'Ne pas représenter une menace pour l’ordre public. La demande reste possible en situation irrégulière.']],
+      ['Le parcours',[
+        'Le certificat médical vierge est mis à disposition dans l’espace ANEF de la personne : on l’imprime.',
+        'Il est rempli par le médecin qui suit habituellement la personne, ou par un praticien hospitalier.',
+        'La personne l’envoie elle-même au service médical de l’OFII, sous enveloppe « secret médical », <b>dans le mois</b> (3 mois si elle est demandeuse d’asile, à compter de l’enregistrement de sa demande). Recommandé avec accusé de réception conseillé.',
+        'Un médecin de l’OFII rédige un rapport. Il peut demander des compléments (réponse attendue sous 15 jours), convoquer la personne ou prescrire des examens.',
+        'Un collège de médecins de l’OFII rend un avis au préfet. Le préfet n’est pas lié par cet avis.',
+        'Sans réponse au bout de 4 mois, la demande est refusée. Un recours devant le tribunal administratif est possible dans les 2 mois.']],
+      ['Bien rédiger le certificat (médecin)',[
+        'Retracer l’historique de la prise en charge, en détail.',
+        'Justifier les choix thérapeutiques et dire comment la situation peut évoluer.',
+        'Décrire concrètement ce qui arriverait si les soins s’arrêtaient.',
+        'Noter ce qui rendrait les soins difficiles au pays : coût, éloignement, risques de discrimination ou de violences.',
+        'Joindre les comptes rendus et résultats d’examens utiles.',
+        'S’y prendre tôt : le délai d’un mois est court.']],
+      ['À ne pas faire',[
+        'Donner un certificat ou une information médicale à la préfecture : tout va au médecin de l’OFII, et à lui seul.',
+        'Écrire un diagnostic sur un certificat demandé au guichet. Certaines préfectures exigent un « certificat non descriptif », sans base légale : il ne doit contenir aucune information médicale (modèle « Certificat médical non descriptif » de la bibliothèque).',
+        'Laisser passer le délai d’un mois : noter la date de mise à disposition dans l’ANEF.']],
+      ['Le rôle de l’équipe sociale',[
+        'Aider à ouvrir et suivre l’espace ANEF, repérer la date limite d’envoi.',
+        'Faire le lien avec le médecin, préparer les pièces non médicales.',
+        'Garder la preuve de l’envoi (recommandé).',
+        'En cas de refus : orienter rapidement vers un juriste ou une association spécialisée, le délai de recours est de 2 mois.']],
+      ['À savoir',[
+        'La part d’avis favorables du collège de l’OFII a baissé : près de 80 % en 2016, moins de 65 % en 2023 (Conseil national du sida et des hépatites virales).',
+        'Les dysfonctionnements de l’ANEF sont fréquents (dossiers clos automatiquement, pièces impossibles à transmettre) : faire des captures d’écran de chaque étape.',
+        'Plusieurs propositions de loi visent à supprimer ou restreindre ce titre. Vérifier l’état du droit avant chaque démarche.']]],
+    avant:['Le certificat officiel part à l’OFII, sous enveloppe « secret médical » : jamais à la préfecture.','Ce document-ci ne contient aucun diagnostic, aucune information médicale.','La date limite d’envoi à l’OFII (un mois) est notée et connue de la personne.'],
+    sources:[
+      ['Justice.fr (Service-public) : « Étranger gravement malade : obtenir un titre de séjour », mis à jour le 1er mai 2026','https://www.justice.fr/fiche/etranger-habitant-france-gravement-malade-obtenir-titre-sejour'],
+      ['Conseil national du sida et des hépatites virales : avis sur l’amélioration du dispositif du droit au séjour pour soins, 18 décembre 2025','https://cns.sante.fr/media/3095'],
+      ['Guide Comede, « Personnes étrangères vulnérables », avec Santé publique France','https://guide.comede.org'],
+      ['Préfecture de la Loire : note explicative OFII pour les personnes (« aucune information médicale à la préfecture »)','https://www.loire.gouv.fr/contenu/telechargement/8213/61882/file/note-explicative-titre-de-sejour-sante.pdf'],
+      ['La Revue du Praticien : les principaux types de certificats et rapports dans le parcours d’une personne migrante','https://www.larevuedupraticien.fr/outil/parcours-administratif-dune-personne-migrante-les-principaux-types-de-certificats-et-rapports'],
+      ['Conseil national de l’Ordre des médecins : certificats médicaux, règles de rédaction','https://www.conseil-national.medecin.fr/publications/fiches-pratiques/certificats-medicaux-majeurs'],
+      ['Textes : CESEDA art. L. 425-9 ; arrêté du 27 décembre 2016 (certificats, rapports et avis) ; arrêté du 5 janvier 2017 (orientations pour les médecins de l’OFII)','']]
+  }
+};
+const GUIDE_ALIAS={'cnd-sejour':'etranger-malade'};
+const guideKey=x=>{ const s=x&&(x.modele_src||x.id); return s?(GUIDES[s]?s:GUIDE_ALIAS[s]||null):null; };
+const guideBtn=(x,cls)=>{ const k=guideKey(x); return k?`<button type="button" class="guidebtn ${cls||''}" data-guide="${esc(k)}" title="Guide : enjeux, comment bien rédiger, sources" aria-label="Ouvrir le guide : ${esc(GUIDES[k].titre)}">📘<span>Guide</span></button>`:''; };
+let GUIDE_OPEN=null;
+function guideOpen(k){ const G=GUIDES[k]; if(!G) return; GUIDE_OPEN=k;
+  let p=document.getElementById('guidepan'); if(!p){ p=document.createElement('aside'); p.id='guidepan'; p.setAttribute('aria-labelledby','guide-t'); document.body.appendChild(p); }
+  const vieux=(Date.now()-new Date(G.verifie).getTime())>365*864e5, note=(DATA.guidesNotes||{})[k]||'';
+  p.innerHTML=`<div class="gp-head"><span class="gp-ico" aria-hidden="true">📘</span><h2 id="guide-t">${esc(G.titre)}</h2><button type="button" class="gp-x" data-guideclose aria-label="Fermer le guide">×</button></div>
+    <div class="gp-body">
+      <p class="gp-ver${vieux?' old':''}">${vieux?'⚠️ À revérifier : ':''}vérifié le ${esc(frDate(G.verifie))} · sources en bas</p>
+      <p class="gp-res">${esc(G.resume)}</p>
+      ${note||isAdmin?`<section class="gp-note"><h3>Chez nous</h3>${note?`<p>${esc(note).replace(/\n/g,'<br>')}</p>`:'<p class="hint">Ajoutez une note pour l’équipe : qui contacter, comment la structure fait d’habitude.</p>'}${isAdmin?`<button type="button" class="linkbtn" data-guidenote>${note?'Modifier la note':'Ajouter une note'}</button>`:''}</section>`:''}
+      ${G.blocs.map(([t,L],i)=>`<details class="gp-sec"${i<3?' open':''}><summary>${esc(t)}</summary><ul>${L.map(x=>`<li>${x}</li>`).join('')}</ul></details>`).join('')}
+      ${G.avant?`<details class="gp-sec"><summary>Avant d’envoyer</summary><ul class="gp-chk">${G.avant.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>`:''}
+      <section class="gp-src"><h3>Sources</h3><ol>${G.sources.map(([t,u])=>`<li>${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`:esc(t)}</li>`).join('')}</ol></section>
+      <p class="gp-warn">Des repères pour bien rédiger, pas un avis juridique. En cas de doute, demandez à un juriste ou à une association spécialisée.</p>
+    </div>`;
+  p.hidden=false; document.documentElement.classList.add('guide-on'); setTimeout(()=>p.querySelector('.gp-x').focus(),0); }
+function guideClose(){ const p=document.getElementById('guidepan'); if(p) p.hidden=true; document.documentElement.classList.remove('guide-on'); const b=GUIDE_OPEN&&document.querySelector(`[data-guide="${GUIDE_OPEN}"]`); GUIDE_OPEN=null; if(b) b.focus(); }
+document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
+  const b=t.closest('[data-guide]'); if(b){ e.preventDefault(); e.stopPropagation(); if(GUIDE_OPEN===b.dataset.guide) guideClose(); else guideOpen(b.dataset.guide); return; }
+  if(t.closest('[data-guideclose]')){ guideClose(); return; }
+  if(t.closest('[data-guidenote]')&&GUIDE_OPEN){ const k=GUIDE_OPEN;
+    openModal(`<h3 id="modal-title">Note « Chez nous » : ${esc(GUIDES[k].titre)}</h3><p class="hint">Visible par toute l’équipe, en haut du guide. Pas de nom de personne accompagnée.</p>
+      <label class="field"><span>Note</span><textarea class="in" id="gn-t" rows="6">${esc((DATA.guidesNotes||{})[k]||'')}</textarea></label>
+      <div class="btns"><button class="primary" id="gn-ok">Enregistrer</button><button class="secondary" data-close>Annuler</button></div>`);
+    $('#gn-ok').onclick=async()=>{ const keep=JSON.parse(JSON.stringify(DATA.guidesNotes||{})); DATA.guidesNotes=DATA.guidesNotes||{}; const v=$('#gn-t').value.trim(); if(v) DATA.guidesNotes[k]=v; else delete DATA.guidesNotes[k];
+      if(!await run(saveData,'Note enregistrée')){ DATA.guidesNotes=keep; return; } closeModal(); guideOpen(k); }; }
+},true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&GUIDE_OPEN&&$('#modal').hidden&&!SP_MENU){ guideClose(); } });
+/* au moment de créer le PDF : les vérifications du guide, une fois par formulaire ouvert */
+const GUIDE_OK=new Set();
+function guideAvant(f,go){ const k=guideKey(f), G=k&&GUIDES[k]; if(!G||!G.avant||GUIDE_OK.has(f.id)) return false;
+  openModal(`<h3 id="modal-title">📘 Avant de créer le document</h3><ul class="gp-chk">${G.avant.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <p class="hint">Rappels tirés du guide « ${esc(G.titre)} ».</p>
+    <div class="btns"><button class="primary" id="ga-ok">C’est vérifié, créer le PDF</button><button class="secondary" id="ga-g">Ouvrir le guide</button><button class="secondary" data-close>Annuler</button></div>`);
+  $('#ga-ok').onclick=()=>{ GUIDE_OK.add(f.id); closeModal(); go(); }; $('#ga-g').onclick=()=>{ closeModal(); guideOpen(k); };
+  return true; }
 /* ---------- Cartes : accueil (épinglés, favoris) et en-tête des pages Formulaires et Documents ---------- */
 const TILE_ALL=new Set();
 function tileOf(t,x,pin){
@@ -5429,7 +5524,7 @@ function linkThumb(d){
 function linkRow(d,ts,showCat){
   const u=esc(safeHref(d.url)||'#');
   return `<tr><td class="col-icon"><span class="ico lien" aria-hidden="true">${ICON_LINK}</span></td>
-    <td class="t"><a href="${u}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a><span class="badge">Lien web</span>${isAdmin&&d.epingle?' <span title="Épinglé en accueil">★</span>':''}
+    <td class="t"><a href="${u}" target="_blank" rel="noopener">${hl(d.titre,ts)}</a><span class="badge">Lien web</span>${guideBtn(d,'sm')}${isAdmin&&d.epingle?' <span title="Épinglé en accueil">★</span>':''}
       <small>${showCat?esc(destName(destOf(d)))+' · ':(d.sous&&!filter.includes('/')?esc(d.sous)+' · ':'')}${esc(linkHost(d.url))}</small>
       ${d.description?`<span class="desc">${hl(excerpt(d.description,ts),ts)}</span>`:''}
       ${(d.motscles||[]).length?`<div>${d.motscles.map(m=>`<span class="badge">${hl(m,ts)}</span>`).join('')}</div>`:''}</td>
@@ -5931,7 +6026,7 @@ function homeSec(key,emo,titre,sous,body,cls=''){
 }
 function homeFormRow(f){
   const d=(f.description||'').replace(/\s+/g,' '), s=d.length>90?d.slice(0,88).replace(/\s\S*$/,'')+'…':d;
-  return `<li><button type="button" class="hrow" data-fill="${esc(f.id)}"><span class="hi" aria-hidden="true">${esc(formEmoji(f))}</span><span class="hn"><b>${esc(f.titre)}</b>${s?`<small>${esc(s)}</small>`:''}</span><span class="hgo">Remplir</span></button>${favBtn('f:'+f.id)}</li>`;
+  return `<li><button type="button" class="hrow" data-fill="${esc(f.id)}"><span class="hi" aria-hidden="true">${esc(formEmoji(f))}</span><span class="hn"><b>${esc(f.titre)}</b>${s?`<small>${esc(s)}</small>`:''}</span><span class="hgo">Remplir</span></button>${guideBtn(f,'row')}${favBtn('f:'+f.id)}</li>`;
 }
 function homeDocRow(d){
   if(isLink(d)) return `<li><div class="hrow"><span class="hi lien" aria-hidden="true">🔗</span><a class="hn" href="${esc(safeHref(d.url)||'#')}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc('Lien web · '+linkHost(d.url))}</small></a>
