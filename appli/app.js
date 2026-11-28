@@ -1198,6 +1198,7 @@ function renderDocs(){
         <button data-a="backup"><b>💾 Sauvegarde</b><small>Télécharger une sauvegarde complète, ou en restaurer une</small></button>
         <button data-a="journal"><b>📜 Journal des modifications</b><small>Qui a ajouté, modifié ou archivé quoi, et quand</small></button>
         <button data-a="archives"><b>🗄️ Archives</b><small>Anciennes versions et documents retirés : consulter, comparer, restaurer</small></button>
+        <button data-a="dico"><b>📖 Dictionnaire du correcteur</b><small>Mots que le correcteur ne doit pas souligner : jargon, noms de dispositifs</small></button>
         <button data-a="txsetup"><b>🔎 Recherche dans le texte</b><small>Préparer la recherche dans le contenu des documents</small></button>
         <button data-a="compare"><b>Comparer deux documents</b><small>Deux versions dans le dossier ? Côte à côte, différences encadrées, puis choisir laquelle garder</small></button>
         <button data-a="inventaire"><b>Exporter l’inventaire</b><small>Tous les documents et formulaires, avec version et dates (tableur ou PDF)</small></button>
@@ -1263,7 +1264,7 @@ $('#p-docs').addEventListener('click',e=>{
   if((d=byPath('more'))) return moreMenu(e.target.closest('[data-more]'),d);
   const a=e.target.closest('[data-a]'); if(!a) return;
   const dm=a.closest('details.ab-more'); if(dm) dm.open=false; // le menu Outils se referme : il ne reste pas par-dessus la fenêtre ouverte
-  ({hasprep:()=>hasPrep(),dashboard:()=>dashboard(),backup:()=>backup(),journal:()=>journal(),archives:()=>archives(),txsetup:()=>txSetup(),compare:()=>comparer(),inventaire:()=>inventaire(),wizard:()=>wizOpen(),checks:()=>openChecks(),adddocs:()=>addDocs(),addlink:()=>editLink(null),addcat:addCat,emojicat:emojiCat,rescan:rescan,renamecat:renameCat,delcat:delCat,addsous:addSous,delsous:delSous,thumbs:makeAllThumbs,rethumbs:()=>askConfirm('Refaire toutes les miniatures ?','Librejo relit chaque document du dossier pour refaire sa miniature. Cela peut prendre une minute.','Refaire',()=>makeAllThumbs(false,true))})[a.dataset.a]();
+  ({hasprep:()=>hasPrep(),dashboard:()=>dashboard(),backup:()=>backup(),journal:()=>journal(),archives:()=>archives(),txsetup:()=>txSetup(),dico:()=>dicoEdit(),compare:()=>comparer(),inventaire:()=>inventaire(),wizard:()=>wizOpen(),checks:()=>openChecks(),adddocs:()=>addDocs(),addlink:()=>editLink(null),addcat:addCat,emojicat:emojiCat,rescan:rescan,renamecat:renameCat,delcat:delCat,addsous:addSous,delsous:delSous,thumbs:makeAllThumbs,rethumbs:()=>askConfirm('Refaire toutes les miniatures ?','Librejo relit chaque document du dossier pour refaire sa miniature. Cela peut prendre une minute.','Refaire',()=>makeAllThumbs(false,true))})[a.dataset.a]();
 });
 
 /* Imprimer en un clic : le fichier est lu dans le dossier, puis la fenêtre d'impression s'ouvre */
@@ -2353,83 +2354,166 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
    Le correcteur du navigateur est coupé partout (spellcheck="false") : dans Chrome et Edge, sa version
    « améliorée » envoie le texte tapé à Google ou à Microsoft, et une page web ne peut pas choisir la version
    de base à la place de la personne. On coupe aussi ceux des extensions les plus courantes (Grammarly,
-   LanguageTool) quand elles respectent leur attribut. À la place : une liste de mots français (Grammalecte,
-   1,8 Mo, chargée à la première saisie puis gardée hors ligne), comparée au texte sur le poste.
-   Les mots avec une majuscule (noms, prénoms, sigles) ne sont jamais signalés ; « Ignorer » ne vaut que
-   jusqu'à la fermeture de la page ; rien n'est enregistré.
+   LanguageTool) quand elles respectent leur attribut.
+   À la place : une liste de mots français (Grammalecte), et une liste anglaise chargée seulement quand une phrase
+   a l'air d'être en anglais. Les mots inconnus sont soulignés en rouge, comme dans un traitement de texte :
+   clic (droit ou gauche) sur le mot pour les propositions, « Ignorer », « Ajouter au dictionnaire ».
+   Les mots avec une majuscule (noms, prénoms, sigles) ne sont jamais soulignés. Rien de ce qui est tapé n'est
+   enregistré ; seuls les mots ajoutés volontairement au dictionnaire le sont (sur ce poste, ou pour la structure).
    ====================================================================== */
-const SP={set:null,rank:null,p:null,ign:new Set(),T:0};
+const SP={set:null,en:null,rank:null,p:null,pen:null,ign:new Set(),T:0};
 const SP_OFF=el=>{ if(el.dataset.lsp) return; el.dataset.lsp=el.getAttribute('spellcheck')==='false'?'0':'1'; el.setAttribute('spellcheck','false');
   el.setAttribute('data-gramm','false'); el.setAttribute('data-gramm_editor','false'); el.setAttribute('data-enable-grammarly','false'); el.setAttribute('data-lt-active','false'); };
 function spSweep(root){ if(root.matches&&root.matches('input,textarea,[contenteditable]')) SP_OFF(root); root.querySelectorAll&&root.querySelectorAll('input,textarea,[contenteditable]').forEach(SP_OFF); }
 spSweep(document);
 new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType===1) spSweep(n); }); }).observe(document.documentElement,{childList:true,subtree:true});
+const SP_RE=/[A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+(?:[-’'][A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+)*/g;
+const SP_ELI=/^(?:l|d|j|m|n|s|t|c|qu|jusqu|lorsqu|puisqu|quoiqu|presqu)’/i;
+const SP_KEY='librejo-dictionnaire';
+const spPoste=()=>{ try{ const a=JSON.parse(localStorage.getItem(SP_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } };
+const spUnpack=(t,S)=>{ let prev=''; for(const l of t.split('\n')){ if(!l) continue; const w=prev.slice(0,l.charCodeAt(0)-48)+l.slice(1); S.add(w); prev=w; } };
 function spLoad(){ if(SP.p) return SP.p;
   /* un script plutôt qu'un fetch : marche aussi dans la version hors ligne ouverte depuis le disque (file://) */
-  SP.p=(window.LJ_MOTS?Promise.resolve():loadScript('app/lib/mots-fr.js')).then(()=>{ const t=window.LJ_MOTS; if(!t) throw new Error('dico');
-    const S=new Set(); let prev='';
-    for(const l of t.split('\n')){ if(!l) continue; const w=prev.slice(0,l.charCodeAt(0)-48)+l.slice(1); S.add(w); prev=w; }
+  SP.p=(window.LJ_MOTS?Promise.resolve():loadScript('app/lib/mots-fr.js')).then(()=>{ if(!window.LJ_MOTS) throw new Error('dico');
+    const S=new Set(); spUnpack(window.LJ_MOTS,S);
     /* le vocabulaire de la structure (titres, descriptions, mots-clés, champs des formulaires) compte comme connu */
     const voc=[...docs().map(d=>[d.titre,d.description,(d.motscles||[]).join(' ')].join(' ')),...formItems().map(f=>f.titre+' '+(f.description||'')),...(DATA.formulaires||[]).map(f=>(f.champs||[]).map(c=>c.label+' '+(c.options||'')).join(' ')+' '+(f.modele||''))].join(' ');
     (voc.match(SP_RE)||[]).forEach(w=>{ if(w===w.toLowerCase()) S.add(w.replace(/'/g,'’')); });
+    [...(DATA.dico||[]),...spPoste()].forEach(w=>S.add(String(w).toLowerCase()));
     SP.set=S; SP.rank=new Map(); (window.LJ_FREQ||'').split('\n').forEach((w,i)=>SP.rank.set(w,i)); window.LJ_MOTS=window.LJ_FREQ=null; }).catch(()=>{ SP.p=null; });
   return SP.p; }
-const SP_RE=/[A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+(?:[-’'][A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+)*/g;
-const SP_ELI=/^(?:l|d|j|m|n|s|t|c|qu|jusqu|lorsqu|puisqu|quoiqu|presqu)’/i;
-function spKnown(w){ const S=SP.set, l=w.toLowerCase(); if(S.has(w)||S.has(l)||SP.ign.has(l)) return true;
+function spLoadEn(){ if(SP.pen) return SP.pen;
+  SP.pen=(window.LJ_MOTS_EN?Promise.resolve():loadScript('app/lib/mots-en.js')).then(()=>{ const S=new Set(); spUnpack(window.LJ_MOTS_EN||'',S); SP.en=S; window.LJ_MOTS_EN=null; spAll(); }).catch(()=>{ SP.pen=null; });
+  return SP.pen; }
+function spKnown(w,S){ const l=w.toLowerCase(); if(S.has(w)||S.has(l)||SP.ign.has(l)) return true;
   if(w.includes('-')) return w.split('-').every(p=>!p||S.has(p.toLowerCase())||/^(t|là|ci|ce|je|tu|il|elle|on|nous|vous|ils|elles|moi|toi|lui|leur|y|en)$/i.test(p));
   return false; }
-/* les mots à vérifier dans un texte : [{w, i}] (position dans le texte) */
-function spCheck(text){ const out=[]; let m; SP_RE.lastIndex=0;
-  while((m=SP_RE.exec(text))){ let w=m[0].replace(/'/g,'’'), i=m.index;
-    const e=w.match(SP_ELI); if(e&&w.length>e[0].length&&!SP.set.has(w.toLowerCase())){ w=w.slice(e[0].length); i+=e[0].length; }
-    if(w.length<3||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w[0])||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w.slice(1))) continue;   // majuscule : nom propre, sigle, début de phrase connu
-    if(spKnown(w)) continue;
-    out.push({w,i}); if(out.length>=12) break; }
+/* les mots à souligner : [{w, i}] (position dans le texte). Phrase par phrase : une phrase où les mots anglais
+   l'emportent sur les mots français est vérifiée avec la liste anglaise. */
+function spCheck(text){ const out=[]; const sentRe=/[^.!?;:\n]+[.!?;:\n]*/g; let s;
+  while((s=sentRe.exec(text))){ const toks=[]; let m; SP_RE.lastIndex=0;
+    while((m=SP_RE.exec(s[0]))){ let w=m[0].replace(/'/g,'’'), i=s.index+m.index;
+      const e=w.match(SP_ELI); if(e&&w.length>e[0].length&&!SP.set.has(w.toLowerCase())){ w=w.slice(e[0].length); i+=e[0].length; }
+      if(w.length<2||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w[0])||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w.slice(1))) continue;   // majuscule : nom propre, sigle
+      toks.push({w,i,fr:spKnown(w,SP.set)}); }
+    if(!toks.length) continue;
+    const bad=toks.filter(t=>!t.fr);
+    let en=false;
+    if(bad.length&&toks.length>=3&&bad.length/toks.length>=0.34){
+      if(!SP.en){ spLoadEn(); continue; }   // on ne souligne pas tant que l'anglais n'est pas vérifié
+      const nEn=toks.filter(t=>spKnown(t.w,SP.en)).length, nFr=toks.length-bad.length; en=nEn>nFr; }
+    for(const t of bad){ if(t.w.length<3) continue; if(en&&spKnown(t.w,SP.en)) continue; if(!en&&SP.en&&t.w.length>3&&spKnown(t.w,SP.en)&&toks.length<3) continue;
+      out.push({w:t.w,i:t.i,en}); if(out.length>=60) return out; } }
   return out; }
 const SP_AL='abcdefghijklmnopqrstuvwxyzàâäçéèêëîïôöùûüÿœ-';
 const SP_ACC={a:'aàâä',e:'eéèêë',i:'iîï',o:'oôö',u:'uùûü',c:'cç',y:'yÿ'};
 const spStrip=w=>w.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/œ/g,'oe');
-function spSugg(w){
-  const S=SP.set, lw=w.toLowerCase(), res=new Map(), add=(c,sc)=>{ if(c!==lw&&S.has(c)&&(!res.has(c)||res.get(c)>sc)) res.set(c,sc); };
-  /* 1. les accents seuls (eleve → élève, recu → reçu) : toutes les combinaisons, jusqu'à 4000 */
-  const b=spStrip(lw).replace(/oe/g,'\u0001'); let vs=[''];
-  for(const ch of b){ const o=ch==='\u0001'?['oe','œ']:(SP_ACC[ch]||ch).split(''); const nv=[]; for(const v of vs) for(const x of o) nv.push(v+x); vs=nv; if(vs.length>4000) break; }
-  if(vs.length<=4000) vs.forEach(v=>add(v,0));
+function spSugg(w,en){
+  const S=en&&SP.en?SP.en:SP.set, lw=w.toLowerCase(), res=new Map(), add=(c,sc)=>{ if(c!==lw&&S.has(c)&&(!res.has(c)||res.get(c)>sc)) res.set(c,sc); };
+  if(!en){ /* 1. les accents seuls (eleve → élève, recu → reçu) */
+    const b=spStrip(lw).replace(/oe/g,'\u0001'); let vs=[''];
+    for(const ch of b){ const o=ch==='\u0001'?['oe','œ']:(SP_ACC[ch]||ch).split(''); const nv=[]; for(const v of vs) for(const x of o) nv.push(v+x); vs=nv; if(vs.length>4000) break; }
+    if(vs.length<=4000) vs.forEach(v=>add(v,0)); }
   /* 2. une faute de frappe : lettre en trop, oubliée, remplacée, deux lettres inversées */
-  const e1=[];
+  const AL=en?'abcdefghijklmnopqrstuvwxyz-':SP_AL, e1=[];
   for(let i=0;i<=lw.length;i++){ const a=lw.slice(0,i), z=lw.slice(i);
     if(z) e1.push(a+z.slice(1));
     if(z.length>1) e1.push(a+z[1]+z[0]+z.slice(2));
-    for(const c of SP_AL){ if(z) e1.push(a+c+z.slice(1)); e1.push(a+c+z); } }
+    for(const c of AL){ if(z) e1.push(a+c+z.slice(1)); e1.push(a+c+z); } }
   e1.forEach(c=>add(c,1));
   /* 3. rien trouvé : une faute de frappe plus des accents (acceuil → accueil, hopital → hôpital) */
-  if(!res.size&&lw.length<=14){ for(const c of e1){ if(c.length<2) continue; const s=spStrip(c); let v=['']; for(const ch of s){ const o=(SP_ACC[ch]||ch).split(''); const nv=[]; for(const x of v) for(const y of o) nv.push(x+y); v=nv; if(v.length>60) break; } if(v.length<=60) v.forEach(x=>add(x,2)); if(res.size>=6) break; } }
-  /* classement : le moins de changements, puis le mot le plus courant (un mot hors des 30 000 plus courants passe après) */
-  const rk=w=>SP.rank.has(w)?SP.rank.get(w):40000+w.length;
-  return [...res.entries()].sort((a,c)=>a[1]-c[1]||rk(a[0])-rk(c[0])).slice(0,3).map(x=>x[0]); }
-const spOk=el=>el&&el.matches&&el.matches('textarea,input:not([type]),input[type=text]')&&el.dataset.lsp!=='0'&&el.id!=='q'&&!el.readOnly&&!el.disabled&&!el.closest('[data-nospell],.annu-tools,#modal [data-nospell]');
-function spBox(el){ const at=el.closest('label.field')||el; let n=at.nextElementSibling; if(at===el&&n&&n.classList.contains('spell')&&n._el===el) return n; if(at!==el){ const x=at.querySelector(':scope > .spell'); if(x) return x; } return null; }
-async function spShow(el){
-  if(!spOk(el)||!el.isConnected) return; await spLoad(); if(!SP.set||!el.isConnected) return;
-  const errs=spCheck(el.value||'').map(x=>({...x,s:spSugg(x.w)})); let box=spBox(el);
-  if(!errs.length){ if(box) box.remove(); return; }
-  if(!box){ box=document.createElement('div'); box.className='spell'; box.setAttribute('aria-live','polite'); const at=el.closest('label.field'); if(at) at.appendChild(box); else el.insertAdjacentElement('afterend',box); }
-  box._el=el; box._errs=errs;
-  box.innerHTML=`<span class="sp-l">Orthographe :</span>`+errs.map((x,i)=>`<span class="sp-e"><span class="sp-w">${esc(x.w)}</span>${x.s.length?x.s.map(s=>`<button type="button" class="sp-fix" data-spfix="${i}" data-v="${esc(s)}" aria-label="Remplacer ${esc(x.w)} par ${esc(s)}">${esc(s)}</button>`).join(''):'<i>pas de proposition</i>'}<button type="button" class="sp-ign" data-spign="${esc(x.w)}" title="Ignorer ce mot (jusqu’à la fermeture de la page)" aria-label="Ignorer ${esc(x.w)}">×</button></span>`).join('');
+  if(!res.size&&!en&&lw.length<=14){ for(const c of e1){ if(c.length<2) continue; const s=spStrip(c); let v=['']; for(const ch of s){ const o=(SP_ACC[ch]||ch).split(''); const nv=[]; for(const x of v) for(const y of o) nv.push(x+y); v=nv; if(v.length>60) break; } if(v.length<=60) v.forEach(x=>add(x,2)); if(res.size>=6) break; } }
+  /* classement : le moins de changements, puis le mot le plus courant */
+  const rk=x=>!en&&SP.rank.has(x)?SP.rank.get(x):40000+Math.abs(x.length-lw.length);
+  const cap=/^[A-ZÀ-ÖØ-Þ]/.test(w);
+  return [...res.entries()].sort((a,c)=>a[1]-c[1]||rk(a[0])-rk(c[0])).slice(0,5).map(x=>cap?x[0][0].toUpperCase()+x[0].slice(1):x[0]); }
+const spOk=el=>el&&el.matches&&el.matches('textarea,input:not([type]),input[type=text]')&&el.dataset.lsp!=='0'&&el.id!=='q'&&!el.readOnly&&!el.disabled&&!el.closest('[data-nospell],.annu-tools');
+
+/* ---- le soulignement : un calque transparent posé exactement sur le champ, mêmes police, marges et défilement ---- */
+const SPM=new Map();   // champ → {m: calque, errs, v: texte vérifié}
+function spPlace(el){ const o=SPM.get(el); if(!o) return;
+  if(!el.isConnected){ o.m.remove(); SPM.delete(el); return; }
+  const r=el.getBoundingClientRect(); if(!r.width||!el.offsetParent){ o.m.hidden=true; return; }
+  const cs=getComputedStyle(el), m=o.m, ta=el.tagName==='TEXTAREA';
+  const bl=parseFloat(cs.borderLeftWidth)||0, br=parseFloat(cs.borderRightWidth)||0, sb=Math.max(0,el.offsetWidth-el.clientWidth-bl-br);
+  m.hidden=false;
+  const st=m.style; st.left=(r.left+scrollX)+'px'; st.top=(r.top+scrollY)+'px'; st.width=r.width+'px'; st.height=r.height+'px';
+  st.font=cs.font; st.letterSpacing=cs.letterSpacing; st.wordSpacing=cs.wordSpacing; st.lineHeight=cs.lineHeight; st.textAlign=cs.textAlign; st.textIndent=cs.textIndent; st.textTransform=cs.textTransform;
+  st.paddingTop=cs.paddingTop; st.paddingBottom=cs.paddingBottom; st.paddingLeft=cs.paddingLeft; st.paddingRight=(parseFloat(cs.paddingRight)+sb)+'px';
+  st.borderStyle='solid'; st.borderColor='transparent'; st.borderWidth=`${cs.borderTopWidth} ${cs.borderRightWidth} ${cs.borderBottomWidth} ${cs.borderLeftWidth}`;
+  st.whiteSpace=ta?'pre-wrap':'pre'; st.overflowWrap=ta?'break-word':'normal';
+  /* un champ sur une ligne centre son texte verticalement : le calque fait pareil */
+  st.display=ta?'block':'flex'; st.alignItems='center';
+  const md=document.getElementById('modal'); st.zIndex=md&&!md.hidden&&md.contains(el)?String((parseInt(getComputedStyle(md).zIndex)||100)+1):'3';
+  m.scrollTop=el.scrollTop; m.scrollLeft=el.scrollLeft; }
+function spPaint(el){ const o=SPM.get(el); if(!o) return; const v=el.value||''; let h='', at=0;
+  o.errs.forEach((x,k)=>{ h+=esc(v.slice(at,x.i))+`<mark class="sp-x" data-k="${k}">${esc(v.substr(x.i,x.w.length))}</mark>`; at=x.i+x.w.length; });
+  h+=esc(v.slice(at))+'​';
+  o.m.firstChild.innerHTML=h; spPlace(el); }
+async function spRun(el){ if(!spOk(el)||!el.isConnected) return; await spLoad(); if(!SP.set||!el.isConnected) return;
+  let o=SPM.get(el);
+  if(!o){ const m=document.createElement('div'); m.className='sp-mir'; m.setAttribute('aria-hidden','true'); m.innerHTML='<div class="sp-in"></div>'; document.body.appendChild(m);
+    o={m,errs:[],v:null}; SPM.set(el,o); el.addEventListener('scroll',()=>spPlace(el),{passive:true});
+    if(window.ResizeObserver) new ResizeObserver(()=>spPlace(el)).observe(el); }
+  o.v=el.value||''; o.errs=spCheck(o.v); spPaint(el); }
+const spAll=()=>{ SPM.forEach((o,el)=>{ if(el.isConnected) spRun(el); }); };
+/* garde le calque collé au champ (mise en page qui bouge, texte changé par Librejo sans saisie) */
+setInterval(()=>{ SPM.forEach((o,el)=>{ if(!el.isConnected){ o.m.remove(); SPM.delete(el); return; } if((el.value||'')!==o.v) spRun(el); else spPlace(el); }); },400);
+addEventListener('scroll',()=>SPM.forEach((o,el)=>spPlace(el)),{capture:true,passive:true});
+addEventListener('resize',()=>SPM.forEach((o,el)=>spPlace(el)));
+document.addEventListener('focusin',e=>{ if(spOk(e.target)) spRun(e.target); });
+document.addEventListener('input',e=>{ const el=e.target; if(!spOk(el)) return; spMenuClose(); const o=SPM.get(el); if(o){ o.errs=o.errs.filter(x=>x.i+x.w.length<(el.selectionStart||0)-1); spPaint(el); }   // pendant la frappe : on retire les soulignements qui ont bougé
+  clearTimeout(SP.T); SP.T=setTimeout(()=>spRun(el),450); });
+
+/* ---- le menu des propositions ---- */
+let SP_MENU=null;
+function spMenuClose(back){ if(!SP_MENU) return; const f=SP_MENU._el; SP_MENU.remove(); SP_MENU=null; if(back&&f&&f.isConnected) f.focus(); }
+function spHit(el,x,y){ const o=SPM.get(el); if(!o) return -1; for(const mk of o.m.querySelectorAll('mark.sp-x')) for(const r of mk.getClientRects()) if(x>=r.left-1&&x<=r.right+1&&y>=r.top-2&&y<=r.bottom+3) return +mk.dataset.k; return -1; }
+function spMenu(el,k,x,y,kbd){ spMenuClose(); const o=SPM.get(el), err=o&&o.errs[k]; if(!err) return;
+  const sug=spSugg(err.w,err.en), mn=document.createElement('div'); mn.className='sp-menu'; mn.setAttribute('role','menu'); mn.setAttribute('aria-label',`Orthographe : ${err.w}`);
+  mn.innerHTML=`<div class="sp-mh">${err.en?'Anglais : ':''}<b>${esc(err.w)}</b></div>`
+    +(sug.length?sug.map(s=>`<button type="button" role="menuitem" class="sp-sug" data-v="${esc(s)}">${esc(s)}</button>`).join(''):'<div class="sp-none">Pas de proposition</div>')
+    +`<hr><button type="button" role="menuitem" data-spa="ign">Ignorer</button><button type="button" role="menuitem" data-spa="poste">Ajouter au dictionnaire <small>(ce poste)</small></button>`
+    +(isAdmin?`<button type="button" role="menuitem" data-spa="struct">Ajouter au dictionnaire de la structure <small>(tous les postes)</small></button>`:'')
+    +`<button type="button" role="menuitem" data-spa="voir" class="sp-more">Gérer les mots ajoutés…</button>`;
+  mn._el=el; mn._err=err; document.body.appendChild(mn); SP_MENU=mn;
+  const w=mn.offsetWidth, h=mn.offsetHeight; mn.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+'px'; mn.style.top=(y+h+8>innerHeight?Math.max(8,y-h-6):y+6)+'px';
+  if(kbd){ const f=mn.querySelector('button'); f&&f.focus(); } }
+async function spAdd(w,where){ const l=w.toLowerCase();
+  if(where==='struct'){ const keep=(DATA.dico||[]).slice(); DATA.dico=[...new Set([...keep,l])].sort((a,b)=>a.localeCompare(b,'fr')); if(!await run(saveData,`« ${w} » ajouté au dictionnaire de la structure`)){ DATA.dico=keep; return; } }
+  else { const a=spPoste(); if(!a.includes(l)) a.push(l); try{ localStorage.setItem(SP_KEY,JSON.stringify(a.slice(-2000))); }catch(e){} toast(`« ${w} » ajouté au dictionnaire de ce poste`); }
+  SP.set&&SP.set.add(l); spAll(); }
+document.addEventListener('pointerdown',e=>{ if(SP_MENU&&!SP_MENU.contains(e.target)) spMenuClose(); },true);
+document.addEventListener('contextmenu',e=>{ const el=e.target; if(!spOk(el)) return; const k=spHit(el,e.clientX,e.clientY); if(k<0) return; e.preventDefault(); spMenu(el,k,e.clientX,e.clientY); });
+document.addEventListener('click',e=>{ const el=e.target; if(SP_MENU&&SP_MENU.contains(el)) return; if(!spOk(el)) return; const k=spHit(el,e.clientX,e.clientY); if(k>=0) spMenu(el,k,e.clientX,e.clientY); });
+document.addEventListener('keydown',e=>{
+  if(SP_MENU){ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); spMenuClose(true); return; }
+    if(SP_MENU.contains(document.activeElement)&&(e.key==='ArrowDown'||e.key==='ArrowUp')){ e.preventDefault(); const B=[...SP_MENU.querySelectorAll('button')], i=B.indexOf(document.activeElement); B[(i+(e.key==='ArrowDown'?1:-1)+B.length)%B.length].focus(); return; } }
+  const el=e.target; if(!spOk(el)) return;
+  /* clavier : touche Menu ou Maj+F10 sur un mot souligné */
+  if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){ const o=SPM.get(el); if(!o) return; const c=el.selectionStart||0, k=o.errs.findIndex(x=>c>=x.i&&c<=x.i+x.w.length); if(k<0) return;
+    e.preventDefault(); const mk=o.m.querySelector(`mark[data-k="${k}"]`), r=mk?mk.getBoundingClientRect():el.getBoundingClientRect(); spMenu(el,k,r.left,r.bottom,true); } },true);
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.sp-menu button'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  const mn=SP_MENU, el=mn&&mn._el, x=mn&&mn._err; if(!el||!x) return; const a=b.dataset.spa;
+  if(a==='voir'){ spMenuClose(); return dicoEdit(); }
+  if(a==='ign'){ SP.ign.add(x.w.toLowerCase()); spMenuClose(true); spAll(); return; }
+  if(a==='poste'||a==='struct'){ spMenuClose(true); spAdd(x.w,a); return; }
+  const v=el.value; let i=v.substr(x.i,x.w.length).replace(/'/g,'’')===x.w?x.i:v.replace(/'/g,'’').indexOf(x.w); if(i<0){ spMenuClose(true); return; }
+  el.value=v.slice(0,i)+b.dataset.v+v.slice(i+x.w.length); spMenuClose(true);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  if(el.isConnected){ const p=i+b.dataset.v.length; try{ el.setSelectionRange(p,p); }catch(_){} clearTimeout(SP.T); spRun(el); } },true);
+/* les mots ajoutés : ceux de ce poste (tout le monde) et ceux de la structure (admin) */
+function dicoEdit(){
+  openModal(`<h3 id="modal-title">📖 Mots ajoutés au dictionnaire</h3>
+    <p class="hint">Le correcteur de Librejo ne souligne plus ces mots. Un mot par ligne. Ils ne servent qu’au correcteur, rien n’est envoyé.</p>
+    <label class="field"><span>Sur ce poste</span><textarea class="in" id="dc-p" rows="6" data-nospell>${esc(spPoste().join('\n'))}</textarea></label>
+    ${isAdmin?`<label class="field"><span>Pour toute la structure <small>(tous les postes)</small></span><textarea class="in" id="dc-s" rows="6" data-nospell>${esc((DATA.dico||[]).join('\n'))}</textarea></label>`:`<p class="hint">Les mots ajoutés pour toute la structure se gèrent en mode admin.</p>`}
+    <div class="btns"><button class="primary" id="dc-ok">Enregistrer</button><button class="secondary" data-close>Annuler</button></div>`);
+  $('#dc-ok').onclick=async()=>{ const L=t=>[...new Set(t.split('\n').map(w=>w.trim().toLowerCase()).filter(w=>w&&w.length<60))];
+    try{ localStorage.setItem(SP_KEY,JSON.stringify(L($('#dc-p').value).slice(-2000))); }catch(e){}
+    if(isAdmin&&$('#dc-s')){ const keep=DATA.dico; DATA.dico=L($('#dc-s').value).sort((a,b)=>a.localeCompare(b,'fr')); if(!await run(saveData,'Dictionnaire enregistré')){ DATA.dico=keep; return; } } else toast('Dictionnaire enregistré');
+    closeModal(); SP.p=null; SP.set=null; spLoad().then(spAll); };
 }
-document.addEventListener('focusin',e=>{ if(spOk(e.target)) spLoad(); });
-document.addEventListener('input',e=>{ const el=e.target; if(!spOk(el)) return; clearTimeout(SP.T); SP.T=setTimeout(()=>spShow(el),650); });
-document.addEventListener('focusout',e=>{ const el=e.target; if(spOk(el)){ clearTimeout(SP.T); setTimeout(()=>spShow(el),0); } });
-/* un clic dans la ligne du correcteur ne doit pas faire perdre la place dans le champ */
-document.addEventListener('pointerdown',e=>{ if(e.target.closest&&e.target.closest('.spell button')) e.preventDefault(); },true);
-document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.spell button'); if(!b) return; e.preventDefault(); e.stopPropagation();
-  const box=b.closest('.spell'), el=box._el; if(!el) return;
-  if(b.dataset.spign){ SP.ign.add(b.dataset.spign.toLowerCase()); spShow(el); el.focus(); return; }
-  const x=box._errs[+b.dataset.spfix], v=el.value; if(!x) return;
-  let i=v.slice(x.i,x.i+x.w.length).replace(/'/g,'’')===x.w?x.i:v.replace(/'/g,'’').indexOf(x.w); if(i<0) return;
-  el.value=v.slice(0,i)+b.dataset.v+v.slice(i+x.w.length); el.dispatchEvent(new Event('input',{bubbles:true}));
-  if(el.isConnected){ el.focus(); const p=i+b.dataset.v.length; try{ el.setSelectionRange(p,p); }catch(_){} spShow(el); } },true);
 /* ---------- Cartes : accueil (épinglés, favoris) et en-tête des pages Formulaires et Documents ---------- */
 const TILE_ALL=new Set();
 function tileOf(t,x,pin){
@@ -8195,8 +8279,72 @@ function openNas(){
     if(r.err){ er.textContent=r.err; er.hidden=false; const f=$(r.k==='lettre'?'#nas-l':'#nas-c'); f.setAttribute('aria-invalid','true'); f.focus(); return; }
     er.hidden=true; N.download(r); toast(`Programme téléchargé : « Librejo - lecteur ${r.lettre.charAt(0)}.cmd »`); };
 }
+/* ---------- Protéger Librejo des extensions du navigateur (Vérifications du poste) ----------
+   Une extension autorisée à « lire les données des sites » voit tout ce qui est tapé dans une page ; aucune page web
+   ne peut l'en empêcher. Deux parades, sans rien envoyer nulle part :
+   1. un lanceur (.cmd) qui ouvre Librejo dans un profil à part, sans extension (pas besoin de droits administrateur) ;
+   2. la règle ExtensionSettings › runtime_blocked_hosts pour tout le parc (technicien, droits administrateur). */
+const protHost=()=>location.protocol==='file:'?'':location.hostname;
+const protUrl=()=>location.protocol==='file:'?location.href.split(/[?#]/)[0]:location.origin+location.pathname;
+const protPolicy=()=>JSON.stringify({'*':{runtime_blocked_hosts:['*://'+protHost()]}});
+function protectHTML(){ const h=protHost();
+  return `<details class="prot mt-m"><summary><b>🛡️ Protéger Librejo des extensions du navigateur</b></summary>
+    <p class="hint">Une extension autorisée à « lire et modifier les données des sites » voit ce qui est tapé dans Librejo, comme dans n’importe quelle page. Librejo coupe déjà les correcteurs Grammarly et LanguageTool, mais ne peut pas bloquer les autres. Deux protections :</p>
+    <h4 class="m-0">1. Le lanceur protégé <small class="muted">(sans droits administrateur, poste par poste)</small></h4>
+    <p class="hint m-0">Il ouvre Librejo dans une fenêtre à part, avec un profil séparé et <b>aucune extension</b>. Enregistrez le fichier sur le bureau et double-cliquez dessus pour ouvrir Librejo. La première fois : réautoriser le dossier de Librejo et, si vous utilisez Outlook dans le navigateur, vous y reconnecter. Les favoris de ce poste sont à refaire dans ce profil.</p>
+    <div class="row"><button type="button" class="secondary sm" data-prot="cmd-edge">${ICON.dl}Lanceur pour Edge</button><button type="button" class="secondary sm" data-prot="cmd-chrome">${ICON.dl}Lanceur pour Chrome</button></div>
+    <h4 class="m-0 mt-s">2. La règle pour tout le parc <small class="muted">(technicien, droits administrateur)</small></h4>
+    ${h?`<p class="hint m-0">Une règle de Chrome et d’Edge interdit aux extensions de lire ou modifier les pages de <b>${esc(h)}</b>, même si elles sont installées. Le technicien l’applique par stratégie de groupe, ou avec le fichier de réglage (double-clic, droits administrateur).</p>
+    <div class="row"><button type="button" class="secondary sm" data-prot="fiche">${ICON.file}Fiche pour le technicien (PDF)</button><button type="button" class="secondary sm" data-prot="reg-edge">${ICON.dl}Réglage Edge (.reg)</button><button type="button" class="secondary sm" data-prot="reg-chrome">${ICON.dl}Réglage Chrome (.reg)</button></div>`
+    :`<p class="hint m-0">Librejo est ouvert depuis un fichier du disque : la règle par adresse ne s’applique pas. Utilisez le lanceur protégé, ou demandez au technicien de bloquer l’installation des extensions (règle ExtensionSettings, « installation_mode » : « blocked »).</p>`}
+  </details>`; }
+const protFile=(txt,name,type)=>downloadBlob(new Blob([txt.replace(/\r?\n/g,'\r\n')],{type}),name);
+function protCmd(nav){ const exe=nav==='edge'?'msedge':'chrome', dir=nav==='edge'?'Librejo-Edge':'Librejo-Chrome', url=encodeURI(decodeURI(protUrl()));
+  protFile(`@echo off
+rem Librejo : ouvre Librejo dans ${nav==='edge'?'Microsoft Edge':'Google Chrome'}, avec un profil separe et SANS AUCUNE EXTENSION.
+rem Les extensions installees dans le navigateur habituel ne voient donc pas ce qui est tape dans Librejo.
+rem Profil : %LOCALAPPDATA%\\${dir} (a supprimer pour tout remettre a zero). Rien d'autre n'est modifie sur le poste.
+start "" ${exe} --user-data-dir="%LOCALAPPDATA%\\${dir}" --disable-extensions --no-first-run --no-default-browser-check --app="${url}"
+`,`Librejo protege (${nav==='edge'?'Edge':'Chrome'}).cmd`,'application/octet-stream');
+  toast('Lanceur téléchargé : mettez-le sur le bureau et double-cliquez dessus'); }
+function protReg(nav){ const key=nav==='edge'?'HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Edge':'HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Google\\Chrome';
+  protFile(`REGEDIT4
+
+; Librejo : interdit aux extensions de ${nav==='edge'?'Microsoft Edge':'Google Chrome'} de lire ou modifier les pages de ${protHost()}
+; Regle ExtensionSettings > runtime_blocked_hosts. A importer avec des droits administrateur, puis redemarrer le navigateur.
+; ATTENTION : remplace une regle ExtensionSettings deja presente sur ce poste. Si le parc en a deja une, ajouter plutot
+; "runtime_blocked_hosts": ["*://${protHost()}"] dans la regle existante (voir la fiche pour le technicien).
+
+[${key}]
+"ExtensionSettings"="${protPolicy().replace(/\\/g,'\\\\').replace(/"/g,'\\"')}"
+`,`Librejo - regle extensions ${nav==='edge'?'Edge':'Chrome'}.reg`,'application/octet-stream');
+  toast('Fichier de réglage téléchargé : à transmettre au technicien'); }
+async function protFiche(){ if(!LJ_PDF_OK){ try{ await pdfReady(); }catch(e){ toast('Préparation du PDF impossible'); return; } }
+  const h=protHost(), pol=protPolicy();
+  const paras=[`Librejo (${protUrl()}) sert à préparer des documents pour les personnes accueillies. Les extensions de navigateur autorisées à « lire et modifier les données des sites » peuvent lire ce qui est tapé dans ses pages. Cette règle les en empêche pour l’adresse de Librejo, sans toucher aux autres sites.`,
+    '---','>> La règle <<',
+    `Stratégie ExtensionSettings de Chrome et d’Edge, champ runtime_blocked_hosts. Valeur à appliquer (JSON) :`,
+    pol,
+    `Si une stratégie ExtensionSettings existe déjà sur le parc, ajouter "runtime_blocked_hosts": ["*://${h}"] dans l’entrée "*" existante au lieu de la remplacer.`,
+    '---','>> Windows, par stratégie de groupe <<',
+    `Edge : Modèles d’administration › Microsoft Edge › Extensions › « Configure extension management settings » (ExtensionSettings).`,
+    `Chrome : Modèles d’administration › Google Chrome › Extensions › « Extension management settings » (ExtensionSettings).`,
+    '>> Windows, par le registre (droits administrateur) <<',
+    `Edge : HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Edge, valeur ExtensionSettings, type REG_SZ, contenu : le JSON ci-dessus.`,
+    `Chrome : HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Google\\Chrome, valeur ExtensionSettings, type REG_SZ, contenu : le JSON ci-dessus.`,
+    `Librejo fournit les deux fichiers .reg correspondants (Vérifications du poste › Protéger Librejo des extensions).`,
+    '>> macOS et Linux <<',
+    `macOS : clé ExtensionSettings du profil de configuration (com.google.Chrome ou com.microsoft.Edge). Linux : fichier JSON dans /etc/opt/chrome/policies/managed/ (Chrome) ou /etc/opt/edge/policies/managed/ (Edge), contenu {"ExtensionSettings": ${pol}}.`,
+    '---','>> Vérifier <<',
+    `Redémarrer le navigateur, ouvrir chrome://policy (ou edge://policy), « Actualiser les règles » : ExtensionSettings doit apparaître avec l’état OK.`,
+    `Plus strict : bloquer l’installation de toute extension sauf une liste autorisée ("*": {"installation_mode": "blocked"}, puis "installation_mode": "allowed" pour chaque extension utile).`,
+    `Sans droits administrateur : le « lanceur protégé » de Librejo ouvre Librejo dans un profil séparé sans aucune extension (--user-data-dir et --disable-extensions).`];
+  const blob=makeLetter({titre:'Protéger Librejo des extensions du navigateur : fiche pour le technicien',confidentiel:false,date:today(),paras,signataire:' '});
+  downloadBlob(new File([blob],'Librejo - fiche technicien extensions.pdf',{type:'application/pdf'}),'Librejo - fiche technicien extensions.pdf'); toast('Fiche téléchargée'); }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-prot]'); if(!b) return; const a=b.dataset.prot;
+  if(a==='cmd-edge') protCmd('edge'); if(a==='cmd-chrome') protCmd('chrome'); if(a==='reg-edge') protReg('edge'); if(a==='reg-chrome') protReg('chrome'); if(a==='fiche') protFiche(); });
 function openChecks(lead){
-  openModal(`<h3 id="modal-title">Vérifications de ce poste</h3><p class="hint">${lead?esc(lead):'Librejo vérifie le navigateur, l’autorisation du dossier et le type de dossier, puis dit quoi faire. Le résultat peut être copié pour l’informatique : il ne contient aucune donnée de personne.'}</p><div id="ck-box"></div>
+  openModal(`<h3 id="modal-title">Vérifications de ce poste</h3><p class="hint">${lead?esc(lead):'Librejo vérifie le navigateur, l’autorisation du dossier et le type de dossier, puis dit quoi faire. Le résultat peut être copié pour l’informatique : il ne contient aucune donnée de personne.'}</p><div id="ck-box"></div>${protectHTML()}
     <div class="btns"><button class="secondary" data-close>Fermer</button></div>`,'wide');
   return checksInto($('#ck-box')); }
 /* Après le choix d'un dossier sur ce poste : vérifications ; la fenêtre ne s'ouvre que s'il y a quelque chose à faire */
