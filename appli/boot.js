@@ -463,6 +463,16 @@ async function demoBoot(){
   }
 }
 
+/* L'icône Librejo pour Windows : un petit fichier .cmd qui ouvre Librejo dans Edge ou Chrome, profil séparé,
+   sans aucune extension (même texte que « Vérifications du poste › Protéger Librejo des extensions »). */
+var LJ_WIN = /Windows/.test(navigator.userAgent), LJ_LANCEUR = /[?&]lanceur(?:[=&]|$)/.test(location.search);
+async function ljLanceur(){
+  var edge=/Edg\//.test(navigator.userAgent), exe=edge?'msedge':'chrome', dir=edge?'Librejo-Edge':'Librejo-Chrome', url=encodeURI(decodeURI(location.origin+location.pathname))+'?lanceur';
+  var txt=['@echo off','rem Librejo : ouvre Librejo dans '+(edge?'Microsoft Edge':'Google Chrome')+', avec un profil separe et SANS AUCUNE EXTENSION.','rem Les extensions installees dans le navigateur habituel ne voient donc pas ce qui est tape dans Librejo.','rem Profil : %LOCALAPPDATA%\\'+dir+' (a supprimer pour tout remettre a zero). Rien d\'autre n\'est modifie sur le poste.','start "" '+exe+' --user-data-dir="%LOCALAPPDATA%\\'+dir+'" --disable-extensions --no-first-run --no-default-browser-check --app="'+url+'"',''].join('\r\n');
+  if (window.showSaveFilePicker) { try { var h=await showSaveFilePicker({suggestedName:'Librejo.cmd',startIn:'desktop',types:[{description:'Lanceur de Librejo',accept:{'application/octet-stream':['.cmd']}}]}); var w=await h.createWritable(); await w.write(txt); await w.close(); return true; } catch(e){ if (e && e.name==='AbortError') return false; } }
+  var u=URL.createObjectURL(new Blob([txt],{type:'application/octet-stream'})), a=document.createElement('a'); a.href=u; a.download='Librejo.cmd'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); },4000);
+  return 'dl';
+}
 async function boot(){
   if (DEMO) { demoBoot(); return; }
   /* Navigateur sans accès aux dossiers (Firefox, Safari…) : les formulaires marchent quand même */
@@ -478,6 +488,14 @@ async function boot(){
     document.getElementById('lj-go').onclick = reauth;
     document.getElementById('lj-other').onclick = pick;
     sdOffer('choix');
+    return;
+  }
+  /* Windows, premier passage hors du lanceur : on propose d'abord l'icône Librejo (fenêtre à part, sans extension) ;
+     le dossier se choisit ensuite dans cette fenêtre (l'autorisation y est propre au profil du lanceur). */
+  if (LJ_WIN && !LJ_LANCEUR && location.protocol!=='file:' && !sessionStorage.getItem('lj-sans-icone')) {
+    show('<h1>Bienvenue dans Librejo</h1><p><b>1. Installez Librejo sur ce poste.</b> Librejo pose une icône sur le bureau : elle ouvre Librejo dans sa propre fenêtre, <b>sans les extensions du navigateur</b>, qui pourraient lire ce qui est tapé.</p><button class="lj-btn" id="lj-lan">Mettre l’icône Librejo sur le bureau</button><p class="lj-aide">Dans la fenêtre « Enregistrer », cliquez sur <b>Enregistrer</b>. Une fenêtre noire s’affiche une seconde au lancement : c’est normal. Windows peut demander une confirmation la première fois : <b>Exécuter</b>.</p><p><b>2. Double-cliquez sur Librejo</b>, sur le bureau, puis choisissez le dossier de votre structure dans la fenêtre qui s’ouvre.</p><p class="lj-aide"><button class="lj-link" id="lj-lan-non">Continuer ici sans l’icône</button></p>');
+    document.getElementById('lj-lan').onclick = async function(){ var ok = await ljLanceur(); if (ok) { var p=document.createElement('p'); p.className='lj-ok'; p.textContent=ok==='dl'?'Le fichier « Librejo.cmd » est dans vos Téléchargements : déplacez-le sur le bureau, puis double-cliquez dessus.':'Icône posée. Vous pouvez fermer cet onglet et double-cliquer sur « Librejo », sur le bureau.'; this.insertAdjacentElement('afterend',p); this.disabled=true; } };
+    document.getElementById('lj-lan-non').onclick = function(){ try{ sessionStorage.setItem('lj-sans-icone','1'); }catch(e){} boot(); };
     return;
   }
   show('<h1>Bienvenue dans Librejo</h1><p>Choisissez le dossier de votre structure : celui qui contient les sous-dossiers <b>app</b> et <b>Documents</b> (sur cet ordinateur, ou sur un NAS, un lecteur réseau ou OneDrive si plusieurs postes s’en servent).</p><p class="lj-aide">Les documents restent dans ce dossier. Rien n’est envoyé sur Internet.</p><button class="lj-btn" id="lj-pick">Choisir le dossier</button>');

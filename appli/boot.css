@@ -36,3 +36,5 @@
 #lj-boot .lj-row input:focus-visible{outline:3px solid #174f4c;outline-offset:1px}
 #lj-boot .lj-row input[aria-invalid=true]{border-color:#a3341f}
 #lj-boot .lj-err{color:#a3341f;font-weight:600;font-size:.875rem}
+
+#lj-boot .lj-ok{font-weight:700;color:#1e6b3a}

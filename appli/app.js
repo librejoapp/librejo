@@ -2357,7 +2357,7 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
    LanguageTool) quand elles respectent leur attribut.
    À la place : une liste de mots français (Grammalecte), et une liste anglaise chargée seulement quand une phrase
    a l'air d'être en anglais. Les mots inconnus sont soulignés en rouge, comme dans un traitement de texte :
-   clic (droit ou gauche) sur le mot pour les propositions, « Ignorer », « Ajouter au dictionnaire ».
+   clic droit sur le mot pour les propositions, « Ignorer », « Ajouter au dictionnaire ».
    Les mots avec une majuscule (noms, prénoms, sigles) ne sont jamais soulignés. Rien de ce qui est tapé n'est
    enregistré ; seuls les mots ajoutés volontairement au dictionnaire le sont (sur ce poste, ou pour la structure).
    ====================================================================== */
@@ -2485,7 +2485,6 @@ async function spAdd(w,where){ const l=w.toLowerCase();
   SP.set&&SP.set.add(l); spAll(); }
 document.addEventListener('pointerdown',e=>{ if(SP_MENU&&!SP_MENU.contains(e.target)) spMenuClose(); },true);
 document.addEventListener('contextmenu',e=>{ const el=e.target; if(!spOk(el)) return; const k=spHit(el,e.clientX,e.clientY); if(k<0) return; e.preventDefault(); spMenu(el,k,e.clientX,e.clientY); });
-document.addEventListener('click',e=>{ const el=e.target; if(SP_MENU&&SP_MENU.contains(el)) return; if(!spOk(el)) return; const k=spHit(el,e.clientX,e.clientY); if(k>=0) spMenu(el,k,e.clientX,e.clientY); });
 document.addEventListener('keydown',e=>{
   if(SP_MENU){ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); spMenuClose(true); return; }
     if(SP_MENU.contains(document.activeElement)&&(e.key==='ArrowDown'||e.key==='ArrowUp')){ e.preventDefault(); const B=[...SP_MENU.querySelectorAll('button')], i=B.indexOf(document.activeElement); B[(i+(e.key==='ArrowDown'?1:-1)+B.length)%B.length].focus(); return; } }
@@ -8082,9 +8081,23 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
     <p class="hint m-0">Un navigateur ne peut pas en lancer un autre, sauf Edge sous Windows.</p>
     <div class="btns"><button class="primary" data-close>OK</button></div>`)); });
 /* Bouton « Installer Librejo sur ce poste » : visible seulement quand le navigateur le permet et que ce n'est pas déjà fait */
+/* Installer Librejo sur ce poste. Sous Windows, par défaut : le lanceur protégé (une icône Librejo sur le bureau,
+   fenêtre à part, profil séparé, aucune extension). Ailleurs, ou si on le préfère : l'installation du navigateur. */
+const LANCEUR=/[?&]lanceur(?:[=&]|$)/.test(location.search), ON_WIN=/Windows/.test(navigator.userAgent);
+const navOf=()=>/Edg\//.test(navigator.userAgent)?'edge':'chrome';
+async function pwaInstall(){ const ev=window.LJ_INSTALL; if(!ev){ toast('Menu du navigateur (⋮) › Installer Librejo, ou l’icône dans la barre d’adresse'); return; } ev.prompt(); try{ const r=await ev.userChoice; if(r&&r.outcome==='accepted') toast('Librejo est installé : retrouvez-le sur le bureau ou dans le menu Démarrer'); }catch(_){} window.LJ_INSTALL=null; document.dispatchEvent(new Event('lj-install')); }
+function lanceurInstall(){ const nav=navOf();
+  openModal(`<h3 id="modal-title">Installer Librejo sur ce poste</h3>
+    <p>Librejo pose une icône <b>Librejo</b> sur le bureau. Elle ouvre Librejo dans sa propre fenêtre, ${nav==='edge'?'dans Edge':'dans Chrome'}, <b>sans aucune extension du navigateur</b> : ce qui est tapé dans Librejo ne peut pas être lu par une extension.</p>
+    <ol class="steps-ol"><li>Cliquez sur « Mettre l’icône sur le bureau », puis sur <b>Enregistrer</b>.</li><li>Fermez cet onglet et double-cliquez sur <b>Librejo</b>, sur le bureau. Windows peut demander une confirmation la première fois : <b>Exécuter</b>.</li><li>Dans la nouvelle fenêtre, autorisez une fois le dossier de Librejo${PAR.mail==='web'?' et reconnectez-vous à votre messagerie dans le navigateur':''}.</li></ol>
+    <p class="hint">Une fenêtre noire s’affiche une seconde au lancement : c’est normal. Rien d’autre n’est modifié sur le poste.</p>
+    <div class="btns"><button class="primary" id="ln-go">${ICON.dl}Mettre l’icône sur le bureau</button><button class="secondary" data-close>Plus tard</button></div>
+    <p class="hint m-0"><button type="button" class="linkbtn" id="ln-pwa">Installer plutôt dans le navigateur, avec ses extensions</button></p>`);
+  $('#ln-go').onclick=async()=>{ const ok=await protCmd(nav,true); if(ok){ closeModal(); toast('Icône posée : double-cliquez sur « Librejo », sur le bureau'); } };
+  $('#ln-pwa').onclick=()=>{ closeModal(); pwaInstall(); }; }
 (function(){ const b=$('#installbtn'); if(!b) return;
-  const sync=()=>{ b.hidden=!window.LJ_INSTALL||!!DEMO; }; document.addEventListener('lj-install',sync); sync();
-  b.onclick=async()=>{ const ev=window.LJ_INSTALL; if(!ev) return; ev.prompt(); try{ const r=await ev.userChoice; if(r&&r.outcome==='accepted') toast('Librejo est installé : retrouvez-le sur le bureau ou dans le menu Démarrer'); }catch(_){} window.LJ_INSTALL=null; sync(); };
+  const sync=()=>{ b.hidden=!!DEMO||LANCEUR||!((ON_WIN&&FSA&&location.protocol!=='file:')||window.LJ_INSTALL); }; document.addEventListener('lj-install',sync); sync();
+  b.onclick=()=>{ if(ON_WIN&&FSA) lanceurInstall(); else pwaInstall(); };
 })();
 function sdWhy(){
   openModal(`<h3 id="modal-title">Pourquoi « formulaires seulement » ?</h3>
@@ -8183,6 +8196,8 @@ async function ljChecks(opt={}){
   else add('nav','ok','Navigateur',`${B.nom}${B.v?' '+B.v:''}${B.os?' sur '+B.os:''}, sur ordinateur.`);
   // 2. application installée ou onglet
   if(!web) add('app','info','Application','Version fichier, ouverte depuis le dossier (file://).','Mettez Librejo.html en favori du navigateur pour le retrouver.');
+  else if(LANCEUR) add('app','ok','Application','Ouvert par le lanceur protégé : fenêtre à part, aucune extension du navigateur.');
+  else if(ON_WIN&&FSA) add('app','info','Application',ckInstalled()?'Installé dans le navigateur : ses extensions peuvent voir ce qui est tapé.':'Ouvert dans un onglet : les extensions du navigateur peuvent voir ce qui est tapé.','Bouton « Installer Librejo sur ce poste », en bas du menu : une icône Librejo sur le bureau, qui ouvre Librejo sans aucune extension.');
   else if(ckInstalled()) add('app','ok','Application','Librejo est installé : il s’ouvre dans sa propre fenêtre.');
   else add('app','info','Application','Ouvert dans un onglet du navigateur.','Installez Librejo (menu du navigateur › Installer Librejo, ou l’icône dans la barre d’adresse). L’autorisation du dossier tient mieux et Librejo a son icône sur le bureau. Si l’installation est interdite, un favori suffit.');
   // 3. autorisation du dossier
@@ -8290,23 +8305,28 @@ const protPolicy=()=>JSON.stringify({'*':{runtime_blocked_hosts:['*://'+protHost
 function protectHTML(){ const h=protHost();
   return `<details class="prot mt-m"><summary><b>🛡️ Protéger Librejo des extensions du navigateur</b></summary>
     <p class="hint">Une extension autorisée à « lire et modifier les données des sites » voit ce qui est tapé dans Librejo, comme dans n’importe quelle page. Librejo coupe déjà les correcteurs Grammarly et LanguageTool, mais ne peut pas bloquer les autres. Deux protections :</p>
-    <h4 class="m-0">1. Le lanceur protégé <small class="muted">(sans droits administrateur, poste par poste)</small></h4>
+    ${LANCEUR?'<p class="ck-okline">✅ Librejo est ouvert ici par son lanceur protégé : aucune extension n’est chargée dans cette fenêtre.</p>':''}
+    <h4 class="m-0">1. Le lanceur protégé <small class="muted">(sans droits administrateur, poste par poste ; c’est ce que pose le bouton « Installer Librejo sur ce poste »)</small></h4>
     <p class="hint m-0">Il ouvre Librejo dans une fenêtre à part, avec un profil séparé et <b>aucune extension</b>. Enregistrez le fichier sur le bureau et double-cliquez dessus pour ouvrir Librejo. La première fois : réautoriser le dossier de Librejo et, si vous utilisez Outlook dans le navigateur, vous y reconnecter. Les favoris de ce poste sont à refaire dans ce profil.</p>
-    <div class="row"><button type="button" class="secondary sm" data-prot="cmd-edge">${ICON.dl}Lanceur pour Edge</button><button type="button" class="secondary sm" data-prot="cmd-chrome">${ICON.dl}Lanceur pour Chrome</button></div>
+    <div class="row"><button type="button" class="secondary sm" data-prot="cmd-edge">${ICON.dl}Icône Librejo pour Edge</button><button type="button" class="secondary sm" data-prot="cmd-chrome">${ICON.dl}Icône Librejo pour Chrome</button></div>
     <h4 class="m-0 mt-s">2. La règle pour tout le parc <small class="muted">(technicien, droits administrateur)</small></h4>
     ${h?`<p class="hint m-0">Une règle de Chrome et d’Edge interdit aux extensions de lire ou modifier les pages de <b>${esc(h)}</b>, même si elles sont installées. Le technicien l’applique par stratégie de groupe, ou avec le fichier de réglage (double-clic, droits administrateur).</p>
     <div class="row"><button type="button" class="secondary sm" data-prot="fiche">${ICON.file}Fiche pour le technicien (PDF)</button><button type="button" class="secondary sm" data-prot="reg-edge">${ICON.dl}Réglage Edge (.reg)</button><button type="button" class="secondary sm" data-prot="reg-chrome">${ICON.dl}Réglage Chrome (.reg)</button></div>`
     :`<p class="hint m-0">Librejo est ouvert depuis un fichier du disque : la règle par adresse ne s’applique pas. Utilisez le lanceur protégé, ou demandez au technicien de bloquer l’installation des extensions (règle ExtensionSettings, « installation_mode » : « blocked »).</p>`}
   </details>`; }
 const protFile=(txt,name,type)=>downloadBlob(new Blob([txt.replace(/\r?\n/g,'\r\n')],{type}),name);
-function protCmd(nav){ const exe=nav==='edge'?'msedge':'chrome', dir=nav==='edge'?'Librejo-Edge':'Librejo-Chrome', url=encodeURI(decodeURI(protUrl()));
-  protFile(`@echo off
+async function protCmd(nav,bureau){ const exe=nav==='edge'?'msedge':'chrome', dir=nav==='edge'?'Librejo-Edge':'Librejo-Chrome', url=encodeURI(decodeURI(protUrl()))+'?lanceur';
+  const txt=`@echo off
 rem Librejo : ouvre Librejo dans ${nav==='edge'?'Microsoft Edge':'Google Chrome'}, avec un profil separe et SANS AUCUNE EXTENSION.
 rem Les extensions installees dans le navigateur habituel ne voient donc pas ce qui est tape dans Librejo.
 rem Profil : %LOCALAPPDATA%\\${dir} (a supprimer pour tout remettre a zero). Rien d'autre n'est modifie sur le poste.
 start "" ${exe} --user-data-dir="%LOCALAPPDATA%\\${dir}" --disable-extensions --no-first-run --no-default-browser-check --app="${url}"
-`,`Librejo protege (${nav==='edge'?'Edge':'Chrome'}).cmd`,'application/octet-stream');
-  toast('Lanceur téléchargé : mettez-le sur le bureau et double-cliquez dessus'); }
+`.replace(/\r?\n/g,'\r\n');
+  /* directement sur le bureau quand le navigateur le permet (la fenêtre « Enregistrer » s'ouvre sur le bureau) */
+  if(bureau&&window.showSaveFilePicker){ try{ const h=await showSaveFilePicker({suggestedName:'Librejo.cmd',startIn:'desktop',types:[{description:'Lanceur de Librejo',accept:{'application/octet-stream':['.cmd']}}]}); const w=await h.createWritable(); await w.write(txt); await w.close(); return true; }
+    catch(e){ if(e&&e.name==='AbortError') return false; } }
+  downloadBlob(new Blob([txt],{type:'application/octet-stream'}),'Librejo.cmd');
+  toast('Lanceur téléchargé : déplacez « Librejo.cmd » sur le bureau et double-cliquez dessus'); return true; }
 function protReg(nav){ const key=nav==='edge'?'HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Microsoft\\Edge':'HKEY_LOCAL_MACHINE\\SOFTWARE\\Policies\\Google\\Chrome';
   protFile(`REGEDIT4
 
@@ -8342,7 +8362,7 @@ async function protFiche(){ if(!LJ_PDF_OK){ try{ await pdfReady(); }catch(e){ to
   const blob=makeLetter({titre:'Protéger Librejo des extensions du navigateur : fiche pour le technicien',confidentiel:false,date:today(),paras,signataire:' '});
   downloadBlob(new File([blob],'Librejo - fiche technicien extensions.pdf',{type:'application/pdf'}),'Librejo - fiche technicien extensions.pdf'); toast('Fiche téléchargée'); }
 document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-prot]'); if(!b) return; const a=b.dataset.prot;
-  if(a==='cmd-edge') protCmd('edge'); if(a==='cmd-chrome') protCmd('chrome'); if(a==='reg-edge') protReg('edge'); if(a==='reg-chrome') protReg('chrome'); if(a==='fiche') protFiche(); });
+  if(a==='cmd-edge') protCmd('edge',true); if(a==='cmd-chrome') protCmd('chrome',true); if(a==='reg-edge') protReg('edge'); if(a==='reg-chrome') protReg('chrome'); if(a==='fiche') protFiche(); });
 function openChecks(lead){
   openModal(`<h3 id="modal-title">Vérifications de ce poste</h3><p class="hint">${lead?esc(lead):'Librejo vérifie le navigateur, l’autorisation du dossier et le type de dossier, puis dit quoi faire. Le résultat peut être copié pour l’informatique : il ne contient aucune donnée de personne.'}</p><div id="ck-box"></div>${protectHTML()}
     <div class="btns"><button class="secondary" data-close>Fermer</button></div>`,'wide');
