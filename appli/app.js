@@ -1025,7 +1025,7 @@ document.addEventListener('keydown',e=>{ const t=e.target.closest&&e.target.clos
   const k=e.key, n=k==='ArrowDown'||k==='ArrowRight'?i+1:k==='ArrowUp'||k==='ArrowLeft'?i-1:k==='Home'?0:k==='End'?tabs.length-1:null; if(n===null) return;
   e.preventDefault(); const nx=tabs[(n+tabs.length)%tabs.length]; nx.click(); setTimeout(()=>{ const again=list.querySelector(`[role=tab][data-tab="${nx.dataset.tab}"],[role=tab][data-rsecgo="${nx.dataset.rsecgo}"]`)||nx; rovingTabs(list); again.focus(); },0); });
 new MutationObserver(()=>{ rovingTabs(document.querySelector('.rsec-nav')); }).observe(document.querySelector('.app'),{subtree:true,attributes:true,attributeFilter:['aria-selected','hidden'],childList:true});
-document.querySelector('nav.top').addEventListener('click',e=>{ const b=e.target.closest('button[data-tab]'); if(b){ if(b.dataset.tab==='forms') formView=null; if(b.dataset.tab==='docs'){ filter='recent'; query=''; } setTab(b.dataset.tab); if(b.dataset.tab==='docs') renderDocs(); window.scrollTo({top:0}); } });
+document.querySelector('nav.top').addEventListener('click',e=>{ const b=e.target.closest('button[data-tab]'); if(b){ if(b.dataset.tab==='forms') formView=null; if(b.dataset.tab==='docs'){ filter=b.hasAttribute('data-all')?'all':'recent'; query=''; } setTab(b.dataset.tab); if(b.dataset.tab==='docs') renderDocs(); window.scrollTo({top:0}); } });
 
 /* ======================================================================
    1. DOCUMENTS : recherche, impression, copie modifiable, envoi
@@ -1152,6 +1152,7 @@ function renderDocs(){
        on montre ceux qui en contiennent au moins la moitié, mots vides retirés et synonymes compris. */
     if(!list.length){ const L=looseSearch(ts); if(L.length){ list=L; title=`Aucun résultat exact · ${L.length} approchant${L.length>1?'s':''}`; } }
   }else if(filter==='recent'){ list=sortDocs(docs().slice()).slice(0,20); title='Derniers documents'; }
+  else if(filter==='all'){ list=sortDocs(docs().slice()); title='Tous les documents'; }
   else if(filter==='kits'){ list=[]; title='Kits de documents'; }
   else{ const [fc,fs]=splitDest(filter); list=sortDocs(docs().filter(d=>d.categorie===fc&&(!fs||d.sous===fs))).concat(fs?[]:formItems().filter(f=>f.categorie===fc)); title=esc(catName(fc))+(fs?` <span class="o">› ${esc(fs)}</span>`:''); showCat=false; }
   /* beaucoup de documents à l'écran : la liste (dense) par défaut, sauf si la personne a choisi les vignettes */
@@ -1188,7 +1189,6 @@ function renderDocs(){
   const pt=$('#pagetitle'); if(pt&&tab==='docs'){ pt.hidden=home; pt.textContent='Documents'; }
   p.innerHTML=`${home?homeHead():''}
     <div class="bigsearch">${ICON.search}<input class="in" id="q" type="search" placeholder="Rechercher un document ou un formulaire… (touche /)" value="${esc(query)}" autocomplete="off" aria-label="Rechercher un document"></div>
-    <label class="check srch-txt"><input type="checkbox" id="qtxt" ${TXT_ON?'checked':''}> 📄 Chercher aussi dans le texte des documents <small>(plus lent)</small></label>
     ${isAdmin?`<div class="adminbar">
       <div class="ab-txt"><b>Vous modifiez</b><span>Ajoutez, rangez ou modifiez. Astuce : vous pouvez aussi glisser des fichiers n’importe où sur cette page.</span></div>
       <div class="ab-acts"><button class="primary" data-a="adddocs">${ICON.plus}Ajouter un document</button><button class="secondary" data-a="addlink">${ICON.plus}Ajouter un lien</button><button class="secondary" data-a="addcat">${ICON.plus}Nouvelle catégorie</button>
@@ -1207,9 +1207,10 @@ function renderDocs(){
         ${DATA.documents.some(needThumb)?`<button data-a="thumbs"><b>Créer les miniatures</b><small>Pour les documents qui n’ont pas encore d’image</small></button>`:`<button data-a="rethumbs"><b>Refaire les miniatures</b><small>Si les images des documents ne correspondent plus</small></button>`}
       </div></details></div></div>`:''}
     ${isAdmin&&CF_COPIES.length?cfNoticeHTML():''}
-    ${home?startHTML()+renderNews()+renderFavs()+renderPinned()+renderHome():''}
+    ${home?startHTML()+renderNews()+renderHomeTiles():''}
+    ${!ts.length&&filter==='all'?tilesSec('df','⭐ Mes documents favoris',favItems('d'),'',3)+tilesSec('du','Les plus utilisés sur ce poste',usedItems('d'),'',3):''}
     <div class="panel"${home?' hidden':''}>
-      <div class="listhead"><h2 class="sec">${title}</h2>${filter!=='kits'||ts.length?`<div class="viewtoggle" role="group" aria-label="Affichage"><button data-view="liste" aria-pressed="${view==='liste'}">${svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}Liste</button><button data-view="vignettes" aria-pressed="${view==='vignettes'}">${svg('<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="9"/><rect x="3" y="15" width="7" height="6"/><rect x="14" y="15" width="7" height="6"/>')}Vignettes</button></div>`:''}</div>
+      <div class="listhead"><h2 class="sec">${title}</h2>${ts.length?`<label class="check srch-txt"><input type="checkbox" id="qtxt" ${TXT_ON?'checked':''}> 📄 Chercher aussi dans le texte des documents <small>(plus lent)</small></label>`:''}${filter!=='kits'||ts.length?`<div class="viewtoggle" role="group" aria-label="Affichage"><button data-view="liste" aria-pressed="${view==='liste'}">${svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}Liste</button><button data-view="vignettes" aria-pressed="${view==='vignettes'}">${svg('<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="9"/><rect x="3" y="15" width="7" height="6"/><rect x="14" y="15" width="7" height="6"/>')}Vignettes</button></div>`:''}</div>
       ${bigCat?`<p class="bigcat">📂 <span><b>${docs().filter(d=>d.categorie===filter&&!d.sous).length} documents en vrac dans cette catégorie.</b> Au-delà d’une vingtaine, l’équipe doit beaucoup faire défiler : des sous-dossiers (2 à 4 suffisent) la rendent plus facile à parcourir. Bouton « Nouveau sous-dossier » ci-dessous, puis « Gérer » sur chaque document pour le ranger.</span></p>`:''}
       ${!ts.length&&filter!=='recent'&&filter!=='kits'&&isAdmin?(filter.includes('/')?`<div class="row"><button class="ghost danger" data-a="delsous">Supprimer le sous-dossier</button></div>`:`<div class="row"><button class="ghost" data-a="addsous">${ICON.plus}Nouveau sous-dossier</button><button class="ghost" data-a="renamecat">Renommer la catégorie</button><button class="ghost" data-a="emojicat">Changer l’emoji</button><button class="ghost danger" data-a="delcat">Supprimer la catégorie</button></div>`):''}
       ${!ts.length&&filter==='kits'?renderKits():view==='vignettes'&&list.some(x=>!x.kind)?`<div class="grid">${list.filter(x=>!x.kind).map(d=>gridCard(d,ts,showCat)).join('')}</div>${list.some(x=>x.kind)?`<div class="tablebox mt-m"><table class="docs"><tbody>${list.filter(x=>x.kind).map(rowOf).join('')}</tbody></table></div>`:''}`:`<div class="tablebox">${list.length?`<table class="docs"><thead><tr><th scope="col"><span class="sr">Type</span></th>${th('titre','Document')}${th('version','Version')}${th('date','Date')}<th class="right" scope="col">Actions</th></tr></thead><tbody>${rows}</tbody></table>`
@@ -1230,8 +1231,9 @@ function renderSide(){
       return `<button class="catbtn" style="${catColVars(c.id)}" data-filter="${esc(c.id)}" aria-pressed="${on(c.id)}" aria-expanded="${open}"><span class="cemo" aria-hidden="true">${catEmoji(c)}</span><span class="name">${esc(c.nom)}</span>${(()=>{ const nd=docs().filter(d=>d.categorie===c.id).length, nf=formItems().filter(f=>f.categorie===c.id).length, t=[nd?`${nd} document${nd>1?'s':''}`:'',nf?`${nf} formulaire${nf>1?'s':''}`:''].filter(Boolean).join(' et ')||'vide';
         return `<span class="count" title="${t}"><span class="sr">${t}</span><span aria-hidden="true">${nd}${nf?`<span class="cf">+${nf}${ICON.pen}</span>`:''}</span></span>`; })()}</button>`
       +(open?sousOf(c).map(sub=>`<button class="catbtn sub" style="${catColVars(c.id)}" data-filter="${esc(c.id+'/'+sub)}" aria-pressed="${on(c.id+'/'+sub)}"><span class="name">${esc(sub)}</span><span class="count">${docs().filter(d=>d.categorie===c.id&&d.sous===sub).length}</span></button>`).join(''):''); }).join('');
-  const home=document.querySelector('nav.top [data-tab=docs]');
-  if(home){ if(tab==='docs'&&(filter==='recent'||searching)) home.setAttribute('aria-current','page'); else if(tab==='docs') home.removeAttribute('aria-current'); }
+  const home=document.querySelector('nav.top [data-tab=docs]:not([data-all])'), alld=document.querySelector('nav.top [data-all]');
+  if(home&&tab==='docs'){ if(filter==='recent'||searching) home.setAttribute('aria-current','page'); else home.removeAttribute('aria-current'); }
+  if(alld){ if(tab==='docs'&&filter==='all'&&!searching) alld.setAttribute('aria-current','page'); else alld.removeAttribute('aria-current'); }
 }
 $('#sidecats').addEventListener('click',e=>{ const f=e.target.closest('[data-filter]'); if(!f) return;
   filter=f.dataset.filter; query=''; if(tab!=='docs') setTab('docs'); renderDocs(); window.scrollTo({top:0}); });
@@ -1561,7 +1563,7 @@ function editDoc(d){
       <label class="field"><span>Rangé dans</span><select class="in" id="f-cat">${destOptions(destOf(d))}</select></label>
       <label class="field wide"><span>Description <small>(utilisée par la recherche)</small></span><textarea class="in" id="e-desc" rows="4">${esc(d.description||'')}</textarea></label>
       <label class="field wide"><span>Mots-clés <small>(séparés par des virgules)</small></span><input class="in" id="e-kw" value="${esc((d.motscles||[]).join(', '))}"></label>
-      <label class="field self-end"><span>Page d'accueil</span><label class="check"><input type="checkbox" id="e-pin" ${d.epingle?'checked':''}> Épingler dans « Les plus utilisés »</label></label>
+      <label class="field self-end"><span>Page d'accueil</span><label class="check"><input type="checkbox" id="e-pin" ${d.epingle?'checked':''}> Épingler à l’accueil</label></label>
       <label class="field"><span>⏰ Relecture</span><select class="in" id="e-relm">${REL_OPTS.map(([v,l])=>`<option value="${v}" ${(+d.relireMois||0)===v?'selected':''}>${l}</option>`).join('')}</select></label>
       <label class="field"><span>Prochaine relecture ${relBadge(d)}</span><span class="row gap-s"><input class="in" type="date" id="e-reld" value="${esc(d.relire||'')}"><button type="button" class="secondary sm" id="e-relu" title="Le document a été relu aujourd’hui et reste valable">✅ Relu aujourd’hui</button></span>${d.relu?`<small class="hint">Dernière relecture : ${frDate(d.relu)}</small>`:''}</label>
       <div class="field wide"><span>Validation ${stBadge(d)}</span><div class="row gap-s wrap">${isPub(d)?`<span>✅ Publié${d.validePar?` · validé par ${esc(d.validePar)} le ${frDate(d.valideLe)}`:''}</span><button type="button" class="secondary sm" data-est="brouillon">Repasser en brouillon</button>`
@@ -1924,6 +1926,7 @@ function renderForms(){
   p.innerHTML=`<div class="stickhead"><h2 class="sec">Formulaires</h2></div>
     <p class="hint">Remplissez, Librejo crée le PDF à l'en-tête de la structure, puis prépare le mail. Rien n'est enregistré.</p>
     ${SANS?sdEnteteHTML():''}
+    ${tilesSec('pf','⭐ Mes formulaires favoris',favItems('f'),'',3)+tilesSec('pu','Les plus utilisés sur ce poste',usedItems('f'),'',3)}
     ${formsByGroupHTML()}${SANS?sdPacksHTML():''}
     ${isAdmin?`<div class="adminbar"><b>Mode admin</b><button class="secondary" data-newform>${ICON.plus}Créer un formulaire</button>${cerfaDocs().length?`<button class="secondary" data-czcheck>Vérifier les Cerfa${cerfaDocs().some(d=>czAge(d)>CZ_DAYS)?' (à faire)':''}</button>`:''}<span class="hint">Les formulaires se modifient dans l'onglet Administration.</span></div>`:''}`;
 }
@@ -2345,6 +2348,116 @@ function editKit(id){
 
 document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]'); if(g){ setTab(g.dataset.gotab); window.scrollTo({top:0}); } });
 
+/* ======================================================================
+   Correcteur orthographique de Librejo : tout se passe sur ce poste.
+   Le correcteur du navigateur est coupé partout (spellcheck="false") : dans Chrome et Edge, sa version
+   « améliorée » envoie le texte tapé à Google ou à Microsoft, et une page web ne peut pas choisir la version
+   de base à la place de la personne. On coupe aussi ceux des extensions les plus courantes (Grammarly,
+   LanguageTool) quand elles respectent leur attribut. À la place : une liste de mots français (Grammalecte,
+   1,8 Mo, chargée à la première saisie puis gardée hors ligne), comparée au texte sur le poste.
+   Les mots avec une majuscule (noms, prénoms, sigles) ne sont jamais signalés ; « Ignorer » ne vaut que
+   jusqu'à la fermeture de la page ; rien n'est enregistré.
+   ====================================================================== */
+const SP={set:null,rank:null,p:null,ign:new Set(),T:0};
+const SP_OFF=el=>{ if(el.dataset.lsp) return; el.dataset.lsp=el.getAttribute('spellcheck')==='false'?'0':'1'; el.setAttribute('spellcheck','false');
+  el.setAttribute('data-gramm','false'); el.setAttribute('data-gramm_editor','false'); el.setAttribute('data-enable-grammarly','false'); el.setAttribute('data-lt-active','false'); };
+function spSweep(root){ if(root.matches&&root.matches('input,textarea,[contenteditable]')) SP_OFF(root); root.querySelectorAll&&root.querySelectorAll('input,textarea,[contenteditable]').forEach(SP_OFF); }
+spSweep(document);
+new MutationObserver(ms=>{ for(const m of ms) m.addedNodes.forEach(n=>{ if(n.nodeType===1) spSweep(n); }); }).observe(document.documentElement,{childList:true,subtree:true});
+function spLoad(){ if(SP.p) return SP.p;
+  /* un script plutôt qu'un fetch : marche aussi dans la version hors ligne ouverte depuis le disque (file://) */
+  SP.p=(window.LJ_MOTS?Promise.resolve():loadScript('app/lib/mots-fr.js')).then(()=>{ const t=window.LJ_MOTS; if(!t) throw new Error('dico');
+    const S=new Set(); let prev='';
+    for(const l of t.split('\n')){ if(!l) continue; const w=prev.slice(0,l.charCodeAt(0)-48)+l.slice(1); S.add(w); prev=w; }
+    /* le vocabulaire de la structure (titres, descriptions, mots-clés, champs des formulaires) compte comme connu */
+    const voc=[...docs().map(d=>[d.titre,d.description,(d.motscles||[]).join(' ')].join(' ')),...formItems().map(f=>f.titre+' '+(f.description||'')),...(DATA.formulaires||[]).map(f=>(f.champs||[]).map(c=>c.label+' '+(c.options||'')).join(' ')+' '+(f.modele||''))].join(' ');
+    (voc.match(SP_RE)||[]).forEach(w=>{ if(w===w.toLowerCase()) S.add(w.replace(/'/g,'’')); });
+    SP.set=S; SP.rank=new Map(); (window.LJ_FREQ||'').split('\n').forEach((w,i)=>SP.rank.set(w,i)); window.LJ_MOTS=window.LJ_FREQ=null; }).catch(()=>{ SP.p=null; });
+  return SP.p; }
+const SP_RE=/[A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+(?:[-’'][A-Za-zÀ-ÖØ-öø-ÿŒœÆæ]+)*/g;
+const SP_ELI=/^(?:l|d|j|m|n|s|t|c|qu|jusqu|lorsqu|puisqu|quoiqu|presqu)’/i;
+function spKnown(w){ const S=SP.set, l=w.toLowerCase(); if(S.has(w)||S.has(l)||SP.ign.has(l)) return true;
+  if(w.includes('-')) return w.split('-').every(p=>!p||S.has(p.toLowerCase())||/^(t|là|ci|ce|je|tu|il|elle|on|nous|vous|ils|elles|moi|toi|lui|leur|y|en)$/i.test(p));
+  return false; }
+/* les mots à vérifier dans un texte : [{w, i}] (position dans le texte) */
+function spCheck(text){ const out=[]; let m; SP_RE.lastIndex=0;
+  while((m=SP_RE.exec(text))){ let w=m[0].replace(/'/g,'’'), i=m.index;
+    const e=w.match(SP_ELI); if(e&&w.length>e[0].length&&!SP.set.has(w.toLowerCase())){ w=w.slice(e[0].length); i+=e[0].length; }
+    if(w.length<3||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w[0])||/[A-ZÀ-ÖØ-ÞŒÆ]/.test(w.slice(1))) continue;   // majuscule : nom propre, sigle, début de phrase connu
+    if(spKnown(w)) continue;
+    out.push({w,i}); if(out.length>=12) break; }
+  return out; }
+const SP_AL='abcdefghijklmnopqrstuvwxyzàâäçéèêëîïôöùûüÿœ-';
+const SP_ACC={a:'aàâä',e:'eéèêë',i:'iîï',o:'oôö',u:'uùûü',c:'cç',y:'yÿ'};
+const spStrip=w=>w.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/œ/g,'oe');
+function spSugg(w){
+  const S=SP.set, lw=w.toLowerCase(), res=new Map(), add=(c,sc)=>{ if(c!==lw&&S.has(c)&&(!res.has(c)||res.get(c)>sc)) res.set(c,sc); };
+  /* 1. les accents seuls (eleve → élève, recu → reçu) : toutes les combinaisons, jusqu'à 4000 */
+  const b=spStrip(lw).replace(/oe/g,'\u0001'); let vs=[''];
+  for(const ch of b){ const o=ch==='\u0001'?['oe','œ']:(SP_ACC[ch]||ch).split(''); const nv=[]; for(const v of vs) for(const x of o) nv.push(v+x); vs=nv; if(vs.length>4000) break; }
+  if(vs.length<=4000) vs.forEach(v=>add(v,0));
+  /* 2. une faute de frappe : lettre en trop, oubliée, remplacée, deux lettres inversées */
+  const e1=[];
+  for(let i=0;i<=lw.length;i++){ const a=lw.slice(0,i), z=lw.slice(i);
+    if(z) e1.push(a+z.slice(1));
+    if(z.length>1) e1.push(a+z[1]+z[0]+z.slice(2));
+    for(const c of SP_AL){ if(z) e1.push(a+c+z.slice(1)); e1.push(a+c+z); } }
+  e1.forEach(c=>add(c,1));
+  /* 3. rien trouvé : une faute de frappe plus des accents (acceuil → accueil, hopital → hôpital) */
+  if(!res.size&&lw.length<=14){ for(const c of e1){ if(c.length<2) continue; const s=spStrip(c); let v=['']; for(const ch of s){ const o=(SP_ACC[ch]||ch).split(''); const nv=[]; for(const x of v) for(const y of o) nv.push(x+y); v=nv; if(v.length>60) break; } if(v.length<=60) v.forEach(x=>add(x,2)); if(res.size>=6) break; } }
+  /* classement : le moins de changements, puis le mot le plus courant (un mot hors des 30 000 plus courants passe après) */
+  const rk=w=>SP.rank.has(w)?SP.rank.get(w):40000+w.length;
+  return [...res.entries()].sort((a,c)=>a[1]-c[1]||rk(a[0])-rk(c[0])).slice(0,3).map(x=>x[0]); }
+const spOk=el=>el&&el.matches&&el.matches('textarea,input:not([type]),input[type=text]')&&el.dataset.lsp!=='0'&&el.id!=='q'&&!el.readOnly&&!el.disabled&&!el.closest('[data-nospell],.annu-tools,#modal [data-nospell]');
+function spBox(el){ const at=el.closest('label.field')||el; let n=at.nextElementSibling; if(at===el&&n&&n.classList.contains('spell')&&n._el===el) return n; if(at!==el){ const x=at.querySelector(':scope > .spell'); if(x) return x; } return null; }
+async function spShow(el){
+  if(!spOk(el)||!el.isConnected) return; await spLoad(); if(!SP.set||!el.isConnected) return;
+  const errs=spCheck(el.value||'').map(x=>({...x,s:spSugg(x.w)})); let box=spBox(el);
+  if(!errs.length){ if(box) box.remove(); return; }
+  if(!box){ box=document.createElement('div'); box.className='spell'; box.setAttribute('aria-live','polite'); const at=el.closest('label.field'); if(at) at.appendChild(box); else el.insertAdjacentElement('afterend',box); }
+  box._el=el; box._errs=errs;
+  box.innerHTML=`<span class="sp-l">Orthographe :</span>`+errs.map((x,i)=>`<span class="sp-e"><span class="sp-w">${esc(x.w)}</span>${x.s.length?x.s.map(s=>`<button type="button" class="sp-fix" data-spfix="${i}" data-v="${esc(s)}" aria-label="Remplacer ${esc(x.w)} par ${esc(s)}">${esc(s)}</button>`).join(''):'<i>pas de proposition</i>'}<button type="button" class="sp-ign" data-spign="${esc(x.w)}" title="Ignorer ce mot (jusqu’à la fermeture de la page)" aria-label="Ignorer ${esc(x.w)}">×</button></span>`).join('');
+}
+document.addEventListener('focusin',e=>{ if(spOk(e.target)) spLoad(); });
+document.addEventListener('input',e=>{ const el=e.target; if(!spOk(el)) return; clearTimeout(SP.T); SP.T=setTimeout(()=>spShow(el),650); });
+document.addEventListener('focusout',e=>{ const el=e.target; if(spOk(el)){ clearTimeout(SP.T); setTimeout(()=>spShow(el),0); } });
+/* un clic dans la ligne du correcteur ne doit pas faire perdre la place dans le champ */
+document.addEventListener('pointerdown',e=>{ if(e.target.closest&&e.target.closest('.spell button')) e.preventDefault(); },true);
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.spell button'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  const box=b.closest('.spell'), el=box._el; if(!el) return;
+  if(b.dataset.spign){ SP.ign.add(b.dataset.spign.toLowerCase()); spShow(el); el.focus(); return; }
+  const x=box._errs[+b.dataset.spfix], v=el.value; if(!x) return;
+  let i=v.slice(x.i,x.i+x.w.length).replace(/'/g,'’')===x.w?x.i:v.replace(/'/g,'’').indexOf(x.w); if(i<0) return;
+  el.value=v.slice(0,i)+b.dataset.v+v.slice(i+x.w.length); el.dispatchEvent(new Event('input',{bubbles:true}));
+  if(el.isConnected){ el.focus(); const p=i+b.dataset.v.length; try{ el.setSelectionRange(p,p); }catch(_){} spShow(el); } },true);
+/* ---------- Cartes : accueil (épinglés, favoris) et en-tête des pages Formulaires et Documents ---------- */
+const TILE_ALL=new Set();
+function tileOf(t,x,pin){
+  const fav=t==='k'?'':favBtn(t+':'+x.id);
+  const mark=pin?`<span class="pinmark" title="Épinglé par le coordinateur : affiché sur l’accueil de tous les postes">📌${isAdmin?`<button type="button" class="pinoff" data-unpin="${t}:${esc(x.id)}" title="Retirer de l’accueil" aria-label="Retirer ${esc(x.titre)} de l’accueil">×</button>`:''}</span>`:'';
+  let ico='', title, sub, btns;
+  if(t==='f'){ ico=`<span class="te" aria-hidden="true">${esc(formEmoji(x))}</span>`; title=`<a href="#" data-fill="${esc(x.id)}">${esc(x.titre)}</a>`; sub='Formulaire'; btns=`<button class="lbtn" data-fill="${esc(x.id)}">${ICON.pen}Remplir</button>`; }
+  else if(t==='k'){ ico='<span class="badge accent m-0">Kit</span> '; title=esc(x.titre); sub=`${kitDocs(x).length} documents`; btns=`<button class="lbtn" data-kprint="${esc(x.id)}" aria-label="Imprimer le kit ${esc(x.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(x.id)}" aria-label="Envoyer le kit ${esc(x.titre)}">${ICON.mail}Tout envoyer</button>`; }
+  else { const href=isLink(x)?esc(safeHref(x.url)||'#'):hrefOf(x.chemin); title=`<a href="${href}" target="_blank" rel="noopener">${esc(x.titre)}</a>`; sub=catName(x.categorie);
+    btns=`${x.modele?`<button class="lbtn" data-fillword="${esc(x.id)}">${ICON.pen}Remplir</button>`:''}${!isLink(x)&&printable(x)?`<button class="lbtn" data-print="${esc(x.chemin)}" aria-label="Imprimer ${esc(x.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(x)?`data-lsend="${esc(x.id)}"`:`data-send="${esc(x.chemin)}"`} aria-label="Envoyer ${esc(x.titre)}">${ICON.mail}Envoyer</button>`; }
+  return `<div class="fcard tile t3${pin?' pinned':''}">${mark}<b class="tt">${ico}${title}${fav}</b><span class="ts">${esc(sub)}</span><div class="row gap-s push">${btns}</div></div>`;
+}
+function tilesSec(key,title,list,empty,max){
+  if(!list.length&&!empty) return '';
+  const all=TILE_ALL.has(key), shown=all?list:list.slice(0,max);
+  return `<section class="tsec"><div class="tsec-h"><h2 class="lab">${title}</h2>${list.length>max?`<button type="button" class="linkbtn" data-tall="${key}" aria-expanded="${all}">${all?'Réduire':`Voir les ${list.length}`}</button>`:''}</div>
+    ${list.length?`<div class="cards t3grid">${shown.map(([t,x,p])=>tileOf(t,x,p)).join('')}</div>`:`<p class="tempty">${empty}</p>`}</section>`;
+}
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-tall]'); if(!b) return; const k=b.dataset.tall; if(TILE_ALL.has(k)) TILE_ALL.delete(k); else TILE_ALL.add(k); if(tab==='forms') renderForms(); else renderDocs(); });
+function favItems(ty){ const all=ty==='f'?formItems():docs(); return favRead().filter(k=>k.startsWith(ty+':')).map(k=>all.find(x=>x.id===k.slice(2))).filter(Boolean).map(x=>[ty,x,false]); }
+function pinItems(){ return [...formItems().filter(f=>DATA.formsEpingles.includes(f.id)).map(x=>['f',x,true]),...DATA.kits.filter(k=>k.epingle).map(x=>['k',x,true]),...docs().filter(d=>d.epingle).map(x=>['d',x,true])]; }
+/* ce qui sert le plus sur ce poste, favoris exclus (déjà au-dessus) */
+function usedItems(ty){ const all=ty==='f'?formItems():docs(), fav=new Set(favRead()); return useTop().filter(k=>k.startsWith(ty+':')&&!fav.has(k)).map(k=>all.find(x=>x.id===k.slice(2))).filter(Boolean).slice(0,9).map(x=>[ty,x,false]); }
+function renderHomeTiles(){
+  return tilesSec('pin','📌 Épinglés par le coordinateur',pinItems(),isAdmin?'Rien d’épinglé pour l’instant : cochez « Épingler à l’accueil » dans <b>Gérer</b> d’un document, ou en haut d’un formulaire.':'',3)
+    +tilesSec('ff','⭐ Mes formulaires favoris',favItems('f'),'Touchez ☆ à côté d’un formulaire, dans <b>Formulaires</b>, pour le retrouver ici.',3)
+    +tilesSec('fd','⭐ Mes documents favoris',favItems('d'),'Touchez ☆ à côté d’un document, dans <b>Documents</b>, pour le retrouver ici.',3);
+}
 /* ---------- Épinglés (page d'accueil) ---------- */
 function renderPinned(){
   const {order:o0,nPin}=pinnedAndUsed(), order=o0.slice(0,Math.max(6,nPin));
@@ -5291,7 +5404,7 @@ function editLink(d){
       <label class="field"><span>Rangé dans</span><select class="in" id="l-cat">${destOptions(cur)}</select></label>
       <label class="field wide"><span>Description <small>(utilisée par la recherche)</small></span><textarea class="in" id="l-desc" rows="3">${esc(d?d.description||'':'')}</textarea></label>
       <label class="field wide"><span>Mots-clés <small>(séparés par des virgules)</small></span><input class="in" id="l-kw" value="${esc(d?(d.motscles||[]).join(', '):'')}"></label>
-      <label class="check"><input type="checkbox" id="l-pin" ${d&&d.epingle?'checked':''}> Épingler dans « Les plus utilisés »</label>
+      <label class="check"><input type="checkbox" id="l-pin" ${d&&d.epingle?'checked':''}> Épingler à l’accueil</label>
     </div>
     <div class="btns"><button class="primary" id="l-ok">Enregistrer</button><button class="ghost" data-close>Annuler</button></div>`);
   $('#l-url').focus();
@@ -5678,7 +5791,7 @@ function homeSec(key,emo,titre,sous,body,cls=''){
 }
 function homeFormRow(f){
   const d=(f.description||'').replace(/\s+/g,' '), s=d.length>90?d.slice(0,88).replace(/\s\S*$/,'')+'…':d;
-  return `<li><button type="button" class="hrow" data-fill="${esc(f.id)}"><span class="hi" aria-hidden="true">${esc(formEmoji(f))}</span><span class="hn"><b>${esc(f.titre)}</b>${s?`<small>${esc(s)}</small>`:''}</span><span class="hgo">Remplir</span></button></li>`;
+  return `<li><button type="button" class="hrow" data-fill="${esc(f.id)}"><span class="hi" aria-hidden="true">${esc(formEmoji(f))}</span><span class="hn"><b>${esc(f.titre)}</b>${s?`<small>${esc(s)}</small>`:''}</span><span class="hgo">Remplir</span></button>${favBtn('f:'+f.id)}</li>`;
 }
 function homeDocRow(d){
   if(isLink(d)) return `<li><div class="hrow"><span class="hi lien" aria-hidden="true">🔗</span><a class="hn" href="${esc(safeHref(d.url)||'#')}" target="_blank" rel="noopener"><b>${esc(d.titre)}</b><small>${esc('Lien web · '+linkHost(d.url))}</small></a>
@@ -7331,7 +7444,7 @@ function favBtn(k){ const on=isFav(k); return `<button type="button" class="favb
 document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-fav]'); if(!b) return; e.preventDefault(); e.stopPropagation();
   const k=b.dataset.fav, a=favRead(), i=a.indexOf(k); if(i>=0) a.splice(i,1); else a.unshift(k);
   try{ localStorage.setItem(FAV_KEY,JSON.stringify(a.slice(0,60))); }catch(_){ }
-  toast(i>=0?'Retiré de vos favoris':'Ajouté à vos favoris (sur ce poste)'); renderDocs(); },true);
+  toast(i>=0?'Retiré de vos favoris':'Ajouté à vos favoris (sur ce poste)'); if(tab==='forms'&&!formView) renderForms(); else renderDocs(); },true);
 /* « Quoi de neuf » : documents ajoutés ou mis à jour depuis 3 semaines, tant que ce poste n'a pas cliqué « J'ai vu » */
 const NEWS_KEY='librejo-nouveautes-vues', NEWS_DAYS=21;
 const newsSeen=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(NEWS_KEY)||'[]')); }catch(e){ return new Set(); } };
@@ -8251,7 +8364,7 @@ const AIDE={
       'L’étoile, à côté d’un titre, l’ajoute à <b>Mes favoris</b> (sur ce poste).'],
     admin:['<b>Ajouter un document</b>, <b>Ajouter un lien</b>, <b>Nouvelle catégorie</b> : en haut de la page. Vous pouvez aussi glisser des fichiers sur la page.',
       'Le menu <b>Outils</b> : évaluation HAS, tableau de bord, sauvegarde, journal, archives, assistant de démarrage, vérifications du poste.',
-      '<b>Les plus utilisés</b> : épinglez un document (<b>Gérer</b>, sur sa ligne) ou un formulaire (<b>Épingler à l’accueil</b>, en haut du formulaire).',
+      '<b>Épinglés</b> : épinglez un document (<b>Gérer</b>, sur sa ligne) ou un formulaire (<b>Épingler à l’accueil</b>, en haut du formulaire) ; il apparaît sur l’accueil de tous les postes.',
       'La liste de démarrage reste affichée ici tant qu’elle n’est pas terminée.']},
   recherche:{titre:'Résultats de la recherche',
     but:'Les documents, liens, formulaires et kits qui correspondent à vos mots, les plus proches en premier.',
@@ -8537,7 +8650,7 @@ const aideR=(k,extra)=>({k,...AIDE[k],...(extra||{})});
 function aideForm(bf){
   const t=AIDE_FORMS[bf.id]||AIDE.modele;
   const admin=[`La barre <b>Mode admin</b>, en haut du formulaire, mène à ce qui le règle : ${bf.sets.map(k=>'<b>'+esc(SETTINGS[k].l)+'</b>').join(', ')}.`,
-    '<b>Épingler à l’accueil</b>, dans la même barre, le met dans « Les plus utilisés ».',
+    '<b>Épingler à l’accueil</b>, dans la même barre, le met dans « Épinglés », sur l’accueil de tous les postes.',
     'Administration › Formulaires et modèles › <b>Masquer</b> le retire de la liste de l’équipe.',...(t.admin||[])];
   return {k:'form:'+bf.id,titre:bf.titre,but:t.but,etapes:t.etapes,admin};
 }

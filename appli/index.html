@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" spellcheck="false">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -380,6 +380,31 @@ body:has(#sdbar) .panel>.stickhead:first-child,body:has(#sdbar) .panel>.bigsearc
 .news li small{color:var(--text-3);margin-left:auto;white-space:nowrap}
 .news .badge{flex:none;margin:0}
 .cards.narrow .tile .tthumb{display:none}
+li:has(> .hrow + .favbtn){display:flex;align-items:center;gap:4px}li:has(> .hrow + .favbtn) .hrow{flex:1;min-width:0}
+li > .hrow + .favbtn{font-size:20px;padding:6px 10px;min-width:44px;min-height:44px}
+.spell{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:6px;font-size:var(--fs-2);color:var(--text-2);text-transform:none;letter-spacing:0;font-weight:400}
+.spell .sp-l{font-weight:700;color:var(--text-3)}
+.spell .sp-e{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.spell .sp-w{text-decoration:underline wavy #b3261e;text-decoration-skip-ink:none;text-underline-offset:3px;font-weight:600}
+.spell .sp-fix{border:1px solid var(--line-strong);background:var(--surface);color:var(--navy);border-radius:999px;padding:2px 10px;min-height:30px;font:inherit;font-weight:700;cursor:pointer}
+.spell .sp-fix:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.spell .sp-ign{border:0;background:transparent;color:var(--text-muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px;min-height:30px}
+.spell .sp-ign:hover{background:var(--surface-2);color:var(--navy)}
+.spell i{color:var(--text-muted)}
+.tsec{margin:0 0 var(--sp-5)}
+.tsec-h{display:flex;align-items:baseline;gap:var(--sp-3)}.tsec-h .linkbtn{margin-left:auto}
+.cards.t3grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)}
+@media (max-width:1100px){ .cards.t3grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:700px){ .cards.t3grid{grid-template-columns:1fr} }
+.fcard.tile.t3{position:relative;min-height:124px;padding:var(--sp-3) var(--sp-4);display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);text-align:left}
+.tsec h2.lab{margin:0 0 var(--sp-2)}#p-docs .tsec .cards,#p-forms .tsec .cards{margin:0}
+.tile.t3 .tt{display:flex;align-items:flex-start;gap:8px;font-size:17px;line-height:1.25;padding-right:22px}
+.tile.t3 .tt a{color:var(--navy);text-decoration:none}.tile.t3 .tt a:hover{text-decoration:underline}
+.tile.t3 .te{font-size:20px;line-height:1.1;flex:none}
+.tile.t3 .ts{color:var(--text-3);font-size:var(--fs-2)}
+.tile.t3 .row{flex-wrap:wrap}
+.tempty{margin:0;padding:var(--sp-3) var(--sp-4);border:1px dashed var(--line-strong);border-radius:10px;color:var(--text-3);font-size:var(--fs-2)}
+.listhead .srch-txt{margin:0 0 0 var(--sp-3);font-size:var(--fs-2)}
 .newsfold{margin:0 0 var(--sp-4);background:var(--accent-soft);border-radius:10px;padding:0 var(--sp-3)}
 .newsfold summary{display:flex;align-items:center;gap:var(--sp-3);min-height:48px;cursor:pointer;list-style:none;color:var(--accent-ink)}
 .newsfold summary::-webkit-details-marker{display:none}
@@ -1638,6 +1663,7 @@ body.aide-on #livepv,body.aide-on #livepv-tab{visibility:hidden}
     <nav class="top" aria-label="Pages de Librejo">
     <button type="button" data-tab="docs" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>Accueil</button>
     <button type="button" data-tab="forms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m14 6 4 4"/></svg>Formulaires</button>
+    <button type="button" data-tab="docs" data-all><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Documents</button>
     <button type="button" data-tab="semaine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Impression rapide</button>
     <button type="button" data-tab="annu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.7.7 2.8 2.4 3.1 5.2"/></svg>Annuaire</button>
     <button type="button" data-tab="admin" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Administration</button>
