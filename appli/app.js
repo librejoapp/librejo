@@ -2015,6 +2015,7 @@ function renderFill(){
       </div>
     </div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x.k)}">${esc(x.m)}</li>`).join('')}</ul>`:''}
+    ${poliOfForm(f)?`<div class="card top w-form">${poliHTML('f:'+f.id,poliOfForm(f))}</div>`:''}
     <div class="row w-form"><button class="primary big" data-mkpdf>${ICON.mail}Créer le PDF et préparer l'envoi</button></div>
     <div class="row w-form end"><button class="ghost" data-signal="f:${esc(f.id)}">🚩 Signaler un problème</button><button class="ghost danger" data-fclear>${ICON.trash}Tout effacer</button></div>`;
 }
@@ -2058,7 +2059,9 @@ function fillTemplate(f,vals){
     .split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
 }
 function formBlob(f,tp){
-  return makeLetter({titre:f.titre,confidentiel:f.confidentiel&&(f.groupe==='med'||!f.groupe?true:'CONFIDENTIEL'),date:FV._date||today(),paras:fillTemplate(f,FV),signataire:f.signataire||structure.signataire,tp});
+  let paras=fillTemplate(f,FV); const pl=poliOfForm(f);
+  if(pl){ const i=paras.lastIndexOf(pl.line); if(i>=0){ const t=poliText('f:'+f.id,pl); if(t) paras[i]=t; else paras.splice(i,1); } }
+  return makeLetter({titre:f.titre,confidentiel:f.confidentiel&&(f.groupe==='med'||!f.groupe?true:'CONFIDENTIEL'),date:FV._date||today(),paras,signataire:f.signataire||structure.signataire,tp});
 }
 async function makeFormPdf(){
   const f=DATA.formulaires.find(x=>x.id===formView); if(!f) return;
@@ -4548,6 +4551,7 @@ function renderRelais(){
     <div class="card top w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi le saisir dans Outlook)</small></span>${recipHTML('rl-rc')}${senderHTML()}</div></div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
+    <div class="card top w-form">${poliHTML('relais',POLI_RL)}</div>
     <div class="row w-form"><button class="primary big" data-rgo>${ICON.mail}Créer le PDF et préparer l'envoi</button></div>
     <div class="row w-form end"><button class="ghost danger" data-rclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=rlRecip?rlRecip.get():[];
@@ -4614,7 +4618,7 @@ function relaisPdf(){
   if(RL.comment.trim()){ section('Commentaire'); doc.setFont(PF(),'normal'); doc.splitTextToSize(RL.comment.trim(),W-5).forEach(l=>{ room(6); doc.text(l,L+2.5,y); y+=4.8; }); }
   y+=5; room(24);
   doc.setFont(PF(),'normal'); doc.setFontSize(11); doc.setTextColor(...INK);
-  doc.text('Nous vous remercions de votre accueil et restons à votre disposition pour tout complément.',L,y); y+=9;
+  { const t=poliText('relais',POLI_RL); if(t){ doc.splitTextToSize(t,W).forEach(l=>{ room(6); doc.text(l,L,y); y+=5; }); y+=4; } else y+=4; }
   doc.setFont(PF(),'bold'); doc.setTextColor(...NAVY);
   const md=medChoice();
   if(md){ doc.text(md.nom,R,y,{align:'right'}); y+=5; doc.text('N° RPPS : '+md.rpps,R,y,{align:'right'});
@@ -5202,6 +5206,7 @@ function renderMt(){
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi imprimer le courrier)</small></span>${recipHTML('mt-rc')}${senderHTML()}</div></div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
+    <div class="card top w-form">${poliHTML('mt',POLI_MT)}</div>
     <div class="stickyfoot w-form"><button class="primary big" data-mgo>${ICON.file}Créer le courrier (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-mclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=mtRecip?mtRecip.get():[]; mtRecip=bindRecip(p.querySelector('#mt-rc'),prev);
@@ -5240,7 +5245,7 @@ function mtPdf(){
   if(MT.autres.trim()) P.para('Autres traitements : '+MT.autres.trim().replace(/\s*\n\s*/g,' ; ').replace(/\.?$/,'.'));
   if(MT.demande.trim()) P.para(MT.demande.trim());
   P.para(`${fem?'La patiente':'Le patient'} est informé${e_} de ce courrier.`,{italic:true,color:P.C.GREY,size:9.5});
-  P.para('Je reste à votre disposition et vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.',{after:6});
+  { const t=poliText('mt',POLI_MT); if(t) P.para(t,{after:6}); else P.y+=4; }
   P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]);
   const file=P.finish(outName('Courrier-medecin',MT.nom,MT.prenom,MT.date||today()));
   readyModal({file,title:'Courrier prêt',steps:['Imprimez-le et signez-le pour un envoi postal, ou envoyez-le par mail.'],
@@ -5697,6 +5702,7 @@ function renderUrg(){
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : le plus souvent, le courrier est imprimé et remis à la personne)</small></span>${recipHTML('ur-rc')}${senderHTML()}</div></div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
+    <div class="card top w-form">${poliHTML('urg',POLI_UR)}</div>
     <div class="stickyfoot w-form"><button class="primary big" data-ugo>${ICON.file}Créer le courrier (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-uclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=urRecip?urRecip.get():[]; urRecip=bindRecip(p.querySelector('#ur-rc'),prev);
@@ -5743,7 +5749,7 @@ function urPdf(){
   sec('Autres éléments utiles',UR.infos.trim());
   P.room(20);
   P.para(`Vous pouvez joindre notre équipe${UR.tel.trim()?` au ${UR.tel.trim()}`:''} pour tout renseignement. Interlocuteur : ${UR.contact.trim()}.`);
-  P.para('Nous vous remercions de votre accueil.',{after:6});
+  { const t=poliText('urg',POLI_UR); if(t) P.para(t,{after:6}); else P.y+=4; }
   if(UR.signe==='med'){ const md=medChoice(); P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]); }
   else P.sign(UR.signNom.trim(),[UR.signFonction.trim(),st.nom]);
   const file=P.finish(outName('Orientation-urgences',UR.nom,UR.prenom,UR.date||today()));
@@ -5764,14 +5770,44 @@ const CP_APPELS=['Madame, Monsieur,','Madame,','Monsieur,','Chère consœur, che
 const CP_POLI=['Veuillez agréer, {appel}, l’expression de nos salutations distinguées.','Je vous prie d’agréer, {appel}, l’expression de mes salutations distinguées.',
   'Dans l’attente de votre réponse, nous vous prions d’agréer, {appel}, l’expression de nos salutations distinguées.','Restant à votre disposition, nous vous prions d’agréer, {appel}, nos salutations distinguées.',
   'Nous vous prions de recevoir, {appel}, nos salutations respectueuses.','Recevez, {appel}, nos sincères salutations.',
-  'Je vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.','Bien cordialement.','Cordialement.'];
+  'Je vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.','Bien cordialement.','Cordialement.',
+  'Nous vous remercions de votre accueil.','Nous vous remercions de l’accueil que vous lui réserverez.'];
 const cpPoliList=()=>[...new Set([...CP_POLI,...(Array.isArray(DATA.politesse)?DATA.politesse:[])])];
 const cpPoliFill=(f,a)=>f.replace(/\{appel\}/g,String(a||'Madame, Monsieur').replace(/,\s*$/,''));
 /* la formule proposée d'office selon la formule d'appel, tant que la personne n'en a pas choisi une autre */
 const cpPoliAuto=a=>/consœur|confrère/.test(a)?CP_POLI[6]:/collègues/.test(a)?'Bien cordialement.':CP_POLI[0];
-const cpPolitesse=()=>CP.poli?cpPoliFill(CP.formule||cpPoliAuto(CP.appel),CP.appel):'';
+/* Commun à tous les courriers : case « Ajouter une formule de politesse » + menu. Chaque formulaire garde sur ce poste
+   la dernière formule choisie (et si la case était cochée) : elle est proposée en premier la fois suivante.
+   Seule la formule est gardée, jamais le contenu du courrier. */
+const POLI_KEY='librejo-politesse-derniere', POLI={};
+const poliLast=()=>{ try{ return JSON.parse(localStorage.getItem(POLI_KEY)||'{}')||{}; }catch(e){ return {}; } };
+function poliState(k,defOn){ if(!POLI[k]){ const L=poliLast()[k]; POLI[k]={on:L?L.on!==false:defOn!==false,f:L&&L.f||''}; } return POLI[k]; }
+const poliReset=k=>{ delete POLI[k]; };
+function poliSave(k){ const S=POLI[k]; if(!S) return; const o=poliLast(); o[k]={on:S.on,f:S.f||''}; try{ localStorage.setItem(POLI_KEY,JSON.stringify(o)); }catch(e){} }
+function poliList(k,extra){ const L=poliLast()[k]; return [...new Set([...(L&&L.f?[L.f]:[]),...(extra||[]),...cpPoliList()])]; }
+/* o : {appel, auto (formule proposée d'office), extra (formules propres à ce courrier), defOn} */
+function poliText(k,o){ const S=poliState(k,o.defOn); return S.on?cpPoliFill(S.f||o.auto,o.appel):''; }
+function poliHTML(k,o){ const S=poliState(k,o.defOn), cur=S.f||o.auto;
+  return `<div class="field poli" data-poli="${esc(k)}"><label class="check"><input type="checkbox" data-polion ${S.on?'checked':''}> Ajouter une formule de politesse à la fin</label>
+    <select class="in" data-polif aria-label="Formule de politesse"${S.on?'':' hidden'}>${poliList(k,[o.auto,...(o.extra||[])]).map(f=>`<option value="${esc(f)}" ${cur===f?'selected':''}>${esc(cpPoliFill(f,o.appel))}</option>`).join('')}</select>
+    ${isAdmin?`<button type="button" class="linkbtn" data-poliedit>Ajouter ou retirer des formules (structure)</button>`:''}</div>`; }
+document.addEventListener('change',e=>{ const w=e.target.closest&&e.target.closest('[data-poli]'); if(!w) return; const k=w.dataset.poli, S=poliState(k);
+  if(e.target.matches('[data-polion]')){ S.on=e.target.checked; const sel=w.querySelector('[data-polif]'); if(sel) sel.hidden=!S.on; }
+  else if(e.target.matches('[data-polif]')) S.f=e.target.value; else return;
+  poliSave(k); liveSoon(0); });
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-poliedit]')){ e.preventDefault(); poliEdit(); } });
+/* le formulaire ouvert est redessiné après un changement des formules de la structure */
+function poliRerender(){ const R={cp:()=>renderCp(),mt:()=>renderMt(),urg:()=>renderUrg(),ccas:()=>renderCcas(),relais:()=>renderRelais(),el:()=>renderEl(),forms:()=>{ if(formView) renderFill(); }}; (R[tab]||(()=>{}))(); }
+/* formulaire personnalisé (ou de la bibliothèque) dont le modèle finit par une formule de politesse :
+   on retrouve ce paragraphe pour proposer le même choix */
+const POLI_RE=/(agréer|salutations|sentiments|cordialement|prions de recevoir)/i;
+function poliOfForm(f){ const P=String(f.modele||'').split(/\n{2,}/).map(p=>p.trim()).filter(Boolean); for(let i=P.length-1;i>=Math.max(0,P.length-4);i--){ const p=P[i]; if(POLI_RE.test(p)&&p.length<320&&!/\{/.test(p)){ const m=p.match(/(?:agréer|recevoir|croire),\s*(.+?),\s*(?:l’|l'|à l’|à l'|mes|nos|notre|en |nos )/i); return {line:p,appel:m?m[1]:'Madame, Monsieur',auto:p.replace(m?m[1]:'\u0000','{appel}')}; } } return null; }
+const POLI_MT={appel:'Chère consœur, cher confrère,',auto:'Je reste à votre disposition et vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.'}, POLI_UR={appel:'Madame, Monsieur,',auto:'Nous vous remercions de votre accueil.'},
+  POLI_CC={appel:'Madame, Monsieur,',auto:'Nous vous remercions de l’accueil que vous lui réserverez.'}, POLI_RL={appel:'Madame, Monsieur,',auto:'Nous vous remercions de votre accueil et restons à votre disposition pour tout complément.'},
+  POLI_EL={appel:'Madame, Monsieur,',auto:CP_POLI[0],defOn:false};
+const cpPolitesse=()=>poliText('cp',{appel:CP.appel,auto:cpPoliAuto(CP.appel)});
 let CP={}, cpErr=false, cpRecip=null;
-function cpReset(){ CP={dest:'',attention:'',adresse:'',date:today(),objet:'',appel:CP_APPELS[0],message:'',poli:true,formule:'',signe:'equipe',signNom:'',signFonction:''}; cpErr=false; }
+function cpReset(){ poliReset('cp'); CP={dest:'',attention:'',adresse:'',date:today(),objet:'',appel:CP_APPELS[0],message:'',signe:'equipe',signNom:'',signFonction:''}; cpErr=false; }
 cpReset();
 function cpValidate(){
   const e=[];
@@ -5804,9 +5840,7 @@ function renderCp(){
       <label class="field"><span>Objet</span>${txt('objet','ex. Demande de partenariat, présentation de nos permanences…')}</label>
       <div class="field"><span>Formule d'appel</span><div class="choice">${CP_APPELS.map(a=>`<button type="button" class="chip" data-cc="appel" data-v="${esc(a)}" aria-pressed="${CP.appel===a}">${esc(a)}</button>`).join('')}</div></div>
       <label class="field"><span>Texte du courrier <small>(laissez une ligne vide entre deux paragraphes)</small></span>${area('message','',9)}</label>
-      <div class="field poli"><label class="check"><input type="checkbox" data-cpoli ${CP.poli?'checked':''}> Ajouter une formule de politesse à la fin</label>
-        ${CP.poli?`<select class="in" data-c="formule" aria-label="Formule de politesse">${cpPoliList().map(f=>`<option value="${esc(f)}" ${(CP.formule||cpPoliAuto(CP.appel))===f?'selected':''}>${esc(cpPoliFill(f,CP.appel))}</option>`).join('')}</select>`:''}
-        ${isAdmin?`<button type="button" class="linkbtn" data-cpoliedit>Ajouter ou retirer des formules (structure)</button>`:''}</div></div>
+      ${poliHTML('cp',{appel:CP.appel,auto:cpPoliAuto(CP.appel)})}</div>
     <div class="card top w-form"><h3>Signature</h3>
       <div class="field"><span>Signataire</span><div class="seg">${[['equipe','Membre de l’équipe'],['med','Médecin']].map(([k,l])=>`<button type="button" data-cc="signe" data-v="${k}" aria-pressed="${CP.signe===k}">${l}</button>`).join('')}</div></div>
       ${CP.signe==='med'?`<div>${medSelectHTML('cp-med').replace('class="in"','class="in'+B('med')+'"')}</div>`
@@ -5828,21 +5862,18 @@ function poliEdit(){
     <details class="hint"><summary>Voir la liste de base</summary><ul>${CP_POLI.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
     <div class="btns"><button class="primary" id="poli-ok">Enregistrer</button><button class="secondary" data-close>Annuler</button></div>`);
   $('#poli-ok').onclick=async()=>{ const keep=DATA.politesse; DATA.politesse=[...new Set($('#poli-t').value.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(x=>x&&x.length<400))];
-    if(!await run(saveData,'Formules de politesse enregistrées')){ DATA.politesse=keep; return; } jlog('Formules de politesse','',DATA.politesse.length+' formule(s) ajoutée(s)'); closeModal(); renderCp(); };
+    if(!await run(saveData,'Formules de politesse enregistrées')){ DATA.politesse=keep; return; } jlog('Formules de politesse','',DATA.politesse.length+' formule(s) ajoutée(s)'); closeModal(); poliRerender(); };
 }
 function cpBind(){
   const p=$('#p-cp'); if(!p) return;
   p.addEventListener('input',e=>{ const t=e.target; if(!t.dataset.c) return; CP[t.dataset.c]=t.value; if(cpErr) t.classList.remove('bad'); });
   p.addEventListener('change',e=>{ const t=e.target;
     if(t.dataset.c==='dest'){ const x=ANNU.partenaires.find(z=>z.nom===t.value.trim()); if(x){ if(cpRecip) x.emails.forEach(m=>cpRecip.add(m)); if(!CP.adresse.trim()&&x.adresse) CP.adresse=partAddr(x); renderCp(); } }
-    if(t.matches('[data-cpoli]')){ CP.poli=t.checked; renderCp(); liveSoon(0); return; }
-    if(t.dataset.c==='formule') liveSoon(0);
     if(t.matches('[data-med]')&&cpErr) setTimeout(renderCp,0); });
 
   p.addEventListener('click',e=>{ const t=e.target;
     if(t.closest('[data-cback]')){ formView=null; setTab('forms'); window.scrollTo({top:0}); return; }
     const c=t.closest('[data-cc]'); if(c){ CP[c.dataset.cc]=c.dataset.v; renderCp(); return; }
-    if(t.closest('[data-cpoliedit]')){ poliEdit(); return; }
     if(t.closest('[data-cclear]')){ askConfirm('Tout effacer ?','Le formulaire sera vidé.','Tout effacer',()=>{ cpReset(); cpRecip=null; renderCp(); }); return; }
     if(t.closest('[data-cgo]')) cpPdf();
   });
@@ -6068,6 +6099,7 @@ function renderEl(){
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : vous pourrez aussi imprimer)</small></span>${recipHTML('el-rc')}${senderHTML()}</div></div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
+    <div class="card top w-form">${poliHTML('el',POLI_EL)}</div>
     <div class="stickyfoot w-form"><button class="primary big" data-ego>${ICON.file}Créer le document (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-eclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=elRecip?elRecip.get():[]; elRecip=bindRecip(p.querySelector('#el-rc'),prev);
@@ -6089,6 +6121,7 @@ function elPdf(){
   P.right([`${villeLe(st)}${frDate(EL.date)}`],{after:6});
   if(EL.objet.trim()) P.para(`Objet : ${EL.objet.trim()}`,{bold:true,after:5});
   EL.texte.trim().split(/\n\s*\n/).filter(Boolean).forEach(par=>P.para(par.replace(/[ \t]*\n[ \t]*/g,' '),{after:3}));
+  { const t=poliText('el',POLI_EL); if(t) P.para(t,{after:6}); }
   const sig=EL.signature.split('\n').map(s=>s.trim()).filter(Boolean);
   if(sig.length){ P.room(14+sig.length*5); P.y+=6; const d=P.doc;
     sig.forEach((s,i)=>{ d.setFont(PF(),i===0?'bold':'normal'); d.setFontSize(i===0?11:9.5); d.setTextColor(...(i===0?P.C.NAVY:P.C.GREY)); d.text(s,P.R,P.y,{align:'right'}); P.y+=5; }); }
@@ -7825,6 +7858,7 @@ function renderCcas(){
     <div class="card top blue w-form"><h3>Envoi</h3>
       <div class="field"><span>Envoyer à <small>(facultatif : le plus souvent, le bon est imprimé et remis à la personne)</small></span>${recipHTML('cc-rc')}${senderHTML()}</div></div>
     ${errs.length?`<ul class="errors w-form">${errs.map(x=>`<li data-errk="${esc(x[0])}">${esc(x[1])}</li>`).join('')}</ul>`:''}
+    <div class="card top w-form">${poliHTML('ccas',POLI_CC)}</div>
     <div class="stickyfoot w-form"><button class="primary big" data-ckgo>${ICON.file}Créer le bon (PDF)</button></div>
     <div class="row end w-form"><button class="ghost danger" data-ckclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=ccRecip?ccRecip.get():[]; ccRecip=bindRecip(p.querySelector('#cc-rc'),prev);
@@ -7862,7 +7896,7 @@ function ccPdf(){
   sec('Pièces en sa possession',[CC.pieces.join(', ')]);
   P.room(20);
   P.para(`Pour tout renseignement, vous pouvez joindre ${CC.contact.trim()}${CC.ctel.trim()?`, au ${CC.ctel.trim()}`:''}.`);
-  P.para('Nous vous remercions de l’accueil que vous lui réserverez.',{after:6});
+  { const t=poliText('ccas',POLI_CC); if(t) P.para(t,{after:6}); else P.y+=4; }
   P.sign(CC.signNom.trim(),[CC.signFonction.trim(),st.nom]);
   const file=P.finish(outName('Bon-orientation-CCAS',CC.nom,CC.prenom,CC.date||today()));
   readyModal({file,title:'Bon d’orientation prêt',steps:['Imprimez-le, signez-le et remettez-le à la personne pour son passage au CCAS.','Ou envoyez-le par mail au service.'],
