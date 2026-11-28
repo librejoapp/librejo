@@ -417,6 +417,15 @@ html.guide-on #aidebtn{visibility:hidden}
 #guidepan .gp-warn{margin:0;font-size:var(--fs-2);color:var(--text-3);font-style:italic}
 .gp-chk{list-style:none;padding-left:0!important;display:grid;gap:8px;margin:8px 0}
 .gp-chk li{position:relative;padding-left:28px}.gp-chk li::before{content:'✓';position:absolute;left:4px;top:0;font-weight:800;color:var(--accent-text)}
+#guidepan .gp-tool{border:1px solid var(--accent-line);border-radius:10px;padding:10px 14px;background:var(--surface);display:grid;gap:8px}
+#guidepan .gp-tool h3{margin:0;font-size:16px;color:var(--navy)}#guidepan .gp-tool .hint{margin:0}
+#guidepan .gd-grp{display:grid;gap:4px;padding-top:4px;border-top:1px dashed var(--line)}#guidepan .gd-grp:first-of-type{border-top:0}
+#guidepan .gd-out{list-style:none;padding:0;margin:0;gap:4px}#guidepan .gd-out li{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+#guidepan .gd-out b{white-space:nowrap;color:var(--accent-text)}#guidepan .gd-out small{color:var(--text-3)}
+#guidepan .gp-pieces{list-style:none;padding-left:0}#guidepan .gp-pieces label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}#guidepan .gp-pieces input{margin-top:4px;width:18px;height:18px}
+#guidepan .gp-cont{list-style:none;padding-left:0;gap:8px}#guidepan .gp-cont small{color:var(--text-3)}
+.ftip{display:inline-grid;place-items:center;width:20px;height:20px;min-height:0;padding:0;margin-left:4px;border-radius:50%;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-text);font-weight:800;font-size:12px;cursor:pointer;vertical-align:1px}
+.ftip-t{display:block;margin-top:4px;padding:6px 10px;border-radius:8px;background:var(--accent-soft);color:var(--text);font-weight:400;font-size:var(--fs-2)}.ftip-t[hidden]{display:none}
 @media print{ #guidepan{display:none!important} }
 .prot{border:1px solid var(--line);border-radius:10px;padding:var(--sp-3) var(--sp-4);display:grid;gap:var(--sp-2)}.prot summary{cursor:pointer;color:var(--navy)}.prot[open]>summary{margin-bottom:var(--sp-2)}
 .sp-mir{position:absolute;pointer-events:none;overflow:hidden;color:transparent;background:transparent;box-sizing:border-box;margin:0}

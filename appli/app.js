@@ -2009,7 +2009,7 @@ function renderFill(){
             /* longues listes de cases (ordonnances…) : repliées, avec ce qui est coché visible sur la ligne du titre */
             const sel=String(FV[c.id]||'').split('\n').filter(Boolean), op=FOLD.has(c.id)||bad.has(c.id);
             return `<details class="field wide fold" data-fold="${esc(c.id)}"${op?' open':''}><summary><span class="fold-t">${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${sel.length?`<span class="fold-n">${sel.length} coché${sel.length>1?'s':''}</span><span class="fold-s">${esc(sel.join(' · '))}</span>`:''}</summary>${input(c)}</details>`; }
-          const t=c.type==='equipe'||c.type==='cases'||c.type==='montants'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'||c.type==='montants'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}</span>${input(c)}</${t}>`; }).join('')}
+          const t=c.type==='equipe'||c.type==='cases'||c.type==='montants'?'div':'label'; return `<${t} class="field ${c.type==='long'||c.type==='equipe'||c.type==='cases'||c.type==='montants'?'wide':''}"><span>${esc(c.label)}${c.requis?'':' <small>(facultatif)</small>'}${fieldTip(f,c)}</span>${input(c)}</${t}>`; }).join('')}
         <label class="field"><span>Envoyer à <small>(adresses séparées par des virgules)</small></span><input class="in${bad.has('_to')?' bad" data-errk="_to':''}" data-f="_to" value="${esc(FV._to||'')}" spellcheck="false"></label>
         <label class="field"><span>Date du document</span><input class="in${bad.has('_date')?' bad" data-errk="_date':''}" type="date" data-f="_date" value="${esc(FV._date||'')}"></label>
       </div>
@@ -2783,13 +2783,336 @@ const GUIDES={
       ['AFM-Téléthon : comment réaliser un RAPO efficace','https://www.afm-telethon.fr/sites/default/files/media/documents/AFM_VLM_206_BD_pap%2038.pdf'],
       ['MDA de Maine-et-Loire : les voies de recours','https://www.mda.maine-et-loire.fr/fileadmin/mda/Voies_Recours_MDPH.pdf'],
       ['Textes : CASF art. L. 146-1 et suivants, R. 146-29 et suivants','']]
+  },
+  'pdc-designation':{
+    titre:'Personne de confiance',
+    verifie:'2026-11-28',
+    resume:'Toute personne majeure peut désigner une personne de confiance (code de la santé publique, art. L. 1111-6). Elle l’accompagne dans ses démarches de santé et, si un jour la personne ne peut plus s’exprimer, elle témoigne de sa volonté. Dans un établissement ou service social et médico-social, il existe aussi une personne de confiance « médico-sociale » (CASF, art. L. 311-5-1) : ce peut être la même.',
+    blocs:[
+      ['Son rôle',[
+        'Accompagner la personne aux rendez-vous médicaux et l’aider à comprendre, si elle le souhaite.',
+        'Si la personne ne peut plus s’exprimer : rendre compte de sa volonté. Son témoignage prévaut sur tout autre témoignage.',
+        'Elle ne décide pas à la place de la personne : elle porte sa parole.']],
+      ['Ne pas confondre',[
+        'La <b>personne à prévenir</b> est seulement appelée en cas d’urgence ou d’événement inattendu.',
+        'Ce peut être la même personne ou deux personnes différentes : c’est la personne accompagnée qui choisit.']],
+      ['Désigner, changer, révoquer',[
+        'Par écrit, cosigné par la personne désignée.',
+        'Révisable et révocable à tout moment, de préférence par écrit.',
+        'Si la personne ne peut pas écrire elle-même : deux témoins attestent que le document est bien l’expression de sa volonté.',
+        'En établissement ou service médico-social, l’information sur ce droit est donnée avant la signature du contrat de séjour, avec la notice officielle.',
+        'Personne sous mesure de protection : des règles particulières s’appliquent, se renseigner auprès du juge des contentieux de la protection.']],
+      ['En pratique',[
+        'Expliquer son rôle à la personne désignée avant qu’elle signe.',
+        'Garder une copie au dossier ; la personne en garde une aussi, et peut en donner une à son médecin.']]],
+    champs:[['^Personne de confiance$','Elle doit cosigner le document : prévoir sa présence ou un second passage.'],['pour la santé','« Oui » : elle sera aussi personne de confiance pour les soins (code de la santé publique, art. L. 1111-6).']],
+    avant:['La personne désignée a cosigné.','Elle a été informée de son rôle.','La personne accompagnée garde une copie.'],
+    falc:{titre:'Votre personne de confiance',lignes:['Une personne de confiance, c’est quelqu’un que vous choisissez.','Elle peut venir avec vous chez le médecin.','Si un jour vous ne pouvez plus parler, elle dira aux soignants ce que vous voulez.','Elle ne décide pas à votre place.','Vous pouvez changer de personne quand vous voulez.']},
+    sources:[
+      ['Justice.fr (Service-public) : qu’est-ce qu’une personne de confiance en matière de santé ? (mis à jour le 25 septembre 2025)','https://www.justice.fr/fiche/personne-confiance-matiere-sante'],
+      ['France Assos Santé : fiche A.6, la personne de confiance','https://www.france-assos-sante.org/wp-content/uploads/2023/06/Fiche-A.6_La-personne-de-confiance_2023.pdf'],
+      ['Pour les personnes âgées (portail national) : désigner une personne de confiance','https://www.pour-les-personnes-agees.gouv.fr/preserver-son-autonomie-s-informer-et-anticiper/organiser-a-lavance-sa-propre-protection/designer-une-personne-de-confiance'],
+      ['FHF : personne de confiance en ESSMS, décret n° 2016-1395 du 18 octobre 2016','https://www.fhf.fr/autonomie-archive/personne-de-confiance'],
+      ['Code de la santé publique, art. L. 1111-6 (Légifrance)','https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000041721063']]
+  },
+  'partage':{
+    titre:'Partager des informations avec un partenaire',
+    verifie:'2026-11-28',
+    resume:'Les professionnels de santé, du social et du médico-social sont tenus au secret. Ils peuvent partager des informations sur une personne, mais seulement celles qui sont strictement nécessaires à la coordination ou à la continuité des soins, à la prévention, ou à son suivi médico-social et social (code de la santé publique, art. L. 1110-4).',
+    blocs:[
+      ['Dans la même équipe',[
+        'L’« équipe de soins », ce sont les professionnels qui participent directement à l’accompagnement de la personne, y compris les professionnels sociaux et médico-sociaux de la structure (art. L. 1110-12).',
+        'Entre eux, le partage du strict nécessaire est possible : les informations sont réputées confiées à toute l’équipe.',
+        'La personne est informée et peut s’y opposer.']],
+      ['Avec un partenaire extérieur',[
+        'Il faut l’<b>accord préalable</b> de la personne, recueilli par tout moyen, qu’elle peut modifier ou retirer à tout moment.',
+        'Lui dire précisément quelles informations seront partagées, avec qui (nom, structure, fonction) et pourquoi.',
+        'Garder une trace de son accord : c’est le rôle de ce formulaire.']],
+      ['Bien faire',[
+        'Partager le minimum utile, pas tout le dossier.',
+        'Préférer une messagerie sécurisée ; jamais de détail médical par SMS.',
+        'Ne pas confondre avec la protection de l’enfance ou un danger grave : d’autres règles s’appliquent (voir les guides correspondants).']]],
+    champs:[['Informations concernées','Le strict nécessaire, pas tout le dossier : par exemple « dates de rendez-vous et suivi du traitement ».'],['^Partenaire','Le nom de la structure, et si possible la personne et sa fonction.'],['Durée','Par exemple « 6 mois » ou « jusqu’à la fin de l’hébergement ».']],
+    avant:['La personne sait quelles informations seront partagées, avec qui et pourquoi.','Seul le strict nécessaire est transmis.','Son accord est noté ; elle sait qu’elle peut le retirer.'],
+    falc:{titre:'Parler de votre situation avec un partenaire',lignes:['Nous voulons parler de votre situation avec une autre structure.','Nous dirons seulement ce qui est utile pour vous aider.','Vous pouvez dire non.','Vous pouvez changer d’avis à tout moment.']},
+    sources:[
+      ['Conseil national de l’Ordre des médecins : échange et partage d’informations (fiche pratique)','https://www.conseil-national.medecin.fr/publications/fiches-pratiques/echange-partage-dinformations'],
+      ['MACSF : le secret médical partagé et l’équipe de soins','https://www.macsf.fr/responsabilite-professionnelle/relation-au-patient-et-deontologie/secret-medical-partage-equipe-de-soins'],
+      ['Ministère des Solidarités : protéger et partager les informations des personnes accompagnées','https://solidarites.gouv.fr/sites/solidarite/files/2022-11/caractere_perso_personnes_accompagnees_proteger-partager-2_0.pdf'],
+      ['France Assos Santé : fiche A.21, droit au respect de la vie privée','https://france-assos-sante.org/wp-content/uploads/2024/04/Fiche-A.21_Droit-du-patient-au-respect-de-sa-vie-privee.pdf'],
+      ['Textes : code de la santé publique art. L. 1110-4, L. 1110-12, R. 1110-1 et suivants ; décrets n° 2016-994 et n° 2016-1349','']]
+  },
+  'cerfa-16029':{
+    titre:'Domiciliation (élection de domicile)',
+    verifie:'2026-11-28',
+    resume:'Une personne sans domicile stable peut avoir une adresse administrative auprès d’un CCAS, d’un CIAS ou d’un organisme agréé, pour recevoir son courrier et faire valoir ses droits. L’attestation vaut justificatif de domicile.',
+    blocs:[
+      ['La démarche',[
+        'Demande sur le Cerfa 16029, puis un entretien.',
+        'La décision est écrite, dans un délai de 2 mois.',
+        'Si elle est acceptée : attestation d’élection de domicile (Cerfa 16030), gratuite, valable <b>1 an</b>, renouvelable.',
+        'Pour être domiciliée par le CCAS ou la mairie, la personne doit avoir un lien avec la commune ; on ne peut pas ajouter de condition de durée.']],
+      ['Les obligations de la personne',[
+        'Se manifester au moins <b>tous les 3 mois</b> (de préférence en venant chercher son courrier ; le téléphone peut suffire). Sans nouvelles pendant plus de 3 mois d’affilée, la domiciliation peut être radiée.',
+        'Respecter le règlement intérieur de l’organisme ; signaler un changement de situation.',
+        'Demander le renouvellement au moins 2 mois avant la fin, pour éviter une rupture de droits.']],
+      ['En cas de refus',[
+        'Le refus doit être motivé, notifié, et accompagné d’une orientation vers un autre organisme.',
+        'La personne a 2 mois pour faire un recours ; elle peut aussi demander à un autre organisme.']]],
+    dates:[{ref:'Date de délivrance de l’attestation',items:[['Se manifester au plus tard',{m:3}],['Puis au plus tard',{m:6}],['Puis au plus tard',{m:9}],['Demander le renouvellement avant',{m:10}],['Fin de validité',{m:12}]]},
+           {ref:'Date de la demande',items:[['Décision écrite au plus tard',{m:2}]]},
+           {ref:'Date de notification d’un refus',items:[['Recours avant',{m:2}]]}],
+    pieces:['Formulaire Cerfa 16029 rempli et signé','Pièce d’identité si la personne en a une (pas obligatoire pour domicilier)'],
+    contacts:['CCAS','CIAS','domicil'],
+    avant:['La personne sait qu’elle doit se manifester au moins tous les 3 mois.','La date de fin de validité est notée sur sa fiche.','En cas de refus : le motif et l’orientation sont écrits.'],
+    falc:{titre:'Votre domiciliation',lignes:['Avec la domiciliation, vous avez une adresse pour recevoir votre courrier.','Elle est gratuite. Elle dure 1 an.','Venez ou appelez au moins tous les 3 mois. Sinon, elle peut s’arrêter.','Demandez à la renouveler 2 mois avant la fin.']},
+    sources:[
+      ['Service-public : sans domicile stable, en quoi consiste la domiciliation ? (vérifié le 10 octobre 2024)','https://www.service-public.gouv.fr/particuliers/vosdroits/F17314'],
+      ['Justice.fr (Service-public) : obtenir une domiciliation','https://www.justice.fr/fiche/domicile-stable-fixe-sdf-obtenir-domiciliation'],
+      ['Ministère des Solidarités : dépliant domiciliation pour les professionnels (octobre 2024)','https://solidarites.gouv.fr/sites/solidarite/files/2024-10/Depliant-domiciliation-professionnels-10-2024-accessible.pdf'],
+      ['DRIHL Île-de-France : questions-réponses sur la domiciliation','https://www.drihl.ile-de-france.developpement-durable.gouv.fr/IMG/pdf/faq_domiciliation.pdf'],
+      ['Cerfa 16030 : attestation d’élection de domicile','https://www.formulaires.service-public.fr/gf/cerfa_16030.do'],
+      ['Textes : CASF art. L. 264-1 à L. 264-10 et D. 264-1 et suivants','']]
+  },
+  'trod-resultat':{
+    titre:'TROD : remettre un résultat (VIH, VHC, VHB, syphilis)',
+    verifie:'2026-11-28',
+    resume:'Le test rapide d’orientation diagnostique donne un résultat en 30 minutes environ. C’est une orientation : un résultat positif doit être confirmé par une prise de sang ; un résultat négatif ne voit pas une contamination trop récente. Le délai depuis la dernière prise de risque est donc l’information la plus importante à expliquer.',
+    blocs:[
+      ['Le délai de séroconversion : quand un test négatif est-il fiable ?',[
+        '<b>VIH, TROD ou autotest</b> : un résultat négatif est fiable si la dernière prise de risque remonte à <b>3 mois</b> ou plus. Le test peut déjà être positif à partir de 15 à 21 jours.',
+        '<b>VIH, prise de sang en laboratoire</b> (ELISA de 4e génération) : négatif fiable à <b>6 semaines</b>.',
+        '<b>Hépatite C, TROD</b> : un négatif exclut l’infection, sauf exposition de moins de <b>3 mois</b> : refaire alors un test 3 mois après (TROD ou prise de sang).',
+        '<b>Hépatite B, TROD</b> (antigène HBs, premier marqueur à apparaître) : après une exposition récente, un négatif ne suffit pas ; proposer une sérologie complète, vérifier la vaccination, et convenir d’un contrôle avec le médecin.',
+        '<b>Syphilis</b> : l’incubation va de 10 à 90 jours (3 semaines en moyenne). Après une exposition récente, refaire le test plus tard, avec avis médical.',
+        'Ne pas attendre pour dépister : tester tout de suite, et refaire le test à la bonne date si besoin.']],
+      ['Urgence : exposition au VIH de moins de 48 heures',[
+        'Orienter vers les urgences le plus vite possible, de préférence dans les 4 heures, au plus tard dans les 48 heures : un traitement post-exposition peut éviter la contamination.']],
+      ['Résultat positif',[
+        'Dire que c’est un résultat à confirmer, pas un diagnostic.',
+        'Organiser tout de suite la prise de sang de confirmation et le rendez-vous médical ; accompagner si besoin.',
+        'Proposer de l’aide pour prévenir les partenaires, sans pression.']],
+      ['Annoncer et remettre le résultat',[
+        'Expliquer ce que veut dire un résultat négatif, invalide ou positif.',
+        'Le document remis ne contient que ce que la personne accepte ; rappeler la confidentialité.',
+        'Profiter du moment pour la prévention : préservatifs, matériel de réduction des risques, PrEP, vaccination contre l’hépatite B.']]],
+    dates:[{ref:'Date de la dernière prise de risque',items:[['Traitement post-exposition VIH, urgences au plus tard',{h:48}],['VIH, prise de sang en laboratoire, négatif fiable',{s:6}],['VIH, TROD ou autotest, négatif fiable',{m:3}],['Hépatite C, TROD, négatif fiable',{m:3}]]}],
+    contacts:['CeGIDD','dépistage','infectio','hépato','hépatite','PASS','urgences'],
+    champs:[['prise de risque','Indispensable pour savoir si un résultat négatif est fiable : 3 mois après la prise de risque pour un TROD VIH ou VHC.'],['^(VIH|Hépatite|Syphilis)','Écrire « non réactif » ou « réactif, à confirmer par une prise de sang », pas un diagnostic.']],
+    avant:['Le délai depuis la dernière prise de risque est expliqué, et la date du prochain test est donnée si besoin.','En cas de résultat positif : la prise de sang de confirmation est organisée.','La personne a accepté ce qui figure sur le document.'],
+    falc:{titre:'Votre test rapide',lignes:['Le test est négatif : c’est une bonne nouvelle.','Mais le test ne voit pas une contamination trop récente.','Si vous avez pris un risque il y a moins de 3 mois, refaites un test à la date notée ci-dessous.','Le test est positif : ce n’est pas encore sûr. Il faut une prise de sang pour confirmer.','Nous vous aidons à prendre rendez-vous.','Après un risque VIH de moins de 48 heures : allez aux urgences tout de suite.']},
+    sources:[
+      ['Service-public : quel dépistage pour quelle maladie ? (VIH : TROD fiable à 3 mois, laboratoire à 6 semaines)','https://www.service-public.gouv.fr/particuliers/vosdroits/F34437'],
+      ['HAS : dépistage du VIH, questions-réponses (2015)','https://www.has-sante.fr/portail/upload/docs/application/pdf/2015-04/advih_qr__201503_2015-04-07_12-20-12_604.pdf'],
+      ['HAS : place des TROD dans la stratégie de dépistage de l’hépatite C','https://www.has-sante.fr/jcms/c_1615995/fr/place-des-tests-rapides-d-orientation-diagnostique-trod-dans-la-strategie-de-depistage-de-l-hepatite-c'],
+      ['Ameli : dépister l’hépatite C','https://www.ameli.fr/assure/sante/themes/hepatite-c/depistage'],
+      ['HAS : recommandations de prise en charge des personnes ayant une syphilis (avril 2025)','https://www.has-sante.fr/upload/docs/application/pdf/2025-05/recommandations_de_prise_en_charge_des_personnes_ayant_une_syphilis_-_recommandations.pdf'],
+      ['ARS La Réunion : syphilis, incubation et diagnostic','https://lareunion.ars.sante.fr/media/46406/download']]
+  },
+  'mise-a-distance':{
+    titre:'Mise à distance temporaire',
+    verifie:'2026-11-28',
+    resume:'Après des faits graves (violence, menaces, trafic dans les locaux…), la structure peut suspendre pour un temps l’accès d’une personne. Aucun texte national ne l’organise en détail : la mesure s’appuie sur le règlement de fonctionnement (CASF, art. L. 311-7), remis à chaque personne. Elle doit rester exceptionnelle, proportionnée et limitée dans le temps.',
+    blocs:[
+      ['Avant de décider',[
+        'Vérifier que le règlement de fonctionnement prévoit cette mesure et qu’il a été remis à la personne.',
+        'Entendre la personne, recueillir sa version des faits, si la situation le permet.',
+        'Proportionner : gravité des faits, répétition, ce qui a déjà été tenté (rappel au règlement, entretien).',
+        'Décider en équipe, pas seul, et à distance de l’incident si possible.']],
+      ['La décision écrite',[
+        'Les faits, datés, sans jugement sur la personne.',
+        'L’article du règlement concerné.',
+        'Une durée précise, avec une date de fin ; puis un entretien de reprise.',
+        'Ce qui reste possible pendant la mise à distance : continuité d’un traitement en cours (traitement de substitution, relais en pharmacie ou dans une autre structure), accès au matériel de réduction des risques, joignabilité.',
+        'Les recours : demander un entretien avec la direction, ou l’aide d’une personne qualifiée (CASF, art. L. 311-5).']],
+      ['À ne pas confondre',[
+        'La mise à distance n’est pas une plainte : en cas de délit, la plainte est une démarche à part.',
+        'Ne pas rompre l’accès aux soins essentiels : organiser un relais.']]],
+    contacts:['personne qualifiée','pharmacie'],
+    champs:[['^au \\(inclus\\)','Une date de fin précise : la mise à distance est limitée dans le temps.'],['reste assuré','Par exemple : la continuité d’un traitement en cours, l’accès au matériel de réduction des risques.'],['Faits constatés','Des faits datés et observés, sans jugement sur la personne.'],['entendue','Si la personne n’a pas pu être entendue, écrire pourquoi.']],
+    avant:['La décision cite les faits datés et l’article du règlement.','La date de fin et l’entretien de reprise sont écrits.','La continuité d’un traitement en cours est organisée.'],
+    falc:{titre:'Mise à distance',lignes:['Vous ne pouvez pas venir pendant un temps. La date de fin est écrite ci-dessous.','Après, nous vous proposons un rendez-vous pour reprendre.','Pour votre traitement, une solution est prévue : elle est écrite ci-dessous.','Vous n’êtes pas d’accord : vous pouvez demander un rendez-vous avec la direction, ou l’aide d’une personne qualifiée (gratuit).']},
+    sources:[
+      ['CASF art. L. 311-7 : règlement de fonctionnement (Légifrance)','https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000006797427'],
+      ['Département du Pas-de-Calais : kit droits des usagers (livret, règlement, personne qualifiée)','https://www.pasdecalais.fr/sites/default/files/2024-04/KIT%2BDroits%2Bdes%2Busagers.pdf'],
+      ['ARS La Réunion : la personne qualifiée, fondement juridique','https://lareunion.ars.sante.fr/media/128250/download'],
+      ['Exemple d’association : protocole des sanctions proportionnées et contradictoires (SOS Femmes)','https://www.sosfemmes.com/sosfa/docs/Protocole_des_sanctions_v2019.pdf']]
+  },
+  'reclamation':{
+    titre:'Réclamations et plaintes des personnes accompagnées',
+    verifie:'2026-11-28',
+    resume:'Toute personne accompagnée peut exprimer un mécontentement. Recueillir, tracer, répondre et en tirer des actions d’amélioration fait partie des critères impératifs de l’évaluation de la qualité des ESSMS (HAS).',
+    blocs:[
+      ['Recueillir',[
+        'À l’oral comme à l’écrit ; aider la personne à écrire si besoin (ce formulaire).',
+        'Accuser réception rapidement et dire quand une réponse arrivera.',
+        'Enregistrer la réclamation, sans la filtrer.']],
+      ['Répondre',[
+        'Par écrit, en répondant point par point, avec les mesures prises.',
+        'Proposer un entretien si la situation s’y prête.',
+        'Rappeler les recours : la <b>personne qualifiée</b> (CASF, art. L. 311-5), gratuite, que seule la personne ou son représentant peut saisir ; la liste des personnes qualifiées est annexée au livret d’accueil.']],
+      ['Améliorer',[
+        'Analyser les réclamations en équipe (causes, actions correctives) et en rendre compte, par exemple au conseil de la vie sociale.',
+        'C’est l’un des critères impératifs les moins souvent satisfaits dans les évaluations : la traçabilité compte.']]],
+    contacts:['personne qualifiée','médiat'],
+    avant:['La réclamation est enregistrée et datée.','La personne sait quand elle aura une réponse.','Elle connaît la personne qualifiée.'],
+    falc:{titre:'Vous n’êtes pas content ?',lignes:['Vous pouvez le dire, à l’oral ou par écrit.','Nous vous répondons.','Vous pouvez aussi demander l’aide d’une personne qualifiée. C’est gratuit.']},
+    sources:[
+      ['HAS : manuel d’évaluation de la qualité des ESSMS','https://www.has-sante.fr/upload/docs/application/pdf/2022-03/manuel_devaluation_de_la_qualite_essms.pdf'],
+      ['HAS : bilan 2025 de l’évaluation des ESSMS (critères impératifs, plaintes et réclamations)','https://www.has-sante.fr/upload/docs/application/pdf/2026-04/dir2/essms_infographie_bilan_2025.pdf'],
+      ['ARS La Réunion : la personne qualifiée','https://lareunion.ars.sante.fr/media/128250/download'],
+      ['ARS Nouvelle-Aquitaine : personnes qualifiées','https://www.nouvelle-aquitaine.ars.sante.fr/personnes-qualifiees-2'],
+      ['Textes : CASF art. L. 311-3 à L. 311-9, R. 311-1 et R. 311-2','']]
+  },
+  'directives-anticipees':{
+    titre:'Directives anticipées',
+    verifie:'2026-11-28',
+    resume:'Toute personne majeure peut écrire ses volontés sur les soins de fin de vie, pour le cas où elle ne pourrait plus les exprimer (code de la santé publique, art. L. 1111-11).',
+    blocs:[
+      ['Rédiger',[
+        'Sur papier libre ou avec le modèle officiel (modèle A si la personne a une maladie grave, modèle B si elle pense être en bonne santé). Le modèle n’est pas obligatoire, mais il garantit les conditions de validité.',
+        'Si la personne ne peut pas écrire elle-même : deux témoins, dont la personne de confiance si elle existe, attestent que le document est l’expression de sa volonté libre et éclairée ; leur attestation est jointe.',
+        'Le médecin traitant doit informer de cette possibilité.']],
+      ['Validité',[
+        'Valables sans limitation de durée.',
+        'Révisables ou révocables à tout moment ; le document le plus récent l’emporte.']],
+      ['Faire connaître',[
+        'Dire où elles se trouvent : au médecin, à la personne de confiance, aux proches.',
+        'Une copie au dossier de la structure, avec l’accord de la personne.']]],
+    falc:{titre:'Vos directives anticipées',lignes:['Vous pouvez écrire ce que vous voulez pour vos soins à la fin de votre vie.','C’est utile si un jour vous ne pouvez plus parler.','Vous pouvez changer d’avis à tout moment.','Dites à votre médecin et à vos proches où est le document.']},
+    sources:[
+      ['Service-public : directives anticipées (vérifié le 28 mai 2026)','https://www.service-public.gouv.fr/particuliers/vosdroits/f32010'],
+      ['Sante.fr : vos droits en santé, les directives anticipées','https://www.sante.fr/node/2084155'],
+      ['Assemblée nationale : réponse ministérielle sur les directives anticipées (validité, témoins)','https://www2.assemblee-nationale.fr/questions/detail/15/qe/25073/(vue)/pdf'],
+      ['Textes : code de la santé publique art. L. 1111-11, R. 1111-17 à R. 1111-20 ; arrêté du 3 août 2016 (modèle)','']]
+  },
+  'dlu-document':{
+    titre:'Dossier de liaison d’urgence (DLU)',
+    verifie:'2026-11-28',
+    resume:'Le DLU transmet au médecin qui intervient en urgence les informations essentielles sur une personne âgée accompagnée : en Ehpad (HAS, 2015) et à domicile (DLU-Dom, HAS, 2021).',
+    blocs:[
+      ['Deux documents',[
+        'Le <b>document de liaison d’urgence</b> : une synthèse du dossier médical, avec ses annexes (dont les traitements à jour). Il est rempli en dehors de l’urgence par le médecin traitant, en lien avec le médecin coordonnateur.',
+        'La <b>fiche de liaison d’urgence</b> : recto, l’aller vers les urgences (la situation du moment) ; verso, le retour vers l’Ehpad.']],
+      ['En pratique',[
+        'Créé dès l’entrée en Ehpad, pour tous les résidents, accessible 24 h sur 24 à tous les soignants.',
+        'À domicile : réactualisé au moins une fois par an et dès que la situation change ; rangé dans un endroit connu de tous (par exemple sur le réfrigérateur).',
+        'Joindre les directives anticipées et le nom de la personne de confiance s’ils existent.']]],
+    dates:[{ref:'Date de la dernière mise à jour',items:[['Prochaine mise à jour au plus tard',{m:12}]]}],
+    champs:[['Traitements en cours','Joindre la dernière ordonnance plutôt que recopier : moins d’erreurs.'],['Date de mise à jour','À refaire au moins une fois par an et à chaque changement.']],
+    sources:[
+      ['HAS : dossier de liaison d’urgence (DLU-Ehpad), mis à jour le 29 avril 2026','https://has-sante.fr/jcms/c_2049090/fr/dossier-de-liaison-d-urgence-dlu-ehpad'],
+      ['HAS : guide d’utilisation du DLU (2015)','https://www.has-sante.fr/upload/docs/application/pdf/2015-07/guide_utilisation_dlu.pdf'],
+      ['HAS : guide d’utilisation du DLU à domicile (DLU-Dom, mars 2021)','https://has-sante.fr/upload/docs/application/pdf/2021-03/guide_dutilisation_du_dossier_de_liaison_durgence_domicile_dlu-dom.pdf']]
+  },
+  'transport-cerfa':{
+    titre:'Prescription médicale de transport',
+    verifie:'2026-11-28',
+    resume:'L’Assurance maladie peut prendre en charge certains transports pour des soins, sur prescription médicale (Cerfa 11574), établie par un médecin ou un chirurgien-dentiste.',
+    blocs:[
+      ['Les règles',[
+        'La prescription est faite <b>avant</b> le transport, sauf urgence (elle peut alors être établie après).',
+        'Elle ne tient compte que de l’état de santé de la personne, qui fixe le mode de transport.',
+        'Seuls les taxis conventionnés peuvent être pris en charge.']],
+      ['Accord préalable de la caisse (Cerfa 11575)',[
+        'Transport de plus de 150 km aller.',
+        'Transports en série : au moins 4 transports de plus de 50 km aller sur 2 mois, pour un même traitement.',
+        'Le médecin remplit la demande ; la personne l’envoie au service médical de sa caisse avant le transport.']],
+      ['Pour être remboursé',[
+        'Garder la prescription, les justificatifs de paiement et, le cas échéant, le volet 3 de l’accord préalable.']]],
+    pieces:['Prescription médicale de transport (Cerfa 11574)','Accord préalable si plus de 150 km ou transports en série','Justificatifs de paiement'],
+    sources:[
+      ['Justice.fr (Service-public) : remboursement des frais de transport par l’Assurance maladie','https://www.justice.fr/fiche/remboursement-frais-transports-assurance-maladie'],
+      ['France Assos Santé : fiche C.9.3, la prise en charge des frais de transport (2024)','https://www.france-assos-sante.org/wp-content/uploads/2024/09/Fiche-C.9.3_la_prise_en_charge_des_frais_de_transport_2024-E14.pdf'],
+      ['Sante.fr (droit à l’erreur) : transport à plus de 150 km, accord préalable obligatoire','https://www.sante.fr/node/1862849'],
+      ['Textes : code de la sécurité sociale art. R. 322-10 et suivants ; arrêté du 17 février 2015 (formulaires)','']]
   }
 };
-const GUIDE_ALIAS={'cnd-sejour':'etranger-malade','signal-mineur':'ip-crip','ssc-tiers':'ssc-certificat','ssc-cnom':'ssc-certificat','eig-ars':'eig-prepa'};
+const GUIDE_ALIAS={'cnd-sejour':'etranger-malade','signal-mineur':'ip-crip','ssc-tiers':'ssc-certificat','ssc-cnom':'ssc-certificat','eig-ars':'eig-prepa','pdc-revocation':'pdc-designation','pdc-temoins':'pdc-designation','pdc-info':'pdc-designation','cerfa-16030':'cerfa-16029','proc-plaintes':'reclamation','dlu-fiche':'dlu-document','dlu-has':'dlu-document'};
 const guideKey=x=>{ const s=x&&(x.modele_src||x.id); return s?(GUIDES[s]?s:GUIDE_ALIAS[s]||null):null; };
 const guideBtn=(x,cls)=>{ const k=guideKey(x); return k?`<button type="button" class="guidebtn ${cls||''}" data-guide="${esc(k)}" title="Guide : enjeux, comment bien rédiger, sources" aria-label="Ouvrir le guide : ${esc(GUIDES[k].titre)}">📘<span>Guide</span></button>`:''; };
 let GUIDE_OPEN=null;
-function guideOpen(k){ const G=GUIDES[k]; if(!G) return; GUIDE_OPEN=k;
+/* Outils des guides : dates qui comptent, pièces, fiche pour la personne, qui contacter, conseils au bon champ.
+   Rien n'est enregistré : les dates saisies restent dans le panneau et disparaissent à sa fermeture. */
+const GUIDES_PLUS={
+  'etranger-malade':{
+    dates:[{ref:'Date de mise à disposition du certificat dans l’ANEF',items:[['Envoi à l’OFII au plus tard',{m:1}]]},
+           {ref:'Date de dépôt de la demande',items:[['Sans réponse à cette date : refus implicite',{m:4}]]},
+           {ref:'Date de notification d’un refus',items:[['Recours au tribunal administratif avant',{m:2}]]}],
+    contacts:['juri','droit des étrangers','Cimade','PASS','accès aux droits'],
+    falc:{titre:'Votre certificat pour l’OFII',lignes:['Le médecin remplit le certificat.','Vous l’envoyez vous-même à l’OFII, dans l’enveloppe « secret médical ».','Envoyez-le en recommandé avec accusé de réception. Gardez la preuve.','Vous avez 1 mois. La date limite est écrite ci-dessous.','Ne donnez jamais ce certificat à la préfecture.']}},
+  'signal-procureur':{contacts:['tribunal','procureur','mandataire','protection des majeurs']},
+  'ip-crip':{contacts:['CRIP','protection de l’enfance','enfance','département']},
+  'ssc-certificat':{
+    dates:[{ref:'Date du certificat médical',items:[['Certificat utilisable jusqu’au (moins de 15 jours)',{d:14}]]},
+           {ref:'Date de l’admission',items:[['Certificat des 24 heures',{h:24}],['Certificat des 72 heures',{h:72}],['Contrôle du juge avant',{d:12}]]}],
+    contacts:['psychiatr','CMP','urgences']},
+  'dossier-medical':{
+    dates:[{ref:'Date de réception de la demande',items:[['Remise au plus tôt (48 heures de réflexion)',{h:48}],['Remise au plus tard',{d:8}],['Au plus tard si les informations ont plus de 5 ans',{m:2}]]},
+           {ref:'Date du refus ou de l’absence de réponse',items:[['Saisir la CADA avant (hôpital public)',{m:2}]]}],
+    pieces:['Copie d’une pièce d’identité','La période, le service et les pièces souhaitées'],
+    champs:[['période|dates? des|séjour','Préciser la période et le service : la demande est traitée plus vite.']],
+    falc:{titre:'Demander votre dossier médical',lignes:['Votre dossier médical vous appartient. Vous pouvez le demander.','Joignez une copie de votre pièce d’identité.','Le dossier vous est remis en 8 jours au plus.','Si les informations ont plus de 5 ans : 2 mois au plus.']}},
+  'eig-prepa':{
+    dates:[{ref:'Date de l’événement grave associé à des soins',items:[['Analyse approfondie au plus tard',{m:3}]]}],
+    contacts:['ARS','département']},
+  'refus-soins':{
+    dates:[{ref:'Date de la plainte',items:[['Commission de conciliation au plus tard',{m:3}]]}],
+    contacts:['CPAM','Défenseur','Ordre']},
+  'mdph-courrier':{
+    dates:[{ref:'Date du certificat médical',items:[['Encore valable pour le dossier jusqu’au',{m:12}]]},
+           {ref:'Date de dépôt du dossier complet',items:[['Sans réponse à cette date : demande rejetée',{m:4}]]},
+           {ref:'Date de notification de la décision',items:[['RAPO à envoyer avant',{m:2}]]},
+           {ref:'Date de la réponse au RAPO',items:[['Recours au tribunal avant',{m:2}]]}],
+    pieces:['Formulaire de demande (Cerfa)','Certificat médical de moins d’un an','Justificatif d’identité','Justificatif de domicile','Bilans et comptes rendus utiles','Le projet de vie, dans les mots de la personne'],
+    contacts:['MDPH'],
+    falc:{titre:'Votre dossier MDPH',lignes:['Le certificat médical doit avoir moins d’un an.','Écrivez ce que vous voulez pour votre vie : c’est important.','Sans réponse au bout de 4 mois, la demande est refusée.','Vous n’êtes pas d’accord avec la décision : vous avez 2 mois pour la contester.']}}
+};
+Object.entries(GUIDES_PLUS).forEach(([k,o])=>{ if(GUIDES[k]) Object.entries(o).forEach(([p,v])=>{ if(!GUIDES[k][p]) GUIDES[k][p]=v; }); });
+/* date de référence + délai (jours, semaines, mois, heures) → date ISO ; les mois tombent au dernier jour si besoin */
+function gdAdd(iso,o){ const [y,m,d]=iso.split('-').map(Number); let t;
+  if(o.m){ const last=new Date(Date.UTC(y,m-1+o.m+1,0)).getUTCDate(); t=new Date(Date.UTC(y,m-1+o.m,Math.min(d,last))); }
+  else t=new Date(Date.UTC(y,m-1,d+(o.d||0)+(o.s||0)*7+Math.ceil((o.h||0)/24)));
+  return t.toISOString().slice(0,10); }
+const gdDur=o=>o.h?o.h+' heures':o.s?o.s+' semaine'+(o.s>1?'s':''):o.m?o.m+' mois':o.d+' jour'+(o.d>1?'s':'');
+const GD={}; /* dates de référence saisies dans le panneau ouvert, jamais enregistrées */
+function gdList(G,i){ const v=GD[i]; return G.dates[i].items.map(([l,o])=>`<li><span>${esc(l)} <small>(${esc(gdDur(o))})</small></span><b>${v?esc(frDate(gdAdd(v,o))):'—'}</b></li>`).join(''); }
+function gdContacts(G){ const kw=(G.contacts||[]).map(norm); if(!kw.length) return null;
+  return ANNU.partenaires.filter(p=>{ const h=norm(p.nom+' '+(p.type||'')); return kw.some(k=>h.includes(k)); }).slice(0,8); }
+function guideTools(k,G){ let h='';
+  if(G.dates) h+=`<section class="gp-tool"><h3>📅 Dates qui comptent</h3><p class="hint">Saisissez une date : les échéances se calculent. Rien n’est enregistré.</p>
+    ${G.dates.map((g,i)=>`<div class="gd-grp"><label class="field"><span>${esc(g.ref)}</span><input class="in" type="date" data-gdref="${i}" value="${esc(GD[i]||'')}"></label><ul class="gd-out" data-gdout="${i}">${gdList(G,i)}</ul></div>`).join('')}
+    <button type="button" class="secondary sm" data-gdprint>🖨️ Imprimer les dates</button></section>`;
+  if(G.pieces) h+=`<section class="gp-tool"><h3>📎 Pièces à joindre</h3><ul class="gp-pieces">${G.pieces.map((x,i)=>`<li><label><input type="checkbox" data-gpiece="${i}"> ${esc(x)}</label></li>`).join('')}</ul></section>`;
+  const C=gdContacts(G);
+  if(C) h+=`<section class="gp-tool"><h3>📇 Qui contacter</h3>${C.length?`<ul class="gp-cont">${C.map(p=>`<li><b>${esc(p.nom)}</b>${p.type?` <small>${esc(p.type)}</small>`:''}${p.tel?`<br><a href="tel:${esc(String(p.tel).replace(/\s/g,''))}">${esc(p.tel)}</a>`:''}${(p.emails||[]).length?`<br>${p.emails.map(m=>`<a href="mailto:${esc(m)}">${esc(m)}</a>`).join(', ')}`:''}${p.ville?`<br><small>${esc([p.adresse,p.cp,p.ville].filter(Boolean).join(' '))}</small>`:''}</li>`).join('')}</ul>`:`<p class="hint">Aucun partenaire de l’annuaire ne correspond${isAdmin?' : vous pouvez en ajouter dans l’annuaire':' : le coordinateur peut en ajouter dans l’annuaire'}.</p>`}</section>`;
+  if(G.falc) h+=`<section class="gp-tool"><h3>🗒️ Fiche pour la personne</h3><p class="hint">En mots simples, sans nom${G.dates?', avec les dates saisies ci-dessus (ou des lignes vides pour les écrire)':''}. À imprimer et à remettre.</p>
+    <button type="button" class="secondary sm" data-gfalc>🖨️ Imprimer la fiche</button></section>`;
+  return h; }
+async function guidePrint(k,what){ const G=GUIDES[k]; if(!G) return;
+  try{ await pdfReady(); }catch(e){ toast('Impression impossible : bibliothèque PDF non chargée.'); return; }
+  const paras=[], filled=(G.dates||[]).map((g,i)=>[g,GD[i]]).filter(x=>x[1]);
+  if(what==='falc'){ G.falc.lignes.forEach(l=>paras.push(l));
+    if(G.dates){ paras.push('---','>> Dates à retenir <<');
+      if(filled.length) filled.forEach(([g,v])=>g.items.forEach(([l,o])=>paras.push(`${l} : ${frDate(gdAdd(v,o))}`)));
+      else paras.push('Date : ................................................\n\nDate : ................................................\n\nDate : ................................................'); }
+    else paras.push('---','Notes :\n\n\n'); }
+  else { if(!filled.length){ toast('Saisissez au moins une date de référence.'); return; }
+    filled.forEach(([g,v])=>{ paras.push(`>> ${g.ref} : ${frDate(v)} <<`); g.items.forEach(([l,o])=>paras.push(`${l} : ${frDate(gdAdd(v,o))} (${gdDur(o)})`)); });
+    paras.push('---',`Calcul indicatif d’après le guide « ${G.titre} », vérifié le ${frDate(G.verifie)}. En cas de doute, vérifiez auprès de l’organisme concerné ou d’un professionnel.`); }
+  const blob=makeLetter({titre:what==='falc'?G.falc.titre:'Dates à retenir – '+G.titre,confidentiel:false,date:today(),paras,signataire:' '});
+  printBlob(blob,true); }
+document.addEventListener('input',e=>{ const i=e.target.dataset&&e.target.dataset.gdref; if(i===undefined||!GUIDE_OPEN) return; GD[i]=e.target.value;
+  const u=document.querySelector(`[data-gdout="${i}"]`); if(u) u.innerHTML=gdList(GUIDES[GUIDE_OPEN],+i); });
+document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
+  if(t.closest('[data-gdprint]')&&GUIDE_OPEN){ guidePrint(GUIDE_OPEN,'dates'); return; }
+  if(t.closest('[data-gfalc]')&&GUIDE_OPEN){ guidePrint(GUIDE_OPEN,'falc'); return; }
+  const ft=t.closest('[data-ftip]'); if(ft){ e.preventDefault(); const s=ft.nextElementSibling; if(s){ s.hidden=!s.hidden; ft.setAttribute('aria-expanded',String(!s.hidden)); } } },true);
+/* « ? » à côté des champs sensibles d'un formulaire qui a un guide */
+function fieldTip(f,c){ const k=guideKey(f), G=k&&GUIDES[k]; if(!G||!G.champs) return '';
+  const m=G.champs.find(([re])=>new RegExp(re,'i').test(c.label)); if(!m) return '';
+  return ` <button type="button" class="ftip" data-ftip aria-expanded="false" aria-label="Conseil pour ce champ">?</button><small class="ftip-t" hidden>${esc(m[1])}</small>`; }
+function guideOpen(k){ const G=GUIDES[k]; if(!G) return; if(GUIDE_OPEN!==k) Object.keys(GD).forEach(x=>delete GD[x]); GUIDE_OPEN=k;
   let p=document.getElementById('guidepan'); if(!p){ p=document.createElement('aside'); p.id='guidepan'; p.setAttribute('aria-labelledby','guide-t'); document.body.appendChild(p); }
   const vieux=(Date.now()-new Date(G.verifie).getTime())>365*864e5, note=(DATA.guidesNotes||{})[k]||'';
   p.innerHTML=`<div class="gp-head"><span class="gp-ico" aria-hidden="true">📘</span><h2 id="guide-t">${esc(G.titre)}</h2><button type="button" class="gp-x" data-guideclose aria-label="Fermer le guide">×</button></div>
@@ -2797,13 +3120,14 @@ function guideOpen(k){ const G=GUIDES[k]; if(!G) return; GUIDE_OPEN=k;
       <p class="gp-ver${vieux?' old':''}">${vieux?'⚠️ À revérifier : ':''}vérifié le ${esc(frDate(G.verifie))} · sources en bas</p>
       <p class="gp-res">${esc(G.resume)}</p>
       ${note||isAdmin?`<section class="gp-note"><h3>Chez nous</h3>${note?`<p>${esc(note).replace(/\n/g,'<br>')}</p>`:'<p class="hint">Ajoutez une note pour l’équipe : qui contacter, comment la structure fait d’habitude.</p>'}${isAdmin?`<button type="button" class="linkbtn" data-guidenote>${note?'Modifier la note':'Ajouter une note'}</button>`:''}</section>`:''}
+      ${guideTools(k,G)}
       ${G.blocs.map(([t,L],i)=>`<details class="gp-sec"${i<3?' open':''}><summary>${esc(t)}</summary><ul>${L.map(x=>`<li>${x}</li>`).join('')}</ul></details>`).join('')}
       ${G.avant?`<details class="gp-sec"><summary>Avant d’envoyer</summary><ul class="gp-chk">${G.avant.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>`:''}
       <section class="gp-src"><h3>Sources</h3><ol>${G.sources.map(([t,u])=>`<li>${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`:esc(t)}</li>`).join('')}</ol></section>
       <p class="gp-warn">Des repères pour bien rédiger, pas un avis juridique. En cas de doute, demandez à un juriste ou à une association spécialisée.</p>
     </div>`;
   p.hidden=false; document.documentElement.classList.add('guide-on'); setTimeout(()=>p.querySelector('.gp-x').focus(),0); }
-function guideClose(){ const p=document.getElementById('guidepan'); if(p) p.hidden=true; document.documentElement.classList.remove('guide-on'); const b=GUIDE_OPEN&&document.querySelector(`[data-guide="${GUIDE_OPEN}"]`); GUIDE_OPEN=null; if(b) b.focus(); }
+function guideClose(){ Object.keys(GD).forEach(x=>delete GD[x]); const p=document.getElementById('guidepan'); if(p) p.hidden=true; document.documentElement.classList.remove('guide-on'); const b=GUIDE_OPEN&&document.querySelector(`[data-guide="${GUIDE_OPEN}"]`); GUIDE_OPEN=null; if(b) b.focus(); }
 document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
   const b=t.closest('[data-guide]'); if(b){ e.preventDefault(); e.stopPropagation(); if(GUIDE_OPEN===b.dataset.guide) guideClose(); else guideOpen(b.dataset.guide); return; }
   if(t.closest('[data-guideclose]')){ guideClose(); return; }
