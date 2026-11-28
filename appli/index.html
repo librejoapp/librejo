@@ -607,7 +607,8 @@ body.dragging #dropveil{display:grid;position:fixed;inset:0;z-index:15;pointer-e
 .dose-sm{max-width:160px}
 .dosew{display:block;color:var(--blue);font-weight:600;margin-top:var(--sp-1)}
 /* Miniature en direct du formulaire */
-#livepv{position:fixed;z-index:6;right:20px;top:92px;width:clamp(190px,calc(100vw - var(--sbw) - var(--w-form) - 110px),300px);background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-raised);padding:10px;display:grid;gap:8px}
+html{--lpw:clamp(240px,min(calc((100vw - var(--sbw) - 120px) * .44),calc((100vh - 190px) * .707)),620px)}
+#livepv{position:fixed;z-index:6;right:20px;top:92px;width:var(--lpw);background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow-raised);padding:10px;display:grid;gap:8px}
 #livepv[hidden],#livepv-tab[hidden]{display:none}
 #livepv .lp-head{display:flex;align-items:center;gap:8px;font-size:var(--fs-2)}
 #livepv .lp-pg{flex:1;color:var(--text-muted);font-size:var(--fs-1)}
@@ -623,7 +624,8 @@ body.dragging #dropveil{display:grid;position:fixed;inset:0;z-index:15;pointer-e
 #livepv-tab{position:fixed;z-index:6;right:20px;bottom:20px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--navy);border-radius:var(--r-full);padding:8px 14px;font:inherit;font-size:var(--fs-2);font-weight:600;cursor:pointer;box-shadow:var(--shadow-raised)}
 #livepv-tab svg{width:16px;height:16px}
 /* fenêtre étroite : la miniature se range en bas à droite, plus petite */
-@media (max-width:1460px){ #livepv{width:250px} #livepv .lp-note{display:none} html.live-on .content{padding-right:290px} }
+@media (max-width:1460px){ #livepv .lp-note{display:none} }
+html.live-on .content{padding-right:calc(var(--lpw) + 44px)}
 /* fenêtre étroite ou zoom fort : l'aperçu ouvert à la demande passe par-dessus le formulaire et défile */
 @media (max-width:1000px){
   #livepv,#livepv.big{top:auto;bottom:12px;right:12px;width:min(300px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;z-index:7}

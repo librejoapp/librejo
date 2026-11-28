@@ -5971,7 +5971,7 @@ async function liveRefresh(){
   try{
     const lib=await getPdfjs(); if(seq!==LIVE.seq) return;
     const pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise; if(seq!==LIVE.seq){ pdf.destroy(); return; }
-    const page=await pdf.getPage(1), v0=page.getViewport({scale:1}), vp=page.getViewport({scale:620/v0.width});
+    const page=await pdf.getPage(1), v0=page.getViewport({scale:1}), vp=page.getViewport({scale:1100/v0.width});
     const off=document.createElement('canvas'); off.width=Math.round(vp.width); off.height=Math.round(vp.height);
     await page.render({canvasContext:off.getContext('2d'),viewport:vp}).promise; const n=pdf.numPages;
     // alternative texte : les lignes de la page, dans l'ordre de lecture
