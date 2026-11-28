@@ -38,3 +38,9 @@
 #lj-boot .lj-err{color:#a3341f;font-weight:600;font-size:.875rem}
 
 #lj-boot .lj-ok{font-weight:700;color:#1e6b3a}
+#lj-boot .lj-aidel{margin:10px 0;border:1px solid #e3dccd;border-radius:8px;padding:8px 12px;font-size:.9rem}
+#lj-boot .lj-aidel summary{cursor:pointer;font-weight:700;color:#174f4c}
+#lj-boot .lj-aidel ol{padding-left:1.3em;margin:6px 0}
+#lj-boot .lj-cmdl{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin:6px 0}
+#lj-boot .lj-cmdl code{font-size:.72rem;word-break:break-all;background:#f4f1ea;border-radius:6px;padding:4px 6px}
+#lj-boot .lj-cmdl .lj-btn{margin:0;min-height:32px;padding:4px 10px}

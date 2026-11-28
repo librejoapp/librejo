@@ -473,6 +473,26 @@ async function ljLanceur(){
   var u=URL.createObjectURL(new Blob([txt],{type:'application/octet-stream'})), a=document.createElement('a'); a.href=u; a.download='Librejo.cmd'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); },4000);
   return 'dl';
 }
+/* « Ça ne fonctionne pas ? » : ce qu'il faut faire si Windows bloque le fichier, et le raccourci Windows fait à la main
+   (pas de fenêtre noire, pas d'avertissement). Le raccourci ouvre Librejo dans un profil « Librejo » à part, qui n'a
+   aucune extension. Partagé avec app.js (bouton « Installer Librejo sur ce poste », Vérifications du poste). */
+window.ljLanceurAide = function(){
+  var url=encodeURI(decodeURI(location.origin+location.pathname))+'?lanceur';
+  var ed='"C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" --profile-directory="Librejo" --no-first-run --app="'+url+'"';
+  var ch='"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --profile-directory="Librejo" --no-first-run --app="'+url+'"';
+  var row=function(t,l){ return '<p class="lj-cmdl"><b>'+t+'</b><code>'+esc(l)+'</code><button type="button" class="lj-btn lj-sec" data-ljcopy="'+esc(l)+'">Copier</button></p>'; };
+  return '<details class="lj-aidel"><summary>Ça ne fonctionne pas ? Cliquez ici</summary>'
+    +'<p><b>Windows affiche « Windows a protégé votre ordinateur »</b> : cliquez sur <b>Informations complémentaires</b>, puis sur <b>Exécuter quand même</b>. C’est le fichier que vous venez d’enregistrer, il ne fait qu’ouvrir Librejo.</p>'
+    +'<p><b>Le fichier est bloqué</b> (« bloqué par votre administrateur », ou rien ne se passe) : faites le raccourci à la main, une fois par poste. Pas de fenêtre noire, pas d’avertissement.</p>'
+    +'<ol><li>Cliquez sur <b>Copier</b> à côté de votre navigateur.</li>'
+    +'<li>Sur le bureau : clic droit › <b>Nouveau</b> › <b>Raccourci</b>. Collez (Ctrl+V), puis <b>Suivant</b>.</li>'
+    +'<li>Nom : <b>Librejo</b>, puis <b>Terminer</b>. Double-cliquez sur ce raccourci pour ouvrir Librejo.</li></ol>'
+    +row('Edge',ed)+row('Chrome',ch)
+    +'<p class="lj-aide">Le raccourci ouvre Librejo dans un profil « Librejo » séparé, qui n’a aucune extension (ne vous connectez pas à un compte dans ce profil : il récupérerait vos extensions). Si Windows ne trouve pas le navigateur, essayez l’autre ligne, ou montrez cette page à la personne qui s’occupe de l’informatique.</p></details>';
+};
+document.addEventListener('click', async function(e){ var b=e.target.closest&&e.target.closest('[data-ljcopy]'); if(!b) return; e.preventDefault();
+  var t=b.getAttribute('data-ljcopy'), ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(_){ var x=document.createElement('textarea'); x.value=t; document.body.appendChild(x); x.select(); try{ ok=document.execCommand('copy'); }catch(__){} x.remove(); }
+  var old=b.textContent; b.textContent=ok?'Copié ✓':'Copie impossible : sélectionnez la ligne'; setTimeout(function(){ b.textContent=old; },2500); });
 async function boot(){
   if (DEMO) { demoBoot(); return; }
   /* Navigateur sans accès aux dossiers (Firefox, Safari…) : les formulaires marchent quand même */
@@ -493,7 +513,7 @@ async function boot(){
   /* Windows, premier passage hors du lanceur : on propose d'abord l'icône Librejo (fenêtre à part, sans extension) ;
      le dossier se choisit ensuite dans cette fenêtre (l'autorisation y est propre au profil du lanceur). */
   if (LJ_WIN && !LJ_LANCEUR && location.protocol!=='file:' && !sessionStorage.getItem('lj-sans-icone')) {
-    show('<h1>Bienvenue dans Librejo</h1><p><b>1. Installez Librejo sur ce poste.</b> Librejo pose une icône sur le bureau : elle ouvre Librejo dans sa propre fenêtre, <b>sans les extensions du navigateur</b>, qui pourraient lire ce qui est tapé.</p><button class="lj-btn" id="lj-lan">Mettre l’icône Librejo sur le bureau</button><p class="lj-aide">Dans la fenêtre « Enregistrer », cliquez sur <b>Enregistrer</b>. Une fenêtre noire s’affiche une seconde au lancement : c’est normal. Windows peut demander une confirmation la première fois : <b>Exécuter</b>.</p><p><b>2. Double-cliquez sur Librejo</b>, sur le bureau, puis choisissez le dossier de votre structure dans la fenêtre qui s’ouvre.</p><p class="lj-aide"><button class="lj-link" id="lj-lan-non">Continuer ici sans l’icône</button></p>');
+    show('<h1>Bienvenue dans Librejo</h1><p><b>1. Installez Librejo sur ce poste.</b> Librejo pose une icône sur le bureau : elle ouvre Librejo dans sa propre fenêtre, <b>sans les extensions du navigateur</b>, qui pourraient lire ce qui est tapé.</p><button class="lj-btn" id="lj-lan">Mettre l’icône Librejo sur le bureau</button><p class="lj-aide">Dans la fenêtre « Enregistrer », cliquez sur <b>Enregistrer</b>. Une fenêtre noire s’affiche une seconde au lancement : c’est normal. Windows peut demander une confirmation la première fois : <b>Exécuter</b>.</p><p><b>2. Double-cliquez sur Librejo</b>, sur le bureau, puis choisissez le dossier de votre structure dans la fenêtre qui s’ouvre.</p>'+window.ljLanceurAide()+'<p class="lj-aide"><button class="lj-link" id="lj-lan-non">Continuer ici sans l’icône</button></p>');
     document.getElementById('lj-lan').onclick = async function(){ var ok = await ljLanceur(); if (ok) { var p=document.createElement('p'); p.className='lj-ok'; p.textContent=ok==='dl'?'Le fichier « Librejo.cmd » est dans vos Téléchargements : déplacez-le sur le bureau, puis double-cliquez dessus.':'Icône posée. Vous pouvez fermer cet onglet et double-cliquer sur « Librejo », sur le bureau.'; this.insertAdjacentElement('afterend',p); this.disabled=true; } };
     document.getElementById('lj-lan-non').onclick = function(){ try{ sessionStorage.setItem('lj-sans-icone','1'); }catch(e){} boot(); };
     return;

@@ -8092,6 +8092,7 @@ function lanceurInstall(){ const nav=navOf();
     <ol class="steps-ol"><li>Cliquez sur « Mettre l’icône sur le bureau », puis sur <b>Enregistrer</b>.</li><li>Fermez cet onglet et double-cliquez sur <b>Librejo</b>, sur le bureau. Windows peut demander une confirmation la première fois : <b>Exécuter</b>.</li><li>Dans la nouvelle fenêtre, autorisez une fois le dossier de Librejo${PAR.mail==='web'?' et reconnectez-vous à votre messagerie dans le navigateur':''}.</li></ol>
     <p class="hint">Une fenêtre noire s’affiche une seconde au lancement : c’est normal. Rien d’autre n’est modifié sur le poste.</p>
     <div class="btns"><button class="primary" id="ln-go">${ICON.dl}Mettre l’icône sur le bureau</button><button class="secondary" data-close>Plus tard</button></div>
+    <div class="lj-aidebox">${window.ljLanceurAide?ljLanceurAide():''}</div>
     <p class="hint m-0"><button type="button" class="linkbtn" id="ln-pwa">Installer plutôt dans le navigateur, avec ses extensions</button></p>`);
   $('#ln-go').onclick=async()=>{ const ok=await protCmd(nav,true); if(ok){ closeModal(); toast('Icône posée : double-cliquez sur « Librejo », sur le bureau'); } };
   $('#ln-pwa').onclick=()=>{ closeModal(); pwaInstall(); }; }
@@ -8308,7 +8309,7 @@ function protectHTML(){ const h=protHost();
     ${LANCEUR?'<p class="ck-okline">✅ Librejo est ouvert ici par son lanceur protégé : aucune extension n’est chargée dans cette fenêtre.</p>':''}
     <h4 class="m-0">1. Le lanceur protégé <small class="muted">(sans droits administrateur, poste par poste ; c’est ce que pose le bouton « Installer Librejo sur ce poste »)</small></h4>
     <p class="hint m-0">Il ouvre Librejo dans une fenêtre à part, avec un profil séparé et <b>aucune extension</b>. Enregistrez le fichier sur le bureau et double-cliquez dessus pour ouvrir Librejo. La première fois : réautoriser le dossier de Librejo et, si vous utilisez Outlook dans le navigateur, vous y reconnecter. Les favoris de ce poste sont à refaire dans ce profil.</p>
-    <div class="row"><button type="button" class="secondary sm" data-prot="cmd-edge">${ICON.dl}Icône Librejo pour Edge</button><button type="button" class="secondary sm" data-prot="cmd-chrome">${ICON.dl}Icône Librejo pour Chrome</button></div>
+    <div class="row"><button type="button" class="secondary sm" data-prot="cmd-edge">${ICON.dl}Icône Librejo pour Edge</button><button type="button" class="secondary sm" data-prot="cmd-chrome">${ICON.dl}Icône Librejo pour Chrome</button></div><div class="lj-aidebox">${window.ljLanceurAide?ljLanceurAide():''}</div>
     <h4 class="m-0 mt-s">2. La règle pour tout le parc <small class="muted">(technicien, droits administrateur)</small></h4>
     ${h?`<p class="hint m-0">Une règle de Chrome et d’Edge interdit aux extensions de lire ou modifier les pages de <b>${esc(h)}</b>, même si elles sont installées. Le technicien l’applique par stratégie de groupe, ou avec le fichier de réglage (double-clic, droits administrateur).</p>
     <div class="row"><button type="button" class="secondary sm" data-prot="fiche">${ICON.file}Fiche pour le technicien (PDF)</button><button type="button" class="secondary sm" data-prot="reg-edge">${ICON.dl}Réglage Edge (.reg)</button><button type="button" class="secondary sm" data-prot="reg-chrome">${ICON.dl}Réglage Chrome (.reg)</button></div>`
