@@ -5759,10 +5759,19 @@ urBind();
    (structure, service, administration). Rien n'est enregistré.
    ====================================================================== */
 const CP_APPELS=['Madame, Monsieur,','Madame,','Monsieur,','Chère consœur, cher confrère,','Chers collègues,'];
-const cpPolitesse=a=>/consœur|confrère/.test(a)?'Je vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.'
-  :/collègues/.test(a)?'Bien cordialement.':`Veuillez agréer, ${a.replace(/,$/,'')}, l’expression de nos salutations distinguées.`;
+/* Formules de politesse : une liste de base, plus celles que le coordinateur ajoute (DATA.politesse).
+   « {appel} » est remplacé par la formule d'appel choisie, sans sa virgule (« Madame, Monsieur »). */
+const CP_POLI=['Veuillez agréer, {appel}, l’expression de nos salutations distinguées.','Je vous prie d’agréer, {appel}, l’expression de mes salutations distinguées.',
+  'Dans l’attente de votre réponse, nous vous prions d’agréer, {appel}, l’expression de nos salutations distinguées.','Restant à votre disposition, nous vous prions d’agréer, {appel}, nos salutations distinguées.',
+  'Nous vous prions de recevoir, {appel}, nos salutations respectueuses.','Recevez, {appel}, nos sincères salutations.',
+  'Je vous prie de croire, chère consœur, cher confrère, à l’assurance de mes sentiments confraternels.','Bien cordialement.','Cordialement.'];
+const cpPoliList=()=>[...new Set([...CP_POLI,...(Array.isArray(DATA.politesse)?DATA.politesse:[])])];
+const cpPoliFill=(f,a)=>f.replace(/\{appel\}/g,String(a||'Madame, Monsieur').replace(/,\s*$/,''));
+/* la formule proposée d'office selon la formule d'appel, tant que la personne n'en a pas choisi une autre */
+const cpPoliAuto=a=>/consœur|confrère/.test(a)?CP_POLI[6]:/collègues/.test(a)?'Bien cordialement.':CP_POLI[0];
+const cpPolitesse=()=>CP.poli?cpPoliFill(CP.formule||cpPoliAuto(CP.appel),CP.appel):'';
 let CP={}, cpErr=false, cpRecip=null;
-function cpReset(){ CP={dest:'',attention:'',adresse:'',date:today(),objet:'',appel:CP_APPELS[0],message:'',signe:'equipe',signNom:'',signFonction:''}; cpErr=false; }
+function cpReset(){ CP={dest:'',attention:'',adresse:'',date:today(),objet:'',appel:CP_APPELS[0],message:'',poli:true,formule:'',signe:'equipe',signNom:'',signFonction:''}; cpErr=false; }
 cpReset();
 function cpValidate(){
   const e=[];
@@ -5795,7 +5804,9 @@ function renderCp(){
       <label class="field"><span>Objet</span>${txt('objet','ex. Demande de partenariat, présentation de nos permanences…')}</label>
       <div class="field"><span>Formule d'appel</span><div class="choice">${CP_APPELS.map(a=>`<button type="button" class="chip" data-cc="appel" data-v="${esc(a)}" aria-pressed="${CP.appel===a}">${esc(a)}</button>`).join('')}</div></div>
       <label class="field"><span>Texte du courrier <small>(laissez une ligne vide entre deux paragraphes)</small></span>${area('message','',9)}</label>
-      <p class="hint">Formule de politesse ajoutée à la fin : « ${esc(cpPolitesse(CP.appel))} »</p></div>
+      <div class="field poli"><label class="check"><input type="checkbox" data-cpoli ${CP.poli?'checked':''}> Ajouter une formule de politesse à la fin</label>
+        ${CP.poli?`<select class="in" data-c="formule" aria-label="Formule de politesse">${cpPoliList().map(f=>`<option value="${esc(f)}" ${(CP.formule||cpPoliAuto(CP.appel))===f?'selected':''}>${esc(cpPoliFill(f,CP.appel))}</option>`).join('')}</select>`:''}
+        ${isAdmin?`<button type="button" class="linkbtn" data-cpoliedit>Ajouter ou retirer des formules (structure)</button>`:''}</div></div>
     <div class="card top w-form"><h3>Signature</h3>
       <div class="field"><span>Signataire</span><div class="seg">${[['equipe','Membre de l’équipe'],['med','Médecin']].map(([k,l])=>`<button type="button" data-cc="signe" data-v="${k}" aria-pressed="${CP.signe===k}">${l}</button>`).join('')}</div></div>
       ${CP.signe==='med'?`<div>${medSelectHTML('cp-med').replace('class="in"','class="in'+B('med')+'"')}</div>`
@@ -5808,15 +5819,30 @@ function renderCp(){
     <div class="row end w-form"><button class="ghost danger" data-cclear>${ICON.trash}Tout effacer</button></div>`;
   const prev=cpRecip?cpRecip.get():[]; cpRecip=bindRecip(p.querySelector('#cp-rc'),prev);
 }
+/* Coordinateur : formules de politesse propres à la structure (enregistrées dans le dossier, pour tous les postes) */
+function poliEdit(){
+  openModal(`<h3 id="modal-title">Formules de politesse de la structure</h3>
+    <p class="hint">Une formule par ligne. Elles s’ajoutent à la liste de base, sur tous les postes. Écrivez <b>{appel}</b> à la place de « Madame, Monsieur » : Librejo y met la formule d’appel choisie dans le courrier.</p>
+    <p class="hint m-0">Exemple : <i>En vous remerciant de votre accueil, nous vous prions d’agréer, {appel}, nos salutations les meilleures.</i></p>
+    <label class="field"><span>Formules ajoutées</span><textarea class="in" id="poli-t" rows="8">${esc((DATA.politesse||[]).join('\n'))}</textarea></label>
+    <details class="hint"><summary>Voir la liste de base</summary><ul>${CP_POLI.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></details>
+    <div class="btns"><button class="primary" id="poli-ok">Enregistrer</button><button class="secondary" data-close>Annuler</button></div>`);
+  $('#poli-ok').onclick=async()=>{ const keep=DATA.politesse; DATA.politesse=[...new Set($('#poli-t').value.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(x=>x&&x.length<400))];
+    if(!await run(saveData,'Formules de politesse enregistrées')){ DATA.politesse=keep; return; } jlog('Formules de politesse','',DATA.politesse.length+' formule(s) ajoutée(s)'); closeModal(); renderCp(); };
+}
 function cpBind(){
   const p=$('#p-cp'); if(!p) return;
   p.addEventListener('input',e=>{ const t=e.target; if(!t.dataset.c) return; CP[t.dataset.c]=t.value; if(cpErr) t.classList.remove('bad'); });
   p.addEventListener('change',e=>{ const t=e.target;
     if(t.dataset.c==='dest'){ const x=ANNU.partenaires.find(z=>z.nom===t.value.trim()); if(x){ if(cpRecip) x.emails.forEach(m=>cpRecip.add(m)); if(!CP.adresse.trim()&&x.adresse) CP.adresse=partAddr(x); renderCp(); } }
+    if(t.matches('[data-cpoli]')){ CP.poli=t.checked; renderCp(); liveSoon(0); return; }
+    if(t.dataset.c==='formule') liveSoon(0);
     if(t.matches('[data-med]')&&cpErr) setTimeout(renderCp,0); });
+
   p.addEventListener('click',e=>{ const t=e.target;
     if(t.closest('[data-cback]')){ formView=null; setTab('forms'); window.scrollTo({top:0}); return; }
     const c=t.closest('[data-cc]'); if(c){ CP[c.dataset.cc]=c.dataset.v; renderCp(); return; }
+    if(t.closest('[data-cpoliedit]')){ poliEdit(); return; }
     if(t.closest('[data-cclear]')){ askConfirm('Tout effacer ?','Le formulaire sera vidé.','Tout effacer',()=>{ cpReset(); cpRecip=null; renderCp(); }); return; }
     if(t.closest('[data-cgo]')) cpPdf();
   });
@@ -5831,7 +5857,7 @@ function cpPdf(){
   P.para(`Objet : ${CP.objet.trim()}`,{bold:true,after:5});
   P.para(CP.appel,{after:4});
   CP.message.trim().split(/\n\s*\n/).forEach(par=>P.para(par.replace(/\s*\n\s*/g,' '),{after:3}));
-  P.para(cpPolitesse(CP.appel),{after:6});
+  if(cpPolitesse()) P.para(cpPolitesse(),{after:6});
   if(CP.signe==='med'){ const md=medChoice(); P.sign(md.nom,['N° RPPS : '+md.rpps,...String(PAR.medecinLigne||DEFAULT_MED_LINE).split('\n')]); }
   else P.sign(CP.signNom.trim(),[CP.signFonction.trim(),st.nom]);
   const file=P.finish(`Courrier_${fileSafe(CP.dest.trim()).slice(0,40)}_${isoOr(CP.date)}.pdf`);
@@ -8684,7 +8710,7 @@ const AIDE_FORMS={
   __cp:{
     but:'Une lettre à l’en-tête de la structure pour un partenaire, un service ou une administration. Pour un médecin, au sujet d’un patient : « Courrier au médecin traitant ».',
     etapes:['<b>Destinataire</b> : choisissez-le dans l’annuaire, ou écrivez son nom et son adresse.',
-      '<b>Objet</b> et <b>Formule d’appel</b>, puis le <b>Texte du courrier</b>. La formule de politesse est ajoutée à la fin.',
+      '<b>Objet</b> et <b>Formule d’appel</b>, puis le <b>Texte du courrier</b>. La formule de politesse se choisit dans la liste en dessous (ou se décoche).',
       '<b>Signature</b> : le signataire, son nom et sa fonction.',
       'Cliquez sur <b>Créer le courrier (PDF)</b>.',
       AIDE_FIN]},
