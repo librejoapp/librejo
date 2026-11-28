@@ -2571,9 +2571,221 @@ const GUIDES={
       ['La Revue du Praticien : les principaux types de certificats et rapports dans le parcours d’une personne migrante','https://www.larevuedupraticien.fr/outil/parcours-administratif-dune-personne-migrante-les-principaux-types-de-certificats-et-rapports'],
       ['Conseil national de l’Ordre des médecins : certificats médicaux, règles de rédaction','https://www.conseil-national.medecin.fr/publications/fiches-pratiques/certificats-medicaux-majeurs'],
       ['Textes : CESEDA art. L. 425-9 ; arrêté du 27 décembre 2016 (certificats, rapports et avis) ; arrêté du 5 janvier 2017 (orientations pour les médecins de l’OFII)','']]
+  },
+  'signal-procureur':{
+    titre:'Protection d’un majeur vulnérable : signaler au procureur',
+    verifie:'2026-11-28',
+    resume:'Quand une personne majeure ne peut plus défendre seule ses intérêts (budget, démarches, abus), le juge peut ouvrir une mesure de protection : sauvegarde de justice, curatelle, tutelle, habilitation familiale. Une structure qui n’est pas de la famille passe par un signalement au procureur de la République.',
+    blocs:[
+      ['Qui peut demander',[
+        'La personne elle-même, sa famille, son conjoint ou une personne proche : ils écrivent directement au juge des contentieux de la protection.',
+        'Le procureur, d’office ou à la demande d’un tiers : c’est la voie d’un professionnel ou d’une structure (code civil, art. 430).',
+        'Le procureur intervient surtout quand la famille n’est pas mobilisable : dire dans le signalement si l’entourage a été sollicité et ce qu’il a répondu.']],
+      ['Le certificat médical circonstancié',[
+        'Indispensable : sans lui, la demande est irrecevable (code civil, art. 431).',
+        'Il est rédigé par un médecin inscrit sur la liste du procureur, pas par le médecin traitant. Ce médecin peut demander l’avis du médecin traitant.',
+        'Il est payant pour la personne (160 € selon l’Ordre des médecins) ; il peut être pris en charge au titre des frais de justice dans certains cas.',
+        'Si la personne refuse de voir le médecin inscrit, l’écrire dans le signalement : c’est au procureur de décider de la suite.']],
+      ['Bien rédiger le signalement',[
+        'Des faits datés et concrets : factures impayées, dettes, démarches abandonnées, sollicitations abusives, mise en danger. Pas de diagnostic.',
+        'Dire ce qui a déjà été essayé (accompagnement budgétaire, mesures sociales) : la mesure judiciaire doit être nécessaire et proportionnée.',
+        'Préciser la mesure qui semble adaptée, avec prudence : le juge décide.',
+        'Donner l’entourage connu (noms, liens, coordonnées) et une personne joignable dans la structure.']],
+      ['Les droits de la personne',[
+        'L’informer du signalement et de son objet, sauf si cela la met en danger.',
+        'Elle sera entendue par le juge, et peut être accompagnée.',
+        'La mesure doit préserver au maximum son autonomie : elle continue de prendre les décisions qui touchent à sa personne.']]],
+    avant:['La personne a été informée du signalement (ou il est écrit pourquoi elle ne l’a pas été).','Le signalement décrit des faits datés, sans diagnostic.','L’entourage et les démarches déjà tentées sont indiqués.'],
+    sources:[
+      ['Justice.fr (Service-public) : obtenir le certificat médical circonstancié pour une tutelle, curatelle, habilitation familiale ou sauvegarde de justice','https://www.justice.fr/fiche/tutelle-curatelle-habilitation-familiale-sauvegarde-justice-obtenir-certificat-medical'],
+      ['Conseil national de l’Ordre des médecins : le majeur protégé','https://www.conseil-national.medecin.fr/medecin/prise-charge/majeur-protege'],
+      ['Conseil national de l’Ordre des médecins : certificats et mesures de protection juridique (fiche pratique)','https://www.conseil-national.medecin.fr/publications/fiches-pratiques/certificats-mesures-protection-juridique'],
+      ['HAS : le médecin inscrit sur la liste du procureur de la République, fiche de bonnes pratiques, décembre 2024 (diffusée par l’ARS Guyane)','https://www.guyane.ars.sante.fr/media/160109/download'],
+      ['Textes : code civil art. 425 à 432 ; code de procédure civile art. 1219 (contenu du certificat)','']]
+  },
+  'ip-crip':{
+    titre:'Enfant en danger : information préoccupante ou signalement',
+    verifie:'2026-11-28',
+    resume:'Un enfant en danger ou en risque de danger : on alerte la cellule départementale (CRIP) par une information préoccupante. En cas de danger grave et immédiat, on signale directement au procureur de la République. Alerter n’est pas accuser : c’est demander une évaluation.',
+    blocs:[
+      ['Information préoccupante ou signalement ?',[
+        '<b>Information préoccupante</b> (IP), à la CRIP du département où vit l’enfant : danger ou risque de danger pour sa santé, sa sécurité, sa moralité ou son développement. La CRIP fait évaluer la situation.',
+        '<b>Signalement au procureur</b> : danger grave et immédiat (violences physiques ou sexuelles, besoin de mise à l’abri), ou quand la famille refuse toute aide, ou que l’évaluation est impossible. Le procureur peut ordonner un placement provisoire et saisir le juge des enfants.',
+        'En cas de signalement direct au procureur, envoyer une copie à la CRIP.',
+        'Un doute ? Le 119 (Allô enfance en danger) conseille aussi les professionnels, 24 h sur 24.']],
+      ['Bien rédiger',[
+        'Des faits, datés : ce qui a été vu, entendu, constaté. Les propos de l’enfant ou des parents entre guillemets, avec leurs mots.',
+        'Distinguer ce qui est constaté de ce qui est rapporté par quelqu’un d’autre, et dire par qui.',
+        'Pas d’interprétation, pas de diagnostic, pas de nom d’auteur présumé présenté comme certain.',
+        'Ne pas mener d’enquête soi-même, ne pas faire répéter l’enfant.',
+        'Donner les autres enfants du foyer, l’école, les professionnels déjà présents.']],
+      ['Les parents',[
+        'Les informer de l’information préoccupante, sauf si c’est contraire à l’intérêt de l’enfant (CASF, art. L. 226-2-1).',
+        'Ne pas les prévenir d’un signalement pour violences quand cela peut exposer l’enfant ou entraver l’enquête.']],
+      ['Secret professionnel',[
+        'Transmettre une IP est permis malgré le secret : seules les informations nécessaires à la protection de l’enfant sont partagées.',
+        'Les personnes qui ont transmis une IP peuvent être informées des suites, dans le respect de l’intérêt de l’enfant.']]],
+    avant:['Le document décrit des faits datés ; les propos sont entre guillemets.','Ce qui est constaté et ce qui est rapporté sont distingués.','Les parents sont informés, ou il est noté pourquoi ils ne le sont pas.'],
+    sources:[
+      ['Service-public : enfant en danger, comment le signaler ?','https://www.service-public.gouv.fr/particuliers/vosdroits/F781'],
+      ['Ministère des Solidarités : les acteurs de la protection de l’enfance (CRIP, 119)','https://solidarites.gouv.fr/les-acteurs-de-la-protection-de-lenfance'],
+      ['Allô 119 : schéma du dispositif (information préoccupante, signalement)','https://www.allo119.gouv.fr/sites/default/files/upload/content/activite/panneau_a4_2.pdf'],
+      ['Département de la Gironde : guide de l’information préoccupante et du signalement (2025)','https://www.gironde.fr/sites/default/files/2025-01/A5-Plaquette-GuideIP-13012025-1.pdf'],
+      ['Textes : CASF art. L. 226-2-1 à L. 226-4 et R. 226-2-2 ; code civil art. 375','']]
+  },
+  'ssc-certificat':{
+    titre:'Soins psychiatriques sans consentement',
+    verifie:'2026-11-28',
+    resume:'Une admission en soins psychiatriques sans consentement prive une personne de liberté : elle est très encadrée. Trois conditions : des troubles mentaux, qui rendent le consentement impossible, et un état qui impose des soins immédiats avec une surveillance constante. Le médecin est toujours à l’initiative, par ses certificats.',
+    blocs:[
+      ['Les procédures (décision du directeur)',[
+        '<b>À la demande d’un tiers</b> (CSP, art. L. 3212-1) : une demande écrite d’un tiers et deux certificats médicaux concordants et circonstanciés de moins de 15 jours, le premier par un médecin qui n’exerce pas dans l’établissement d’accueil.',
+        '<b>À la demande d’un tiers en urgence</b> (art. L. 3212-3) : risque grave d’atteinte à l’intégrité de la personne ; demande du tiers et un seul certificat, qui peut venir d’un médecin de l’établissement.',
+        '<b>Péril imminent, sans tiers</b> (art. L. 3212-1, II, 2°) : quand aucun tiers ne peut être trouvé ; un certificat d’un médecin extérieur à l’établissement.',
+        'La décision du préfet (art. L. 3213-1) concerne les troubles qui compromettent la sûreté des personnes ou l’ordre public.']],
+      ['Le tiers',[
+        'Un membre de la famille ou une personne qui a des relations antérieures avec la personne et agit dans son intérêt.',
+        'Pas un soignant de l’établissement d’accueil.',
+        'La demande est manuscrite, datée, signée, avec l’identité et le lien du tiers (modèle des ARS).']],
+      ['Bien rédiger le certificat',[
+        'Circonstancié : décrire l’état mental observé (comportement, propos, entre guillemets), pas seulement un diagnostic.',
+        'Expliquer en quoi les troubles rendent le consentement impossible.',
+        'Expliquer pourquoi des soins immédiats et une surveillance constante sont nécessaires ; pour le péril imminent, décrire le péril.',
+        'Indiquer la date et l’heure de l’examen ; utiliser les modèles des ARS ou de l’Ordre des médecins.']],
+      ['Après l’admission',[
+        'Période d’observation : certificats à 24 heures et à 72 heures par un psychiatre.',
+        'Le juge des libertés et de la détention contrôle obligatoirement la mesure avant 12 jours d’hospitalisation complète.',
+        'La personne est informée de ses droits et des voies de recours ; elle peut être aidée par un avocat.']]],
+    avant:['Le certificat date de moins de 15 jours et décrit des faits observés.','La procédure choisie correspond à la situation (tiers, urgence, péril imminent).','Pour une demande de tiers : le tiers n’est pas un soignant de l’établissement d’accueil.'],
+    sources:[
+      ['Justice.fr (Service-public) : hospitalisation pour troubles mentaux','https://www.justice.fr/fiche/hospitalisation-troubles-mentaux'],
+      ['ARS Auvergne-Rhône-Alpes : demander une admission en soins sans consentement par un tiers (modèles de demande et de certificats)','https://www.auvergne-rhone-alpes.ars.sante.fr/demander-une-admission-en-soins-psychiatriques-sans-consentement-par-un-tiers-en-auvergne-rhone'],
+      ['HAS : aide à la rédaction des certificats et avis médicaux dans le cadre des soins psychiatriques sans consentement (2018)','https://has-sante.fr/upload/docs/application/pdf/2018-04/rapport_delaboration_-_aide_a_la_redaction_des_certificats_et_avis_medicaux_dans_le_cadre_des_soins_psychiatriques_sans_cons.pdf'],
+      ['France Assos Santé : fiche A.5.1, soins psychiatriques sans consentement (2022)','https://www.france-assos-sante.org/wp-content/uploads/2016/02/Fiche_A.5.1_Soins-psychiatriques-sans-consentement-2022-web.pdf'],
+      ['Psycom : modalités de soins psychiatriques (2024)','https://www.psycom.org/wp-content/uploads/2024/04/PSYCOM_Brochures-A5_DP_Modalites_de_soins_psychiatriques_WEB.pdf'],
+      ['Textes : code de la santé publique art. L. 3211-1 à L. 3213-11 ; R. 3212-1','']]
+  },
+  'dossier-medical':{
+    titre:'Accès au dossier médical',
+    verifie:'2026-11-28',
+    resume:'Toute personne peut obtenir les informations de santé la concernant, directement ou par un médecin qu’elle choisit (CSP, art. L. 1111-7). L’équipe peut l’aider à faire la demande ; c’est la personne qui demande, ou son représentant légal.',
+    blocs:[
+      ['Les délais',[
+        'Au plus tôt après un délai de réflexion de 48 heures : le dossier ne peut pas être remis avant.',
+        'Au plus tard 8 jours après la demande.',
+        '2 mois si les informations datent de plus de 5 ans (ou si la commission départementale des soins psychiatriques est saisie).']],
+      ['Bien formuler la demande',[
+        'Préciser la période, le service ou le séjour, et les pièces souhaitées (comptes rendus, résultats, courriers).',
+        'Choisir le mode : consultation sur place (gratuite) ou envoi de copies (frais de copie et d’envoi possibles).',
+        'Joindre une copie de pièce d’identité ; pour un représentant légal, le justificatif (jugement de tutelle, livret de famille…).',
+        'Envoyer en recommandé avec accusé de réception, et garder une copie.']],
+      ['Les cas particuliers',[
+        'Personne décédée : les ayants droit, le conjoint ou partenaire peuvent accéder à certaines informations, pour un motif précis (cause du décès, défense de la mémoire, faire valoir leurs droits).',
+        'Mineur : l’accès passe par les titulaires de l’autorité parentale ; le mineur peut demander que l’accès se fasse par un médecin.',
+        'Les dossiers d’établissement sont conservés 20 ans après le dernier séjour (règles particulières pour les mineurs).']],
+      ['Sans réponse ou refus',[
+        'Hôpital public ou privé participant au service public : la commission des usagers de l’établissement peut aider ; saisir la CADA dans les 2 mois suivant le refus ou l’absence de réponse.',
+        'Établissement privé ou médecin libéral : la commission des usagers, puis le conseil départemental de l’Ordre des médecins.']]],
+    avant:['La période, le service et les pièces souhaitées sont précisés.','Une copie de pièce d’identité est jointe.','La personne sait qu’elle a 2 mois pour saisir la CADA en cas de refus (hôpital public).'],
+    sources:[
+      ['Service-public : dossier médical (vérifié le 28 février 2025)','https://www.service-public.gouv.fr/particuliers/vosdroits/F12210'],
+      ['Conseil national de l’Ordre des médecins : comment accéder à mon dossier médical','https://www.conseil-national.medecin.fr/patient/sante-droits/acceder-dossier-medical'],
+      ['Sante.fr : vos droits en santé, l’accès à mon dossier médical','https://www.sante.fr/node/2080573'],
+      ['France Assos Santé : fiche A.3, accès au dossier médical et aux informations de santé','https://www.france-assos-sante.org/wp-content/uploads/2019/03/Acces-au-dossier-medical.pdf'],
+      ['Textes : code de la santé publique art. L. 1111-7 et R. 1111-1 à R. 1111-8','']]
+  },
+  'eig-prepa':{
+    titre:'Événement indésirable grave : déclarer à l’autorité',
+    verifie:'2026-11-28',
+    resume:'Les établissements et services sociaux et médico-sociaux doivent informer sans délai leur autorité (ARS ou conseil départemental) des dysfonctionnements graves et des événements qui menacent la santé, la sécurité ou le bien-être des personnes accompagnées (CASF, art. L. 331-8-1). Déclarer n’est pas se dénoncer : c’est un outil de qualité.',
+    blocs:[
+      ['Ce qui se déclare (arrêté du 28 décembre 2016)',[
+        'Sinistres et événements météorologiques exceptionnels ; défaillances techniques ou d’approvisionnement.',
+        'Accidents ou incidents liés à une erreur ou un défaut de soin ou de surveillance ; décès accidentels ou consécutifs à un défaut de surveillance.',
+        'Disparitions, fugues, suicides et tentatives de suicide.',
+        'Maltraitances, violences, actes de malveillance ; comportements violents de personnes accueillies ou d’intervenants.',
+        'Perturbations graves de l’organisation ou du fonctionnement de la structure.',
+        'Ces exemples ne sont pas limitatifs.']],
+      ['Comment et quand',[
+        'Sans délai, par le directeur ou le responsable de la structure.',
+        '<b>La déclaration se fait en ligne</b>, sur le portail national signalement.social-sante.gouv.fr (certaines ARS acceptent encore leur formulaire par mail).',
+        'Le formulaire de Librejo sert à <b>préparer</b> le texte au calme, sans nom, avant de le recopier sur le portail, et à en garder une trace dans la structure.',
+        'Événement grave associé à des soins (décès, mise en jeu du pronostic vital, déficit permanent) : déclaration en deux parties, la première sans délai, l’analyse approfondie dans les 3 mois.']],
+      ['Bien rédiger',[
+        'Aucun nom : les personnes concernées sont décrites par leur nombre, leur âge, leur sexe.',
+        'La chronologie : date et heure de l’événement, du constat, lieu, déroulement factuel.',
+        'Les conséquences pour les personnes, les professionnels, la structure.',
+        'Les mesures immédiates prises, et les informations données (familles, plainte, autres autorités).']],
+      ['À ne pas oublier',[
+        'Si un enfant est en danger : information préoccupante à la CRIP en plus (voir le guide correspondant).',
+        'Un crime ou un délit : signalement au procureur en plus de la déclaration.',
+        'Analyser ensuite en équipe (causes, mesures correctrices) : c’est le sens du dispositif.']]],
+    avant:['Le texte ne contient aucun nom de personne accompagnée ni de professionnel.','Il sera recopié sans délai sur le portail signalement.social-sante.gouv.fr, par le directeur ou le responsable.','Les autres signalements nécessaires sont faits (CRIP, procureur).'],
+    sources:[
+      ['Décret n° 2016-1813 du 21 décembre 2016 relatif à l’obligation de signalement des structures sociales et médico-sociales (Légifrance)','https://www.legifrance.gouv.fr/jorf/id/JORFARTI000033670894'],
+      ['ARS Nouvelle-Aquitaine : signaler un dysfonctionnement grave survenu en ESMS','https://www.nouvelle-aquitaine.ars.sante.fr/signaler-un-dysfonctionnement-grave-survenu-en-etablissement-medico-social-esms'],
+      ['ARS PACA : événements indésirables en établissements médico-sociaux','https://www.paca.ars.sante.fr/evenements-indesirables-en-etablissements-medico-sociaux'],
+      ['Portail national de signalement des événements sanitaires indésirables','https://signalement.social-sante.gouv.fr/'],
+      ['Textes : CASF art. L. 331-8-1 et R. 331-8 à R. 331-10 ; arrêté du 28 décembre 2016 ; décret n° 2016-1606 du 25 novembre 2016 (événements graves associés aux soins)','']]
+  },
+  'refus-soins':{
+    titre:'Refus de soins discriminatoire',
+    verifie:'2026-11-28',
+    resume:'Refuser de soigner une personne parce qu’elle bénéficie de la complémentaire santé solidaire (C2S) ou de l’aide médicale de l’État (AME) est interdit : c’est une discrimination (CSP, art. L. 1110-3). Il existe une procédure de conciliation, puis de sanction.',
+    blocs:[
+      ['Les formes du refus',[
+        'Refus net de rendez-vous ou de soins, au motif de la C2S ou de l’AME.',
+        'Formes indirectes : délais anormalement longs, renvoi systématique vers un autre professionnel ou l’hôpital, refus du tiers payant, dépassements d’honoraires facturés malgré la C2S.']],
+      ['Qui saisir',[
+        'Le directeur de la caisse d’assurance maladie (CPAM, MSA…) ou le président du conseil départemental de l’Ordre du professionnel (médecins, chirurgiens-dentistes, sages-femmes, infirmiers…).',
+        'Une commission de conciliation se réunit dans les 3 mois suivant la plainte.',
+        'Sans conciliation, ou en cas de récidive : poursuites disciplinaires et sanctions possibles.',
+        'Le Défenseur des droits peut aussi être saisi pour une discrimination.']],
+      ['Bien rédiger la plainte',[
+        'Les faits : date, lieu, mode de contact (téléphone, accueil, consultation), mots employés entre guillemets, témoins.',
+        'L’identité et l’adresse du professionnel.',
+        'Joindre la copie de l’attestation C2S ou AME en cours de validité à la date des faits.',
+        'Une association peut accompagner la personne et alerter la caisse ; envoyer une copie à France Assos Santé si l’on veut appuyer le recensement des refus.']],
+      ['Accompagner la personne',[
+        'D’abord lui trouver un autre professionnel : la plainte ne remplace pas l’accès aux soins.',
+        'Santé Info Droits (France Assos Santé) : 01 53 62 40 30.']]],
+    avant:['La date, le lieu et les mots employés sont précis.','L’attestation C2S ou AME valide à la date des faits est jointe.','La personne a donné son accord pour la plainte.'],
+    sources:[
+      ['France Assos Santé : fiche A.10.1, accompagnement par les associations des victimes de refus de soins','https://france-assos-sante.org/wp-content/uploads/2016/01/Fiche_A.10.1_Accompagnement-par-les-assos-des-victimes-de-refus-de-soins-VDigitale.pdf'],
+      ['Conseil national de l’Ordre des médecins : plainte pour refus de soins discriminatoire, la procédure (février 2023)','https://www.conseil-national.medecin.fr/sites/default/files/external-package/fiche_pratique/lrcc/fiche_info_plaignant_l.1110-3.pdf'],
+      ['Défenseur des droits : fiche 14, les refus de soins','https://www.defenseurdesdroits.fr/sites/default/files/2023-03/FICHE%2014%20Les%20refus%20de%20soins.pdf'],
+      ['Sante.fr : victime d’un refus de soins discriminatoire ? (modèle de saisine)','https://www.sante.fr/node/135783'],
+      ['Textes : code de la santé publique art. L. 1110-3 et R. 1110-8 et suivants ; R. 4127-7 (déontologie médicale)','']]
+  },
+  'mdph-courrier':{
+    titre:'Demande à la MDPH : appuyer le dossier',
+    verifie:'2026-11-28',
+    resume:'La maison départementale des personnes handicapées évalue les besoins à partir du formulaire, du certificat médical et de ce que l’entourage et les professionnels lui apportent. Un courrier d’éléments complémentaires aide l’équipe d’évaluation à voir la vie réelle de la personne.',
+    blocs:[
+      ['Le dossier',[
+        'Le formulaire de demande (Cerfa) et un certificat médical de moins d’un an, obligatoire.',
+        'Les justificatifs d’identité et de domicile ; les bilans utiles (comptes rendus, bilans auditifs ou visuels).',
+        'Le projet de vie : ce que la personne souhaite, dans ses mots. Il compte.']],
+      ['Bien rédiger le courrier',[
+        'Décrire les conséquences concrètes au quotidien plutôt qu’un diagnostic : ce que la personne ne peut pas faire seule, avec quelle fréquence, avec quelle aide.',
+        'Des exemples précis et datés : démarches abandonnées, chutes, hospitalisations, ruptures d’hébergement, périodes sans traitement.',
+        'Ce qui a déjà été mis en place et ses limites.',
+        'Dire depuis quand et dans quel cadre la structure accompagne la personne ; rester factuel, avec son accord.']],
+      ['Les délais et recours',[
+        'Sans réponse 4 mois après une demande complète, la demande est considérée comme rejetée.',
+        'Contester une décision : un recours administratif préalable obligatoire (RAPO), écrit, dans les 2 mois suivant la notification ; joindre la décision et les éléments nouveaux.',
+        'La MDPH répond au RAPO sous 2 mois ; ensuite, recours devant le tribunal compétent dans les 2 mois.',
+        'Une conciliation ou une médiation est possible avant le RAPO.']]],
+    avant:['Le courrier décrit des difficultés concrètes, pas seulement un diagnostic.','La personne a donné son accord et connaît le contenu du courrier.','Le certificat médical du dossier date de moins d’un an.'],
+    sources:[
+      ['Service-public : demande à la MDPH (formulaire, certificat médical de moins d’un an, délai de 4 mois)','https://www.service-public.fr/particuliers/vosdroits/N155'],
+      ['INCa et CNSA : fiche 9, contester une décision de la CDAPH (RAPO)','https://www.apel.fr/sites/default/files/2022-04/cnsa_19-04_fiche_9_contester_une_decision_cdaph.pdf'],
+      ['AFM-Téléthon : comment réaliser un RAPO efficace','https://www.afm-telethon.fr/sites/default/files/media/documents/AFM_VLM_206_BD_pap%2038.pdf'],
+      ['MDA de Maine-et-Loire : les voies de recours','https://www.mda.maine-et-loire.fr/fileadmin/mda/Voies_Recours_MDPH.pdf'],
+      ['Textes : CASF art. L. 146-1 et suivants, R. 146-29 et suivants','']]
   }
 };
-const GUIDE_ALIAS={'cnd-sejour':'etranger-malade'};
+const GUIDE_ALIAS={'cnd-sejour':'etranger-malade','signal-mineur':'ip-crip','ssc-tiers':'ssc-certificat','ssc-cnom':'ssc-certificat','eig-ars':'eig-prepa'};
 const guideKey=x=>{ const s=x&&(x.modele_src||x.id); return s?(GUIDES[s]?s:GUIDE_ALIAS[s]||null):null; };
 const guideBtn=(x,cls)=>{ const k=guideKey(x); return k?`<button type="button" class="guidebtn ${cls||''}" data-guide="${esc(k)}" title="Guide : enjeux, comment bien rédiger, sources" aria-label="Ouvrir le guide : ${esc(GUIDES[k].titre)}">📘<span>Guide</span></button>`:''; };
 let GUIDE_OPEN=null;
