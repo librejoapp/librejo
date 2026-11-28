@@ -2347,13 +2347,16 @@ document.addEventListener('click',e=>{ const g=e.target.closest('[data-gotab]');
 
 /* ---------- Épinglés (page d'accueil) ---------- */
 function renderPinned(){
-  const {order,nPin}=pinnedAndUsed();
+  const {order:o0,nPin}=pinnedAndUsed(), order=o0.slice(0,Math.max(6,nPin));
+  /* moins de six : on complète avec les formulaires les plus utiles, pour que l'accueil ne soit jamais vide */
+  if(order.length<6){ const has=new Set(order.filter(x=>x[0]==='f').map(x=>x[1].id)), used=useTop().filter(k=>k.startsWith('f:')).map(k=>k.slice(2)), rank=f=>DATA.formsEpingles.includes(f.id)?0:used.includes(f.id)?1+used.indexOf(f.id):100;
+    formItems().filter(f=>!has.has(f.id)).sort((a,b)=>rank(a)-rank(b)).slice(0,6-order.length).forEach(f=>order.push(['f',f])); }
   if(!order.length) return '';
   const tile=(title,sub,btns,mark,th,href,fav)=>`<div class="fcard tile">${th||''}${mark}<b>${href?`<a class="gtitle" href="${href}" target="_blank" rel="noopener">${esc(title)}</a>`:esc(title)}${fav?favBtn(fav):''}</b>${sub?`<span>${esc(sub)}</span>`:''}<div class="row gap-s push">${btns}</div></div>`;
   const F=f=>tile(f.titre,'Formulaire',`<button class="lbtn" data-fill="${esc(f.id)}">${ICON.pen}Remplir</button>`,'',`<span class="tile-emoji" aria-hidden="true">${esc(formEmoji(f))}</span>`,'','f:'+f.id), K=k=>tile(k.titre,`Kit · ${kitDocs(k).length} documents`,`<button class="lbtn" data-kprint="${esc(k.id)}" aria-label="Imprimer le kit ${esc(k.titre)}">${ICON.print}Tout imprimer</button><button class="lbtn" data-ksend="${esc(k.id)}" aria-label="Envoyer le kit ${esc(k.titre)}">${ICON.mail}Tout envoyer</button>`,'<span class="badge accent m-0 self-start">Kit</span>'), D=d=>tile(d.titre,catName(d.categorie),`${d.modele?`<button class="lbtn" data-fillword="${esc(d.id)}">${ICON.pen}Remplir</button>`:''}${printable(d)?`<button class="lbtn" data-print="${esc(d.chemin)}" aria-label="Imprimer ${esc(d.titre)}">${ICON.print}Imprimer</button>`:''}<button class="lbtn" ${isLink(d)?`data-lsend="${esc(d.id)}"`:`data-send="${esc(d.chemin)}"`} aria-label="Envoyer ${esc(d.titre)}">${ICON.mail}Envoyer</button><a class="iconbtn" href="${isLink(d)?esc(d.url):hrefOf(d.chemin)}" target="_blank" rel="noopener" title="Ouvrir" aria-label="Ouvrir ${esc(d.titre)}">${ICON.open}</a>`,'',thumbSrc(d)?`<img class="tthumb" src="${thumbSrc(d)}" alt="" loading="lazy" data-err="remove">`:'',isLink(d)?esc(d.url):hrefOf(d.chemin),'d:'+d.id);
   return `<h2 class="lab">Les plus utilisés</h2>
   <div class="cards narrow">
-    ${order.slice(0,Math.max(6,nPin)).map(([t,x],i)=>{ const h=t==='f'?F(x):t==='k'?K(x):D(x); if(i>=nPin) return h;
+    ${order.map(([t,x],i)=>{ const h=t==='f'?F(x):t==='k'?K(x):D(x); if(i>=nPin) return h;
       /* épinglé par l'admin : toujours affiché, quel que soit l'usage ; on le dit, et l'admin peut le retirer d'ici */
       return h.replace('<div class="fcard tile">',`<div class="fcard tile pinned"><span class="pinmark" title="Épinglé par l’admin : toujours affiché ici, même s’il sert peu">📌${isAdmin?`<button type="button" class="pinoff" data-unpin="${t}:${esc(x.id)}" title="Retirer de l’accueil" aria-label="Retirer ${esc(x.titre)} de l’accueil">×</button>`:''}</span>`); }).join('')}
   </div>${nPin?`<p class="hint pinhint">📌 épinglé par l’admin${isAdmin?' (× pour le retirer)':''} · les autres : ce qui sert le plus sur ce poste ces dernières semaines.</p>`:''}`;
@@ -5705,7 +5708,7 @@ function renderHome(){
   const docsSec=`<details class="hsec main hdocsec" data-home="docs"${homeOpen.has('docs')?' open':''}>
     <summary><span class="he" aria-hidden="true">${HICO.docs}</span><span class="ht"><b>Documents</b><small>${cs.length} catégorie${cs.length>1?'s':''} · ${nd} document${nd>1?'s':''}</small></span><span class="chev" aria-hidden="true"></span></summary>
     <div class="hcats">${catsHtml}${kits}</div></details>`;
-  return `${quickForms()}<div class="homecol">${forms}${docsSec}</div>`;
+  return '';   // accueil allégé : formulaires, catégories et annuaire sont déjà dans le menu de gauche
 }
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-goforms]')){ formView=null; setTab('forms'); window.scrollTo({top:0}); return; }
@@ -8244,7 +8247,7 @@ const AIDE={
     etapes:['Tapez ce que vous cherchez dans la barre de recherche. <kbd>/</kbd> ou <kbd>Ctrl</kbd>+<kbd>K</kbd> y mène depuis n’importe quelle page ; ici, quand rien n’est sélectionné, il suffit de taper.',
       'Pour un formulaire, cliquez sur son nom ou sur <b>Remplir</b>.',
       'Pour un document, cliquez sur son titre pour l’ouvrir, ou sur <b>Imprimer</b> ou <b>Envoyer</b>.',
-      'Dépliez <b>Tous les formulaires</b> ou <b>Documents</b> pour voir le reste, rubrique par rubrique.',
+      'Le reste est dans le menu de gauche : <b>Formulaires</b>, <b>Annuaire</b> et les <b>catégories</b> de documents.',
       'L’étoile, à côté d’un titre, l’ajoute à <b>Mes favoris</b> (sur ce poste).'],
     admin:['<b>Ajouter un document</b>, <b>Ajouter un lien</b>, <b>Nouvelle catégorie</b> : en haut de la page. Vous pouvez aussi glisser des fichiers sur la page.',
       'Le menu <b>Outils</b> : évaluation HAS, tableau de bord, sauvegarde, journal, archives, assistant de démarrage, vérifications du poste.',
